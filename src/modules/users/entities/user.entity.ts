@@ -1,3 +1,4 @@
+import { Message } from "src/modules/messages/entities/messages.entity";
 import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 export enum UserStatus {
@@ -58,6 +59,10 @@ export class User {
     @ManyToOne(() => User, user => user.createdUsers)
     creator?: User
 
-    @OneToMany(() => User, user=> user.creator)
+    @OneToMany(() => User, user => user.creator)
     createdUsers: User[]
+
+    @OneToMany(() => Message, message => message.creator)
+    messages: Message[];
+
 }

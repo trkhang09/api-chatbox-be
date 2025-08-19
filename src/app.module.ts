@@ -6,6 +6,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SocketModule } from './modules/socket/socket.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { UsersModule } from './modules/users/users.module';
+import { MessagesModule } from './modules/messages/messages.module';
+import { ChatsModule } from './modules/chats/chats.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -20,7 +23,7 @@ import { UsersModule } from './modules/users/users.module';
         username: configService.get<string>('POSTGRES_USER'),
         password: configService.get<string>('POSTGRES_PASSWORD'),
         database: configService.get<string>('POSTGRES_DB'),
-              entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
         logging: false,
       }),
@@ -33,6 +36,9 @@ import { UsersModule } from './modules/users/users.module';
     ]),
     SocketModule,
     UsersModule,
+    MessagesModule,
+    ChatsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
