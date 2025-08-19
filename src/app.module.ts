@@ -7,6 +7,7 @@ import { SocketModule } from './modules/socket/socket.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { UsersModule } from './modules/users/users.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { DocumentChunksModule } from './modules/document-chunks/document-chunks.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
     ]),
     SocketModule,
     UsersModule,
+    DocumentChunksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
