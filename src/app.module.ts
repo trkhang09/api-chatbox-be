@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SocketModule } from './modules/socket/socket.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { UsersModule } from './modules/users/users.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 
 @Module({
   imports: [
