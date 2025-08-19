@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SocketModule } from './modules/socket/socket.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
         username: configService.get<string>('POSTGRES_USER'),
         password: configService.get<string>('POSTGRES_PASSWORD'),
         database: configService.get<string>('POSTGRES_DB'),
-        entities: [],
+              entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
         logging: false,
       }),
@@ -31,6 +32,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
       }
     ]),
     SocketModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
