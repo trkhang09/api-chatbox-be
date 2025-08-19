@@ -3,7 +3,7 @@ import { Server, Socket } from 'socket.io';
 import { SocketService } from './socket.service';
 import { ConfigService } from '@nestjs/config';
 import { UseFilters } from '@nestjs/common';
-import { WsExceptionFilter } from 'src/common/filters/ws-exception.filter';
+import { WsExceptionFilter } from 'src/common/filters';
 
 @WebSocketGateway({
     cors: { origin: '*' },
@@ -25,22 +25,20 @@ export class SocketGateway implements OnGatewayConnection {
 
     @SubscribeMessage('hello')
     handleEvent(
-        @MessageBody() data: any,
+        @MessageBody() data: string,
         @ConnectedSocket() socket: Socket,
     ) {
-        const response = {
-            code: 0,
-            message: 'success',
-            data: { text: `Hello ${data.data}` },
-        };
-        
         if (!data) {
-        socket.emit('hello', 'loi');
-            throw new WsException('Data is required!');
+            socket.emit('helloResponse', { code: 500, message: 'Data is required!', data: null });
         }
-        
-        socket.emit('hello', response);
-        
+
+        const response = {
+            code: 200,
+            message: 'success',
+            data: { text: `Hello ${data}` },
+        };
+
+        socket.emit('helloResponse', response);
     }
 
 

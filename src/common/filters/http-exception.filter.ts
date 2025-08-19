@@ -2,7 +2,7 @@ import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from
 import { Request, Response } from 'express';
 
 @Catch()
-export class AllExceptionsFilter implements ExceptionFilter {
+export default class AllExceptionsFilter implements ExceptionFilter {
     catch(exception: unknown, host: ArgumentsHost) {
         const ctx = host.switchToHttp();
         const response = ctx.getResponse<Response>();
@@ -20,7 +20,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
                     ? res
                     : (res as any).message || message;
         } else if (exception instanceof Error) {
-            // Nếu là lỗi runtime
             message = exception.message;
         }
 

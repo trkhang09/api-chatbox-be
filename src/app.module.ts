@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SocketModule } from './modules/socket/socket.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -23,6 +24,12 @@ import { SocketModule } from './modules/socket/socket.module';
         logging: false,
       }),
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60,
+        limit: 20
+      }
+    ]),
     SocketModule,
   ],
   controllers: [AppController],

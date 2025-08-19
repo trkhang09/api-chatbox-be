@@ -3,9 +3,10 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SocketIoAdapter } from './modules/socket/adapters/socket-io.adapter';
-import { ResponseInterceptor } from './common/filters/http-response';
-import { AllExceptionsFilter } from './common/filters/http-exception.filter';
-import { WsExceptionFilter } from './common/filters/ws-exception.filter';
+import helmet from 'helmet';
+import { AllExceptionsFilter, ResponseInterceptor } from './common/filters';
+import WsExceptionFilter from './common/filters/ws-exception.filter';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -13,8 +14,10 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   app.useWebSocketAdapter(new SocketIoAdapter(configService));
 
+  // CORS
   app.enableCors({ credentials: true, origin: '*' });
 
+  // Validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -23,6 +26,7 @@ async function bootstrap() {
     }),
   );
 
+  // GLobal prefix
   app.setGlobalPrefix('api');
 
   // HTTP Exception Filter
@@ -33,7 +37,10 @@ async function bootstrap() {
   // Global interceptor for response successfull
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  await app.listen(process.env.PORT ?? 3000);
+  // helmet
+  app.use(helmet())
+
+  await app.listen(Number(process.env.APP_PORT));
 }
 
 bootstrap();
