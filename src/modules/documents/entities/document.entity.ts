@@ -1,8 +1,10 @@
+import { DocumentChunks } from 'src/modules/document-chunks/entities/document-chunks.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import {
   BeforeInsert,
   BeforeUpdate,
   Column,
+  Entity,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -14,7 +16,7 @@ export enum DocumentStatus {
   inactive = 1,
   delete = 2,
 }
-
+@Entity('documents')
 export class Document {
   @PrimaryColumn()
   id: string;
@@ -63,4 +65,8 @@ export class Document {
   @JoinColumn({ name: 'uploaded_by' })
   @ManyToOne(() => User, (user) => user.documents)
   user: User;
+
+  @OneToMany(() => DocumentChunks, (chunk) => chunk.document)
+  chunks: DocumentChunks[];
+  
 }
