@@ -20,12 +20,12 @@ import { LoginOauthModule } from './modules/login-oauth/login-oauth.module';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get<string>('DPOSTGRES_HOST'),
+        host: configService.get<string>('POSTGRES_HOST'),
         port: configService.get<number>('POSTGRES_PORT'),
         username: configService.get<string>('POSTGRES_USER'),
         password: configService.get<string>('POSTGRES_PASSWORD'),
         database: configService.get<string>('POSTGRES_DB'),
-              entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
         logging: false,
       }),
@@ -33,8 +33,8 @@ import { LoginOauthModule } from './modules/login-oauth/login-oauth.module';
     ThrottlerModule.forRoot([
       {
         ttl: 60,
-        limit: 20
-      }
+        limit: 20,
+      },
     ]),
     SocketModule,
     UsersModule,
@@ -46,6 +46,4 @@ import { LoginOauthModule } from './modules/login-oauth/login-oauth.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {
-
-}
+export class AppModule {}

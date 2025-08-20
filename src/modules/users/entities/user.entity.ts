@@ -1,72 +1,26 @@
 import { LoginOauth } from "src/modules/login-oauth/entities/login-oauth.entity";
-import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Document } from "src/modules/documents/entities/document.entity";
-
-export enum UserStatus {
-    actived = 0,
-    blocked = 1,
-    deleted = 2
-}
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from "typeorm";
+import { AbstractEntity } from "src/common/entities/abstract.entity";
+import { UserStatus } from "src/common/enums/user-status.enum";
+import { Role } from "src/modules/roles/entities/role.entity";
 
 @Entity('users')
-export class User {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+export class User extends AbstractEntity {
+  @Column({ unique: true })
+  email: string;
 
-    @Column({ unique: true })
-    email: string;
+  @Column()
+  password: string;
 
-    @Column()
-    password: string;
+  @Column({ type: 'varchar' })
+  fullname: string;
 
-    @Column({ type: 'varchar' })
-    fullname: string;
+    @ManyToOne(() => Role, (role) => role.users, { eager: true, onDelete: "RESTRICT" })
+    @JoinColumn({ name: 'role_id' })
+    role: Role;
 
-    @Column({ name: 'role_id', type: 'uuid' })
-    roleId: string;
-
-    @Column({ default: UserStatus.actived })
+    @Column({type: 'number', default: UserStatus.ACTIVED })
     status: UserStatus
-
-    @Column({
-        name: 'created_at',
-        type: 'timestamp',
-        default: () => 'CURRENT_TIMESTAMP',
-        onUpdate: 'CURRENT_TIMESTAMP',
-    })
-    createdAt: Date;
-
-    @Column({
-        name: 'updated_at',
-        type: 'timestamp',
-        default: () => 'CURRENT_TIMESTAMP',
-        onUpdate: 'CURRENT_TIMESTAMP',
-    })
-    updatedAt: Date;
-
-    @Column({ name: 'created_by', type: 'uuid' })
-    createdBy: string;
-
-    @BeforeUpdate()
-    setUpdatedAt() {
-        this.updatedAt = new Date();
-    }
-
-    @BeforeInsert()
-    setCreatedAt() {
-        this.createdAt = new Date();
-    }
-
-    @ManyToOne(() => User, user => user.createdUsers)
-    creator?: User
-
-    @OneToMany(() => User, user => user.creator)
-    createdUsers: User[]
-    
-    @OneToMany(() => Document, (document) => document.uploadedBy)
-    documents: Document[];
-
-
 
     @OneToMany(() => LoginOauth, (loginOauth) => loginOauth.user)
     loginOauths: LoginOauth[];

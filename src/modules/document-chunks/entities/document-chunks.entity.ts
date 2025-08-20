@@ -1,41 +1,19 @@
-import { Column, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Document } from "src/modules/documents/entities/document.entity";
+import { Column, Entity, ManyToOne } from 'typeorm';
+import { Document } from 'src/modules/documents/entities/document.entity';
+import { AbstractEntity } from 'src/common/entities/abstract.entity';
 
 @Entity('document_chunks')
-export class DocumentChunks {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column({ name: 'document_id', type: 'uuid' })
-  documentId: string;
-  
+export class DocumentChunks extends AbstractEntity {
   @Column({ name: 'chunk_index', type: 'int' })
   chunkIndex: number;
 
   @Column({ type: 'text' })
   content: string;
 
-  @Column(<any>'vector', {length: 768 })
+  //have problem and fixed at last commit
+  @Column({ length: 768 })
   embedding: number[];
-
-  @Column({
-    name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  createdAt: Date;
-
-  @Column({
-    name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  updatedAt: Date;
 
   @ManyToOne(() => Document, (document) => document.chunks)
   document: Document;
-
 }
-
