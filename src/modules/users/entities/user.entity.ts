@@ -23,9 +23,4 @@ export class User extends AbstractEntity {
     @Column({ default: UserStatus.ACTIVED })
     status: UserStatus
 
-    @ManyToOne(() => User, user => user.createdUsers)
-    creator?: User
-
-    @OneToMany(() => User, user=> user.creator)
-    createdUsers: User[]
 }
