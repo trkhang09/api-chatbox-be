@@ -11,6 +11,9 @@ import { DocumentChunksModule } from './modules/document-chunks/document-chunks.
 import { RolesModule } from './modules/roles/roles.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { LoginOauthModule } from './modules/login-oauth/login-oauth.module';
+import { MessagesModule } from './modules/messages/messages.module';
+import { ChatsModule } from './modules/chats/chats.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -42,6 +45,9 @@ import { LoginOauthModule } from './modules/login-oauth/login-oauth.module';
     RolesModule,
     PermissionsModule,
     LoginOauthModule,
+    MessagesModule,
+    ChatsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

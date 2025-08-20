@@ -1,0 +1,17 @@
+import { AbstractEntity } from "src/common/entities/abstract.entity";
+import { Chat } from "src/modules/chats/entities/chat.entity";
+import { Column, Entity, JoinColumn, ManyToOne } from "typeorm";
+
+@Entity('messages')
+export class Message extends AbstractEntity {
+
+    @Column({ type: 'text' })
+    content: string;
+
+    @Column({ type: 'bool', default: false})
+    isRead: boolean;
+
+    @ManyToOne(() => Chat, chat => chat.messages)
+    @JoinColumn({ name: 'chat_id' })
+    chat: Chat
+}
