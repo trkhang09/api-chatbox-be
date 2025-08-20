@@ -1,5 +1,6 @@
 import { Message } from "src/modules/messages/entities/messages.entity";
 import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Document } from "src/modules/documents/entities/document.entity";
 
 export enum UserStatus {
     actived = 0,
@@ -61,6 +62,11 @@ export class User {
 
     @OneToMany(() => User, user => user.creator)
     createdUsers: User[]
+    
+    @OneToMany(() => Document, (document) => document.uploadedBy)
+    documents: Document[];
+
+
 
     @OneToMany(() => Message, message => message.creator)
     messages: Message[];

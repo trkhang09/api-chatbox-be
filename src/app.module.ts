@@ -6,6 +6,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SocketModule } from './modules/socket/socket.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { UsersModule } from './modules/users/users.module';
+import { DocumentsModule } from './modules/documents/documents.module';
+import { DocumentChunksModule } from './modules/document-chunks/document-chunks.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -36,6 +38,7 @@ import { AuthModule } from './modules/auth/auth.module';
     ]),
     SocketModule,
     UsersModule,
+    DocumentChunksModule,
     MessagesModule,
     ChatsModule,
     AuthModule,
