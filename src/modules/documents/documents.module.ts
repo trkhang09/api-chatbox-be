@@ -9,4 +9,4 @@ import { Document } from './entities/document.entity';
   providers: [DocumentsService],
   controllers: [DocumentsController],
 })
-export class DocumentsModule {}
+export class DocumentsModule { }

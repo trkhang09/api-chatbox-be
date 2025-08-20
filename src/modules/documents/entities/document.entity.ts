@@ -23,5 +23,5 @@ export class Document extends AbstractEntity {
 
   @OneToMany(() => DocumentChunks, (chunk) => chunk.document)
   chunks: DocumentChunks[];
-  
+
 }
