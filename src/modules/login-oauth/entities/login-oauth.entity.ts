@@ -1,38 +1,26 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne } from "typeorm";
 import { User } from "src/modules/users/entities/user.entity";
-
-export enum Provider {
-    system = 0,
-    google = 1,
-    github = 2,
-}
+import { Provider } from "src/common/enums/provider.enum";
+import { AbstractEntity } from "src/common/entities/abstract.entity";
 
 @Entity('login_oauth')
-export class LoginOauth {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+export class LoginOauth extends AbstractEntity {
 
-    @Column({ type: 'uuid' })
-    user_id: string;
+  @Column({ type: 'uuid' })
+  user_id: string;
 
-    @ManyToOne(() => User, (user) => user.loginOauths, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'user_id' })
-    user: User;
+  @ManyToOne(() => User, (user) => user.loginOauths, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
-    @Column({
+  @Column({
     type: 'enum',
     enum: Provider,
-    default: Provider.system,
+    default: Provider.SYSTEM,
   })
   provider: Provider;
 
   @Column({ type: 'varchar', length: 255 })
   provider_user_id: string;
 
-  @CreateDateColumn({ type: 'timestamp' })
-  created_at: Date;
-
-  @UpdateDateColumn({ type: 'timestamp' })
-  updated_at: Date;
-  
 }

@@ -1,19 +1,18 @@
+import { AbstractEntity } from 'src/common/entities/abstract.entity';
 import { Permission } from 'src/modules/permissions/entities/permission.entity';
-import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
-
+import { User } from 'src/modules/users/entities/user.entity';
+import { Column, Entity, JoinTable, ManyToMany, OneToMany } from 'typeorm';
 
 @Entity('roles')
-export class Role {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+export class Role extends AbstractEntity {
 
-    @Column({length: 255})
+    @Column({ length: 255 })
     name: string;
 
-    @Column({length: 50})
+    @Column({ length: 50 })
     code: string;
 
-    @ManyToMany(()=> Permission, (permission)=> permission.roles, {
+    @ManyToMany(() => Permission, (permission) => permission.roles, {
         cascade: true,
     })
     @JoinTable({
@@ -22,10 +21,13 @@ export class Role {
             name: 'role_id',
             referencedColumnName: 'id',
         },
-        inverseJoinColumn:{
+        inverseJoinColumn: {
             name: 'permission_id',
             referencedColumnName: 'id',
         },
     })
-    permissions : Permission[];
+    permissions: Permission[];
+
+    @OneToMany(() => User, (user) => user.role)
+    users: User[];
 }
