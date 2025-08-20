@@ -8,6 +8,9 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { UsersModule } from './modules/users/users.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { DocumentChunksModule } from './modules/document-chunks/document-chunks.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
+import { LoginOauthModule } from './modules/login-oauth/login-oauth.module';
 
 @Module({
   imports: [
@@ -36,6 +39,9 @@ import { DocumentChunksModule } from './modules/document-chunks/document-chunks.
     SocketModule,
     UsersModule,
     DocumentChunksModule,
+    RolesModule,
+    PermissionsModule,
+    LoginOauthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

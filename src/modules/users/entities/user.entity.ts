@@ -1,7 +1,8 @@
-import { Column, Entity, OneToMany } from 'typeorm';
-import { AbstractEntity } from 'src/common/entities/abstract.entity';
-import { UserStatus } from 'src/common/enums/user-status.enum';
-import { Document } from 'src/modules/documents/entities/document.entity';
+import { LoginOauth } from "src/modules/login-oauth/entities/login-oauth.entity";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from "typeorm";
+import { AbstractEntity } from "src/common/entities/abstract.entity";
+import { UserStatus } from "src/common/enums/user-status.enum";
+import { Role } from "src/modules/roles/entities/role.entity";
 
 @Entity('users')
 export class User extends AbstractEntity {
@@ -14,11 +15,13 @@ export class User extends AbstractEntity {
   @Column({ type: 'varchar' })
   fullname: string;
 
-  //update after create role entity
-  // @ManyToOne(()=> Role, (role) => role.user, {eager: true})
-  // @JoinColumn({name: 'role_id'})
-  // role: Role;
+    @ManyToOne(() => Role, (role) => role.users, { eager: true, onDelete: "RESTRICT" })
+    @JoinColumn({ name: 'role_id' })
+    role: Role;
 
-  @Column({ default: UserStatus.ACTIVED })
-  status: UserStatus;
+    @Column({type: 'number', default: UserStatus.ACTIVED })
+    status: UserStatus
+
+    @OneToMany(() => LoginOauth, (loginOauth) => loginOauth.user)
+    loginOauths: LoginOauth[];
 }

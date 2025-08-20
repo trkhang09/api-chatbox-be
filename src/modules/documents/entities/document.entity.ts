@@ -14,7 +14,7 @@ export class Document extends AbstractEntity {
   @Column({ name: 'file_path' })
   filePath: string;
 
-  @Column({ default: DocumentStatus.ACTIVED })
+  @Column({ type: 'number', default: DocumentStatus.ACTIVED })
   status: DocumentStatus;
 
   @OneToMany(() => DocumentChunks, (chunk) => chunk.document)
