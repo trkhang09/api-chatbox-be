@@ -26,6 +26,4 @@ export abstract class AbstractEntity {
 
     @DeleteDateColumn({ name: 'deleted_at', type: 'timestamp', nullable: true })
     deletedAt?: Date;
-
-
 }

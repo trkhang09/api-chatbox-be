@@ -1,4 +1,4 @@
-import { Column, Entity,  ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity } from "typeorm";
 import { AbstractEntity } from "src/common/entities/abstract.entity";
 import { UserStatus } from "src/common/enums/user-status.enum";
 
