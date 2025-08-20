@@ -24,7 +24,7 @@ export default class AllExceptionsFilter implements ExceptionFilter {
         }
 
         response.status(status).json({
-            statusCode: status, 
+            statusCode: status,
             message,
             data: null,
             timestamp: new Date().toISOString(),
