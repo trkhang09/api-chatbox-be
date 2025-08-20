@@ -3,7 +3,6 @@ import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany } from "ty
 import { AbstractEntity } from "src/common/entities/abstract.entity";
 import { UserStatus } from "src/common/enums/user-status.enum";
 import { Role } from "src/modules/roles/entities/role.entity";
-import { Message } from "src/modules/messages/entities/messages.entity";
 import { Chat } from "src/modules/chats/entities/chat.entity";
 
 @Entity('users')
