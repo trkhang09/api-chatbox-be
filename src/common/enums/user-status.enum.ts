@@ -1,4 +1,4 @@
 export enum UserStatus {
-    ACTIVED = 1,
-    BLOCKED = 2,
+  ACTIVED = 1,
+  BLOCKED = 2,
 }
