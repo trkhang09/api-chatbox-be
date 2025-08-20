@@ -1,6 +1,7 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { AbstractEntity } from 'src/common/entities/abstract.entity';
 import { UserStatus } from 'src/common/enums/user-status.enum';
+import { Document } from 'src/modules/documents/entities/document.entity';
 
 @Entity('users')
 export class User extends AbstractEntity {
