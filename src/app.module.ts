@@ -10,6 +10,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
 import { DocumentChunksModule } from './modules/document-chunks/document-chunks.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
+import { LoginOauthModule } from './modules/login-oauth/login-oauth.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
     DocumentChunksModule,
     RolesModule,
     PermissionsModule,
+    LoginOauthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
