@@ -6,15 +6,14 @@ import { Role } from "src/modules/roles/entities/role.entity";
 
 @Entity('users')
 export class User extends AbstractEntity {
+  @Column({ unique: true })
+  email: string;
 
-    @Column({ unique: true })
-    email: string;
+  @Column()
+  password: string;
 
-    @Column()
-    password: string;
-
-    @Column({ type: 'varchar' })
-    fullname: string;
+  @Column({ type: 'varchar' })
+  fullname: string;
 
     @ManyToOne(() => Role, (role) => role.users, { eager: true, onDelete: "RESTRICT" })
     @JoinColumn({ name: 'role_id' })

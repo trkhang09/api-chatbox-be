@@ -1,8 +1,4 @@
-import {
-  Column,
-  Entity,
-  OneToMany
-} from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
 import { AbstractEntity } from 'src/common/entities/abstract.entity';
 import { DocumentChunks } from 'src/modules/document-chunks/entities/document-chunks.entity';
@@ -23,5 +19,4 @@ export class Document extends AbstractEntity {
 
   @OneToMany(() => DocumentChunks, (chunk) => chunk.document)
   chunks: DocumentChunks[];
-
 }

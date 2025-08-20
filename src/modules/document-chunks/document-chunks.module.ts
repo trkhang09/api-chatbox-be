@@ -7,6 +7,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 @Module({
   imports: [TypeOrmModule.forFeature([DocumentChunks])],
   providers: [DocumentChunksService],
-  controllers: [DocumentChunksController]
+  controllers: [DocumentChunksController],
 })
 export class DocumentChunksModule {}

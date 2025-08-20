@@ -33,8 +33,8 @@ import { LoginOauthModule } from './modules/login-oauth/login-oauth.module';
     ThrottlerModule.forRoot([
       {
         ttl: 60,
-        limit: 20
-      }
+        limit: 20,
+      },
     ]),
     SocketModule,
     UsersModule,
@@ -46,6 +46,4 @@ import { LoginOauthModule } from './modules/login-oauth/login-oauth.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {
-
-}
+export class AppModule {}

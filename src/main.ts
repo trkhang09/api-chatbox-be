@@ -38,7 +38,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
 
   // helmet
-  app.use(helmet())
+  app.use(helmet());
 
   await app.listen(Number(process.env.APP_PORT));
 }
