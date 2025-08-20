@@ -1,4 +1,5 @@
 import { AbstractEntity } from 'src/common/entities/abstract.entity';
+import { RoleStatus } from 'src/common/enums/role-status.enum';
 import { Permission } from 'src/modules/permissions/entities/permission.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import { Column, Entity, JoinTable, ManyToMany, OneToMany } from 'typeorm';
@@ -11,6 +12,9 @@ export class Role extends AbstractEntity {
 
     @Column({ length: 50 })
     code: string;
+
+    @Column({ type: 'number', default: RoleStatus.ACTIVED })
+    status: RoleStatus;
 
     @ManyToMany(() => Permission, (permission) => permission.roles, {
         cascade: true,

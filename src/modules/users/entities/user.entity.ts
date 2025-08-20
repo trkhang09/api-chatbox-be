@@ -19,7 +19,7 @@ export class User extends AbstractEntity {
     @JoinColumn({ name: 'role_id' })
     role: Role;
 
-    @Column({ default: UserStatus.ACTIVED })
+    @Column({type: 'number', default: UserStatus.ACTIVED })
     status: UserStatus
 
     @OneToMany(() => LoginOauth, (loginOauth) => loginOauth.user)
