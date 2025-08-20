@@ -1,10 +1,6 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { UserStatus } from "src/common/enum/user-status.enum";
 
-export enum UserStatus {
-    actived = 0,
-    blocked = 1,
-    deleted = 2
-}
 
 @Entity('users')
 export class User {
@@ -20,10 +16,12 @@ export class User {
     @Column({ type: 'varchar' })
     fullname: string;
 
-    @Column({ name: 'role_id', type: 'uuid' })
-    roleId: string;
+    //update after create role entity 
+    // @ManyToOne(()=> Role, (role) => role.user, {eager: true})
+    // @JoinColumn({name: 'role_id'})
+    // role: Role;
 
-    @Column({ default: UserStatus.actived })
+    @Column({ default: UserStatus.ACTIVED })
     status: UserStatus
 
     @Column({
