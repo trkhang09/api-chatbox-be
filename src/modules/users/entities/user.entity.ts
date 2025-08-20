@@ -23,10 +23,4 @@ export class User extends AbstractEntity {
 
     @Column({ default: UserStatus.ACTIVED })
     status: UserStatus
-
-    
-    @OneToMany(() => Document, (document) => document.uploadedBy)
-    documents: Document[];
-
-
 }

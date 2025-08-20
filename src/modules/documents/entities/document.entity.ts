@@ -1,24 +1,10 @@
-import { User } from 'src/modules/users/entities/user.entity';
 import {
-  BeforeInsert,
-  BeforeUpdate,
   Column,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  PrimaryColumn,
 } from 'typeorm';
+import { DocumentStatus } from 'src/common/enums/document-status.enum';
+import { AbstractEntity } from 'src/common/entities/abstract.entity';
 
-export enum DocumentStatus {
-  active = 0,
-  inactive = 1,
-  delete = 2,
-}
-
-export class Document {
-  @PrimaryColumn()
-  id: string;
-
+export class Document extends AbstractEntity {
   @Column()
   title: string;
 
@@ -28,39 +14,6 @@ export class Document {
   @Column({ name: 'file_path' })
   filePath: string;
 
-  @Column({ name: 'uploaded_by', type: 'uuid' })
-  uploadedBy: string;
-
-  @Column({ default: DocumentStatus.active })
+  @Column({ default: DocumentStatus.ACTIVED })
   status: DocumentStatus;
-
-  @Column({
-    name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  createdAt: Date;
-
-  @Column({
-    name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  updatedAt: Date;
-
-  @BeforeUpdate()
-  setUpdatedAt() {
-    this.updatedAt = new Date();
-  }
-
-  @BeforeInsert()
-  setCreatedAt() {
-    this.createdAt = new Date();
-  }
-
-  @JoinColumn({ name: 'uploaded_by' })
-  @ManyToOne(() => User, (user) => user.documents)
-  user: User;
 }
