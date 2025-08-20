@@ -1,3 +1,4 @@
+import { LoginOauth } from "src/modules/login-oauth/entities/login-oauth.entity";
 import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Document } from "src/modules/documents/entities/document.entity";
 
@@ -59,11 +60,14 @@ export class User {
     @ManyToOne(() => User, user => user.createdUsers)
     creator?: User
 
-    @OneToMany(() => User, user=> user.creator)
+    @OneToMany(() => User, user => user.creator)
     createdUsers: User[]
     
     @OneToMany(() => Document, (document) => document.uploadedBy)
     documents: Document[];
 
 
+
+    @OneToMany(() => LoginOauth, (loginOauth) => loginOauth.user)
+    loginOauths: LoginOauth[];
 }
