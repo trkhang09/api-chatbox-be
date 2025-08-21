@@ -10,7 +10,7 @@ export class Chat extends AbstractEntity {
     @Column({ type: 'varchar', length: 255 })
     title: string;
 
-    @Column({type: 'number', default: ChatTypes.BOT })
+    @Column({type: 'int', default: ChatTypes.BOT })
     type: ChatTypes;
 
     @OneToMany(() => Message, message => message.chat)

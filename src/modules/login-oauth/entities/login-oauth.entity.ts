@@ -11,8 +11,7 @@ export class LoginOauth extends AbstractEntity {
   user: User;
 
   @Column({
-    type: 'number',
-    enum: Provider,
+    type: 'int',
     default: Provider.SYSTEM,
   })
   provider: Provider;
