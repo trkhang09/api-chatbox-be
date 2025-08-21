@@ -10,9 +10,8 @@ export class DocumentChunks extends AbstractEntity {
   @Column({ type: 'text' })
   content: string;
 
-  //have problem and fixed at last commit
-  @Column({ length: 768 })
-  embedding: number[];
+  @Column({ type: 'text' })
+  embedding: string;
 
   @ManyToOne(() => Document, (document) => document.chunks)
   document: Document;
