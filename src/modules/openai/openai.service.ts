@@ -7,7 +7,10 @@ dotenv.config();
 @Injectable()
 export class OpenaiService {
   private readonly apiKey: string;
-  private readonly endpoint: string = 'https://api.openai.com/v1/completions';
+  private readonly endpoint: string =
+    'https://api.openai.com/v1/chat/completions';
+  private readonly model: string = 'gpt-4o-mini';
+  private readonly maxTokens: number = 100;
 
   constructor() {
     this.apiKey = process.env.OPENAI_API_KEY ?? '';
@@ -23,9 +26,14 @@ export class OpenaiService {
       const response = await axios.post(
         this.endpoint,
         {
-          model: 'gpt-4o-mini',
-          prompt: formattedPrompt,
-          max_tokens: 100,
+          model: this.model,          
+          max_tokens: this.maxTokens,
+          messages: [
+            {
+              role: 'user',
+              content: formattedPrompt
+            }
+          ]
         },
         {
           headers: {
@@ -34,16 +42,26 @@ export class OpenaiService {
           },
         },
       );
-      return this.handleApiResponse(response.data);
+      return this.handleApiResponse(response.data);      
     } catch (error) {
-      throw new Error('Failed to fetch from OpenAI API');
+      if (axios.isAxiosError(error)) {
+        const detail = error.response?.data.error;
+        
+        throw new Error(
+          `Failed to fetch from OpenAI API. Details: ${detail.code}`,
+        );
+      } else {
+        throw new Error(
+          `Failed to fetch from OpenAI API. Error: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
     }
   }
 
   private handleApiResponse(response: any): any {
     if (response.choices && response.choices.length > 0) {
       return {
-        text: response.choices[0].text,
+        content: response.choices[0].message.content,
         model: response.model,
       };
     }
