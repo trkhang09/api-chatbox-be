@@ -14,6 +14,7 @@ import { LoginOauthModule } from './modules/login-oauth/login-oauth.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { OpenaiModule } from './modules/openai/openai.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { AuthModule } from './modules/auth/auth.module';
     MessagesModule,
     ChatsModule,
     AuthModule,
+    OpenaiModule
   ],
   controllers: [AppController],
   providers: [AppService],
