@@ -13,7 +13,7 @@ export class Role extends AbstractEntity {
     @Column({ length: 50 })
     code: string;
 
-    @Column({ type: 'number', default: RoleStatus.ACTIVED })
+    @Column({ type: 'int', default: RoleStatus.ACTIVED })
     status: RoleStatus;
 
     @ManyToMany(() => Permission, (permission) => permission.roles, {

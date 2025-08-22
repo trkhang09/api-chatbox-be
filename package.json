@@ -18,12 +18,21 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typeorm": "typeorm-ts-node-commonjs -d src/data-source.ts",
+    "migration:run": "npx typeorm migration:run -d dist/data-source.js",
+    "migration:revert": "npx typeorm migration:revert -d dist/data-source.js",
+    "migration:show": "npx typeorm migration:show -d dist/data-source.js",
+    "migration:gen": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate ./src/migrations/InitMigration -d ./src/data-source.ts",
+    "migration:create": "npx typeorm migration:create"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
   },
   "dependencies": {
+    "@langchain/community": "^0.3.53",
+    "@langchain/core": "^0.3.72",
+    "@langchain/openai": "^0.6.9",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -42,6 +51,7 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "typeorm": "^0.3.25",
+    "typeorm-ts-node-commonjs": "^0.3.20",
     "ws": "^8.18.3"
   },
   "devDependencies": {
