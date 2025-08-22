@@ -23,7 +23,7 @@
     "migration:run": "npx typeorm migration:run -d dist/data-source.js",
     "migration:revert": "npx typeorm migration:revert -d dist/data-source.js",
     "migration:show": "npx typeorm migration:show -d dist/data-source.js",
-    "migration:gen": "npx typeorm migration:generate src/migrations/AutoMigration -d src/data-source.ts",
+    "migration:gen": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate ./src/migrations/InitMigration -d ./src/data-source.ts",
     "migration:create": "npx typeorm migration:create"
   },
   "lint-staged": {
