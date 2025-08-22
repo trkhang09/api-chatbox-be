@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+dist
+.git
+.env
+*.md
+.gitignore
+.env.example
+.prettierrc
+README.md
+Dockerfile.*
+data
+.husky
