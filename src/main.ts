@@ -6,6 +6,7 @@ import { SocketIoAdapter } from './modules/socket/adapters/socket-io.adapter';
 import helmet from 'helmet';
 import { AllExceptionsFilter, ResponseInterceptor } from './common/filters';
 import WsExceptionFilter from './common/filters/ws-exception.filter';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,6 +14,21 @@ async function bootstrap() {
   // Socket
   const configService = app.get(ConfigService);
   app.useWebSocketAdapter(new SocketIoAdapter(configService));
+
+  /**
+   * Swagger config start
+   **/
+  const config = new DocumentBuilder()
+    .setTitle(String(configService.get('SWAGGER_TITLE')))
+    .setDescription(String(configService.get('SWAGGER_DESCRIPTION')))
+    .setVersion(String(configService.get('SWAGGER_VERSION')))
+    .addTag(String(configService.get('SWAGGER_TAG')))
+    .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory);
+  /*
+     Swagger config end
+  */
 
   // CORS
   app.enableCors({ credentials: true, origin: '*' });
