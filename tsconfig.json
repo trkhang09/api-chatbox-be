@@ -21,5 +21,10 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
+  },
+  "exclude": ["node_modules", "dist"],
+  "watchOptions": {
+    "watchFile": "fixedPollingInterval", // bug TS 4.9
+    "watchDirectory": "useFsEvents"
   }
 }
