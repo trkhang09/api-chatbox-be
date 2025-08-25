@@ -8,7 +8,7 @@ export class EmailService {
   constructor(private readonly mailService: MailerService) {}
   async sendEmail(sendEmailDto: SendEmailDto) {
     this.mailService.sendMail({
-      from: ' "TCOMchatbox <tan.github@gmail.com>" ',
+      from: `' ${process.env.EMAIL_FROM} '`,
       to: sendEmailDto.to,
       subject: sendEmailDto.subject,
       text: sendEmailDto.text,
