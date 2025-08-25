@@ -1,4 +1,13 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import {
+  AfterInsert,
+  AfterLoad,
+  AfterUpdate,
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  Entity,
+  ManyToOne,
+} from 'typeorm';
 import { Document } from 'src/modules/documents/entities/document.entity';
 import { AbstractEntity } from 'src/common/entities/abstract.entity';
 
@@ -15,4 +24,20 @@ export class DocumentChunks extends AbstractEntity {
 
   @ManyToOne(() => Document, (document) => document.chunks)
   document: Document;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  beforeUpsert() {
+    if (this.embedding && Array.isArray(this.embedding)) {
+      this.embedding = JSON.stringify(this.embedding);
+    }
+  }
+  @AfterInsert()
+  @AfterLoad()
+  @AfterUpdate()
+  onLoad() {
+    if (this.embedding && typeof this.embedding === 'string') {
+      this.embedding = JSON.parse(this.embedding);
+    }
+  }
 }
