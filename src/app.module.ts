@@ -14,6 +14,8 @@ import { MessagesModule } from './modules/messages/messages.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { OpenaiModule } from './modules/openai/openai.module';
+import { OtpModule } from './modules/otp/otp.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
@@ -49,7 +51,9 @@ import { OpenaiModule } from './modules/openai/openai.module';
     MessagesModule,
     ChatsModule,
     AuthModule,
-    OpenaiModule
+    OpenaiModule,
+    OtpModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
