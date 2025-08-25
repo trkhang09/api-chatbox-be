@@ -12,6 +12,8 @@ import { ApiOperation } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('roles')
 export class RolesController {
@@ -30,6 +32,7 @@ export class RolesController {
   }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create a new role' })
   create(@Body() dto: CreateRoleDto, @Req() req) {
     const userId = req.user.id;
@@ -37,10 +40,11 @@ export class RolesController {
   }
 
   @Put(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update a role' })
   update(@Param('id') id: string, @Body() dto: UpdateRoleDto, @Req() req) {
-    dto.updatedByUserId = req.user.id;
-    return this.rolesService.update(id, dto);
+    const userId = req.user.id;
+    return this.rolesService.update(id, dto, userId);
   }
 
   @Delete(':id')

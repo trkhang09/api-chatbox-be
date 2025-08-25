@@ -15,45 +15,72 @@ export class RolesService {
   ) {}
 
   async findAll(): Promise<Role[]> {
-    const roles = await this.roleRepo.find({ relations: ['permissions'] });
-    console.log(roles);
-    return roles;
+    try {
+      const roles = await this.roleRepo.find({ relations: ['permissions'] });
+      return roles;
+    } catch (error) {
+      throw new Error('Failed to retrieve roles: ' + error.message);
+    }
   }
 
   async findOne(id: string): Promise<Role> {
-    const role = await this.roleRepo.findOne({
-      where: { id },
-      relations: ['permissions'],
-    });
-    if (!role) throw new NotFoundException('Role not found');
-    return role;
+    try {
+      const role = await this.roleRepo.findOne({
+        where: { id },
+        relations: ['permissions'],
+      });
+      if (!role) throw new NotFoundException('Role not found');
+      return role;
+    } catch (error) {
+      console.error(error);
+      throw new Error(
+        'Failed to retrieve role with ID: ' + id + ' - ' + error.message,
+      );
+    }
   }
 
   async create(dto: CreateRoleDto, userId: string): Promise<Role> {
-    const permissions = dto.permissions
-      ? await this.permRepo.find({ where: { id: In(dto.permissions) } })
-      : [];
-    const role = this.roleRepo.create({
-      ...dto,
-      permissions,
-      createdByUserId: userId,
-    });
-    return this.roleRepo.save(role);
+    try {
+      const permissions = dto.permissions
+        ? await this.permRepo.find({ where: { id: In(dto.permissions) } })
+        : [];
+      const role = this.roleRepo.create({
+        ...dto,
+        permissions,
+        createdByUserId: userId,
+      });
+      return this.roleRepo.save(role);
+    } catch (error) {
+      throw new Error('Failed to create role: ' + error.message);
+    }
   }
 
-  async update(id: string, dto: UpdateRoleDto): Promise<Role> {
-    const role = await this.findOne(id);
-    if (dto.permissions) {
-      const permissions = await this.permRepo.find({
-        where: { id: In(dto.permissions) },
-      });
-      role.permissions = permissions;
+  async update(id: string, dto: UpdateRoleDto, userId: string): Promise<Role> {
+    try {
+      const role = await this.findOne(id);
+      if (dto.permissions) {
+        const permissions = await this.permRepo.find({
+          where: { id: In(dto.permissions) },
+        });
+        role.permissions = permissions;
+      }
+      Object.assign(role, dto);
+      role.updatedByUserId = userId;
+      return this.roleRepo.save(role);
+    } catch (error) {
+      throw new Error(
+        'Failed to update role with ID: ' + id + ' - ' + error.message,
+      );
     }
-    Object.assign(role, dto);
-    return this.roleRepo.save(role);
   }
 
   async remove(id: string): Promise<void> {
-    await this.roleRepo.delete(id);
+    try {
+      await this.roleRepo.delete(id);
+    } catch (error) {
+      throw new Error(
+        'Failed to delete role with ID: ' + id + ' - ' + error.message,
+      );
+    }
   }
 }

@@ -18,13 +18,6 @@ export class UpdateRoleDto {
   @IsString()
   code?: string;
 
-  @ApiProperty({
-    example: 'uuid-user-updater',
-    description: 'Unique identifier for the user who updated the role',
-  })
-  @IsString()
-  updatedByUserId: string;
-
   @ApiPropertyOptional({
     example: ['uuid-permission-1', 'uuid-permission-2'],
     description: 'List of permission IDs (optional)',
