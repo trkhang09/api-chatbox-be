@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { DocumentChunksRepository } from '../document-chunks/document-chunks.repository';
+import { AiResponseDto } from './dto/ai-response.dto';
 
 dotenv.config();
 
@@ -28,14 +29,13 @@ export class GeminiService {
     }
   }
 
-  async generateEmbedding(prompt: string): Promise<any> {
+  async generateEmbedding(prompt: string): Promise<number[]> {
     try {
       const response = await this.googleGenAI.models.embedContent({
         model: this.embeddingModel,
         contents: prompt,
       });
-
-      return response;
+      return response.embeddings?.[0]?.values ?? [];
     } catch (error) {
       throw new Error(
         `Failed to get embedding from Gemini API: ${error.message}`,
@@ -43,16 +43,14 @@ export class GeminiService {
     }
   }
 
-  async generateResponse(prompt: string): Promise<any> {
+  async generateResponse(prompt: string): Promise<AiResponseDto> {
     try {
       const embedding = await this.generateEmbedding(prompt);
-      const query = await this.documentChunksRepository.findClosestByEmbedding(
-        embedding.embeddings[0].values,
-      );
+      const query =
+        await this.documentChunksRepository.findClosestByEmbedding(embedding);
 
       const content = query?.content || null;
-      const inDocuments = content ? true : false;
-
+      const inDocuments = !!content;
       const response = await this.googleGenAI.models.generateContent({
         model: this.completionModel,
         contents: [
@@ -75,16 +73,44 @@ export class GeminiService {
         ],
       });
 
-      const data = {
-        content: response.candidates?.[0]?.content?.parts?.[0]?.text ?? null,
+      return {
+        content: response.candidates?.[0]?.content?.parts?.[0]?.text ?? '',
         model: this.completionModel,
         inDocument: inDocuments,
       };
-
-      return data;
     } catch (error) {
       throw new Error(
         `Failed to get response from Gemini API: ${error.message}`,
+      );
+    }
+  }
+
+  async generateSummary(message: string): Promise<AiResponseDto> {
+    try {
+      const prompt = `Tạo một tiêu đề ngắn gọn, súc tích (tối đa 8 từ) cho nội dung sau để dùng làm tên lịch sử đoạn chat:\n${message}\nKhông thêm ký tự đặc biệt, không dấu chấm.`;
+
+      const response = await this.googleGenAI.models.generateContent({
+        model: this.completionModel,
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt,
+              },
+            ],
+            role: 'user',
+          },
+        ],
+      });
+      const title = response?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+      return {
+        content: title,
+        model: this.completionModel,
+        inDocument: false,
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to generate summary from Gemini API: ${error.message}`,
       );
     }
   }
