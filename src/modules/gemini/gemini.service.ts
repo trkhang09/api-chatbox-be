@@ -3,6 +3,7 @@ import * as dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { DocumentChunksRepository } from '../document-chunks/document-chunks.repository';
 import { AiResponseDto } from './dto/ai-response.dto';
+import { EmbeddingResponseDto } from './dto/create-embedding-response.dto';
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ export class GeminiService {
     this.googleGenAI = new GoogleGenAI({ apiKey: this.apiKey });
   }
 
-  private generateContext(content: string | null, prompt: string): string {
+  private generateContext(content: string, prompt: string): string {
     if (content) {
       return `Dưới đây là một số thông tin nội bộ được lấy từ tài liệu: ${content}. \nCâu hỏi của người dùng: ${prompt}.\nHãy dựa vào thông tin trên để trả lời tự nhiên, dễ hiểu.\nNếu thông tin không có trong dữ liệu, hãy trả lời rằng bạn không có thông tin.\nTuyệt đối không bịa ra câu trả lời.`;
     } else {
@@ -29,13 +30,25 @@ export class GeminiService {
     }
   }
 
-  async generateEmbedding(prompt: string): Promise<number[]> {
+  async generateEmbedding(input: string): Promise<EmbeddingResponseDto[]> {
     try {
-      const response = await this.googleGenAI.models.embedContent({
-        model: this.embeddingModel,
-        contents: prompt,
-      });
-      return response.embeddings?.[0]?.values ?? [];
+      const texts = input
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line !== '');
+
+      const embeddings: EmbeddingResponseDto[] = [];
+
+      for (const chunk of texts) {
+        const response = await this.googleGenAI.models.embedContent({
+          model: this.embeddingModel,
+          contents: chunk,
+        });
+        const embedding = response.embeddings?.[0]?.values ?? [];
+        embeddings.push({ content: chunk, embedding });
+      }
+
+      return embeddings;
     } catch (error) {
       throw new Error(
         `Failed to get embedding from Gemini API: ${error.message}`,
@@ -45,11 +58,12 @@ export class GeminiService {
 
   async generateResponse(prompt: string): Promise<AiResponseDto> {
     try {
-      const embedding = await this.generateEmbedding(prompt);
-      const query =
-        await this.documentChunksRepository.findClosestByEmbedding(embedding);
+      const convertPrompt = await this.generateEmbedding(prompt);
+      const query = await this.documentChunksRepository.findClosestByEmbedding(
+        convertPrompt[0].embedding,
+      );
 
-      const content = query?.content || null;
+      const content = query?.content || '';
       const inDocuments = !!content;
       const response = await this.googleGenAI.models.generateContent({
         model: this.completionModel,
