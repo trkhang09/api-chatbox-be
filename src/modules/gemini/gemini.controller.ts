@@ -39,6 +39,9 @@ export class GeminiController {
   async generateEmbedding(
     @UploadedFile() file: Express.Multer.File,
   ): Promise<EmbeddingResponseDto[]> {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
     return this.geminiService.generateEmbedding(file.buffer.toString('utf-8'));
   }
 

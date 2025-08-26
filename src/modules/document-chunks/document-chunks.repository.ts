@@ -4,6 +4,7 @@ import { DocumentChunks } from './entities/document-chunks.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 @Injectable()
 export class DocumentChunksRepository extends Repository<DocumentChunks> {
+  private readonly SIMILARITY_THRESHOLD = 0.7;
   constructor(
     @InjectRepository(DocumentChunks)
     private readonly documentChunksRepository: Repository<DocumentChunks>,
@@ -18,9 +19,13 @@ export class DocumentChunksRepository extends Repository<DocumentChunks> {
       const result = await this.documentChunksRepository
         .createQueryBuilder('document_chunks')
         .select('document_chunks.content')
-        .where('document_chunks.embedding <-> :embedding::vector < 0.7', {
-          embedding: `[${embedding.join(', ')}]`,
-        })
+        .where(
+          'document_chunks.embedding <-> :embedding::vector < :threshold',
+          {
+            embedding: `[${embedding.join(', ')}]`,
+            threshold: this.SIMILARITY_THRESHOLD,
+          },
+        )
         .orderBy('document_chunks.embedding <-> :embedding::vector', 'ASC')
         .limit(1)
         .getOne();

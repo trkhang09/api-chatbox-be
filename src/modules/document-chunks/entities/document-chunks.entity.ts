@@ -36,8 +36,10 @@ export class DocumentChunks extends AbstractEntity {
   @AfterLoad()
   @AfterUpdate()
   onLoad() {
-    if (this.embedding && typeof this.embedding === 'string') {
+    try {
       this.embedding = JSON.parse(this.embedding);
+    } catch (e) {
+      throw new Error('Failed to parse embedding JSON: ' + e.message);
     }
   }
 }
