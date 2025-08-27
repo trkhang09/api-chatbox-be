@@ -6,6 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { GetHttpResponseDto } from '../dtos/get-http-response.dto';
 
 @Catch()
 export default class AllExceptionsFilter implements ExceptionFilter {
@@ -26,12 +27,12 @@ export default class AllExceptionsFilter implements ExceptionFilter {
       message = exception.message;
     }
 
-    response.status(status).json({
-      statusCode: status,
-      message,
-      data: null,
-      timestamp: new Date().toISOString(),
-      path: request.url,
-    });
+    const dto = new GetHttpResponseDto();
+    dto.statusCode = status;
+    dto.message = [message];
+    dto.timestamp = new Date();
+    dto.path = request.url;
+
+    response.status(status).json(dto);
   }
 }
