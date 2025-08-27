@@ -11,6 +11,7 @@ import { AbstractEntity } from 'src/common/entities/abstract.entity';
 import { UserStatus } from 'src/common/enums/user-status.enum';
 import { Role } from 'src/modules/roles/entities/role.entity';
 import { Chat } from 'src/modules/chats/entities/chat.entity';
+import { Otp } from 'src/modules/otp/entities/otp.entity';
 
 @Entity('users')
 export class User extends AbstractEntity {
@@ -38,4 +39,7 @@ export class User extends AbstractEntity {
 
   @ManyToMany(() => Chat, (chat) => chat.users)
   chats: Chat[];
+
+  @OneToMany(() => Otp, (otp) => otp.user)
+  otps: Otp[];
 }

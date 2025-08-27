@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DocumentChunksService } from './document-chunks.service';
+import { DocumentChunksService } from '../../src/modules/document-chunks/document-chunks.service';
 
 describe('DocumentChunksService', () => {
   let service: DocumentChunksService;
