@@ -1,0 +1,217 @@
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Chat } from './entities/chat.entity';
+import { DataSource } from 'typeorm';
+import { Message } from '../messages/entities/messages.entity';
+import { RespondCreatedNewChatDto } from './dtos/respond-created-new-chat.dto';
+import { User } from '../users/entities/user.entity';
+import { ChatTypes } from 'src/common/enums/chat-type.enum';
+import { RespondChangedChatTitleDto } from './dtos/respond-changed-chat-title.dto';
+import { RespondRemovedChatHistoryDto } from './dtos/respond-removed-chat-history.dto';
+import { MessagesService } from '../messages/messages.service';
+import { GetBatchedChatDto } from './dtos/get-batched-chat.dto';
+import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
+import { ChatRepository } from './chat.repository';
+import { CreateNewChatDto } from './dtos/create-new-chat.dto';
+import { ChangeChatTitleDto } from './dtos/change-chat-title.dto';
+
+@Injectable()
+export class ChatService {
+  constructor(
+    @InjectRepository(Chat)
+    private readonly chatRepository: ChatRepository,
+    private readonly dataSource: DataSource,
+    private readonly messagesService: MessagesService,
+  ) {}
+
+  /**
+   * Find a list of 1 conversations based on a keyword or get all if no keyword is found.
+   * @param query.page
+   * @param query.size
+   * @param query.type
+   * @param query.searchKeyword is optional
+   * @param user
+   * @returns Promise<ResponsePaginateDto<Partial<Chat>>>
+   * @throws InternalServerErrorException
+   */
+  async getChatBatch(
+    query: GetBatchedChatDto,
+    user: User,
+  ): Promise<ResponsePaginateDto<Partial<Chat>>> {
+    try {
+      const response = await this.chatRepository.findChatByTitleWithPaginate(
+        user.id,
+        query,
+      );
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new chat with the given message.
+   * @param message
+   * @param creator
+   * @param receiver
+   * @returns Promise<RespondCreatedNewChatDto>
+   * @throws InternalServerErrorException
+   */
+  async createNewChatWithMessage(
+    body: CreateNewChatDto,
+    creator: User,
+  ): Promise<RespondCreatedNewChatDto> {
+    // GET RECEIVER. pending UserService
+    const receiver: User = {
+      id: body.receiverId,
+    } as User;
+
+    let newMsg: Message;
+    let title: string;
+
+    try {
+      const result = await this.messagesService.createFirstMessage(
+        body.message,
+        creator,
+      );
+      newMsg = result.message;
+      title = result.chatTitle;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to create the first message for the new chat. ' + error.message,
+      );
+    }
+
+    let createdChat: Chat;
+    const participants: User[] = [];
+    let type: ChatTypes = ChatTypes.BOT;
+
+    participants.push(creator);
+
+    if (receiver) {
+      participants.push(receiver);
+      type = ChatTypes.USER;
+    }
+
+    try {
+      createdChat = this.chatRepository.create({
+        title,
+        type,
+        messages: [newMsg],
+        users: participants,
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to create new chat entity. ' + error.message,
+      );
+    }
+
+    let savedChat: Chat;
+    try {
+      savedChat = await this.chatRepository.save(createdChat);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to save new chat entity. ' + error.message,
+      );
+    }
+
+    const chatDto = new RespondCreatedNewChatDto({
+      id: savedChat.id,
+      title: savedChat.title,
+      type: savedChat.type,
+      messages: savedChat.messages,
+      createdAt: savedChat.createdAt,
+    });
+    return chatDto;
+  }
+
+  /**
+   * Rename an existing chat.
+   * @param id
+   * @param newTitle
+   * @returns Promise<RespondChangedChatTitleDto>
+   * @throws InternalServerErrorException
+   */
+  async changeChatTitle(
+    body: ChangeChatTitleDto,
+  ): Promise<RespondChangedChatTitleDto> {
+    let foundChat: Chat | null;
+    try {
+      foundChat = await this.chatRepository.findOne({
+        where: { id: body.id },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to find chat. ' + error.message,
+      );
+    }
+
+    if (!foundChat) {
+      throw new NotFoundException('Chat not found');
+    }
+
+    if (foundChat.type === ChatTypes.USER) {
+      throw new BadRequestException('Cannot change title of user-to-user chat');
+    }
+
+    foundChat.title = body.title.trim();
+
+    let savedChat: Chat;
+    try {
+      savedChat = await this.chatRepository.save(foundChat);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to save renamed chat. ' + error.message,
+      );
+    }
+
+    const respondChangedChatTitleDto = new RespondChangedChatTitleDto({
+      id: savedChat.id,
+      newTitle: savedChat.title,
+      updatedAt: savedChat.updatedAt,
+    });
+    return respondChangedChatTitleDto;
+  }
+
+  /**
+   * Remove chat history for a specific chat.
+   * @param id
+   * @returns Promise<RespondRemovedChatHistoryDto>
+   * @throws NotFoundException
+   * @throws InternalServerErrorException
+   */
+  async removeChatHistory(id: string): Promise<boolean> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const foundChat = await this.chatRepository.findOne({
+        where: { id: id },
+      });
+      if (!foundChat) throw new NotFoundException('Failed to find chat.');
+
+      await this.messagesService.removeAllMessagesFromChat(
+        foundChat,
+        queryRunner.manager,
+      );
+
+      await queryRunner.manager.softDelete('chats', { id: foundChat.id });
+
+      await queryRunner.commitTransaction();
+
+      return true;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new InternalServerErrorException(error.message);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+}
