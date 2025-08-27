@@ -6,25 +6,26 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Chat } from './entities/chat.entity';
-import { IsNull, Like, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Message } from '../messages/entities/messages.entity';
 import { RespondCreatedNewChatDto } from './dtos/respond-created-new-chat.dto';
 import { User } from '../users/entities/user.entity';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
-import { RespondBatchedChatsDto } from './dtos/respond-batched-chat.dto';
-import { RespondChatDto } from './dtos/respond-chat.dto';
 import { RespondChangedChatTitleDto } from './dtos/respond-changed-chat-title.dto';
 import { RespondRemovedChatHistoryDto } from './dtos/respond-removed-chat-history.dto';
 import { MessagesService } from '../messages/messages.service';
 import { GetBatchedChatDto } from './dtos/get-batched-chat.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ChatRepository } from './chat.repository';
+import { CreateNewChatDto } from './dtos/create-new-chat.dto';
+import { ChangeChatTitleDto } from './dtos/change-chat-title.dto';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectRepository(Chat)
-    private chatRepository: ChatRepository,
+    private readonly chatRepository: ChatRepository,
+    private readonly dataSource: DataSource,
     private readonly messagesService: MessagesService,
   ) {}
 
@@ -45,11 +46,9 @@ export class ChatService {
     try {
       const response = await this.chatRepository.findChatByTitleWithPaginate(
         user.id,
-        query.type,
-        query.page,
-        query.size,
-        query.searchKeyword,
+        query,
       );
+
       return response;
     } catch (error) {
       throw error;
@@ -65,16 +64,20 @@ export class ChatService {
    * @throws InternalServerErrorException
    */
   async createNewChatWithMessage(
-    message: string,
+    body: CreateNewChatDto,
     creator: User,
-    receiver?: User,
   ): Promise<RespondCreatedNewChatDto> {
+    // GET RECEIVER. pending UserService
+    const receiver: User = {
+      id: body.receiverId,
+    } as User;
+
     let newMsg: Message;
     let title: string;
 
     try {
       const result = await this.messagesService.createFirstMessage(
-        message,
+        body.message,
         creator,
       );
       newMsg = result.message;
@@ -118,12 +121,13 @@ export class ChatService {
       );
     }
 
-    const chatDto = new RespondCreatedNewChatDto();
-    chatDto.id = savedChat.id;
-    chatDto.title = savedChat.title;
-    chatDto.type = savedChat.type;
-    chatDto.messages = savedChat.messages;
-    chatDto.createdAt = savedChat.createdAt;
+    const chatDto = new RespondCreatedNewChatDto({
+      id: savedChat.id,
+      title: savedChat.title,
+      type: savedChat.type,
+      messages: savedChat.messages,
+      createdAt: savedChat.createdAt,
+    });
     return chatDto;
   }
 
@@ -133,17 +137,14 @@ export class ChatService {
    * @param newTitle
    * @returns Promise<RespondChangedChatTitleDto>
    * @throws InternalServerErrorException
-   * @throws NotFoundException Chat not found.
-   * @throws BadRequestException Title cannot be empty.
    */
   async changeChatTitle(
-    id: string,
-    newTitle: string,
+    body: ChangeChatTitleDto,
   ): Promise<RespondChangedChatTitleDto> {
     let foundChat: Chat | null;
     try {
       foundChat = await this.chatRepository.findOne({
-        where: { id },
+        where: { id: body.id },
       });
     } catch (error) {
       throw new InternalServerErrorException(
@@ -159,10 +160,7 @@ export class ChatService {
       throw new BadRequestException('Cannot change title of user-to-user chat');
     }
 
-    const oldTitle = foundChat.title;
-    newTitle = newTitle.trim();
-
-    foundChat.title = newTitle;
+    foundChat.title = body.title.trim();
 
     let savedChat: Chat;
     try {
@@ -173,11 +171,11 @@ export class ChatService {
       );
     }
 
-    const respondChangedChatTitleDto = new RespondChangedChatTitleDto();
-    respondChangedChatTitleDto.id = foundChat.id;
-    respondChangedChatTitleDto.oldTitle = oldTitle;
-    respondChangedChatTitleDto.newTitle = savedChat.title;
-    respondChangedChatTitleDto.updatedAt = savedChat.updatedAt;
+    const respondChangedChatTitleDto = new RespondChangedChatTitleDto({
+      id: savedChat.id,
+      newTitle: savedChat.title,
+      updatedAt: savedChat.updatedAt,
+    });
     return respondChangedChatTitleDto;
   }
 
@@ -188,33 +186,32 @@ export class ChatService {
    * @throws NotFoundException
    * @throws InternalServerErrorException
    */
-  async removeChatHistory(id: string): Promise<RespondRemovedChatHistoryDto> {
-    let foundChat: Chat | null;
+  async removeChatHistory(id: string): Promise<boolean> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
-      foundChat = await this.chatRepository.findOne({
+      const foundChat = await this.chatRepository.findOne({
         where: { id: id },
       });
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'Failed to find chat. ' + error.message,
+      if (!foundChat) throw new NotFoundException('Failed to find chat.');
+
+      await this.messagesService.removeAllMessagesFromChat(
+        foundChat,
+        queryRunner.manager,
       );
-    }
-    if (!foundChat) {
-      throw new NotFoundException('Chat not found');
-    }
 
-    try {
-      await this.messagesService.removeAllMessagesFromChat(foundChat);
+      await queryRunner.manager.softDelete('chats', { id: foundChat.id });
+
+      await queryRunner.commitTransaction();
+
+      return true;
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error.message);
+    } finally {
+      await queryRunner.release();
     }
-
-    await this.chatRepository.softDelete(foundChat);
-
-    const respondremovedChatHistoryDto = new RespondRemovedChatHistoryDto({
-      id: foundChat.id,
-      title: foundChat.title,
-    });
-    return respondremovedChatHistoryDto;
   }
 }

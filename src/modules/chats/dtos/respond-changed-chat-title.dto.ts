@@ -1,6 +1,9 @@
 export class RespondChangedChatTitleDto {
   id: string;
-  oldTitle: string;
   newTitle: string;
   updatedAt: Date;
+
+  constructor(partial: Partial<RespondChangedChatTitleDto>) {
+    Object.assign(this, partial);
+  }
 }

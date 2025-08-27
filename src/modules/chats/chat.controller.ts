@@ -38,50 +38,29 @@ export class ChatController {
 
   @Post('/')
   async createNewChatWithMessage(
-    @Res() res,
     @Body() body: CreateNewChatDto,
     /*@JWTUser()*/ user: User,
   ) {
-    // GET RECEIVER
-    const receiver: User = {
-      id: body.receiverId,
-    } as User;
-
     try {
       const createdChat = await this.chatService.createNewChatWithMessage(
-        body.message,
+        body,
         user,
-        receiver,
       );
 
-      return res.status(201).json(createdChat);
+      return createdChat;
     } catch (error) {
-      // InternalServerErrorException
-      return res.status(500).json(error.message);
+      throw error;
     }
   }
 
   @Put('/')
-  @Patch('/')
-  async changeChatTitle(@Res() res, @Body() body: ChangeChatTitleDto) {
+  async changeChatTitle(@Body() body: ChangeChatTitleDto) {
     try {
-      const changedChat = await this.chatService.changeChatTitle(
-        body.id,
-        body.title,
-      );
+      const changedChat = await this.chatService.changeChatTitle(body);
 
-      return res.status(200).json(changedChat);
+      return changedChat;
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        return res.status(400).json(error.message);
-      }
-
-      if (error instanceof NotFoundException) {
-        return res.status(404).json(error.message);
-      }
-
-      // InternalServerErrorException
-      return res.status(500).json(error.message);
+      throw error;
     }
   }
 

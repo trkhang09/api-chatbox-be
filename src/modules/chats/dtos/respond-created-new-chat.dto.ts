@@ -7,4 +7,8 @@ export class RespondCreatedNewChatDto {
   type: ChatTypes;
   messages: Message[];
   createdAt: Date;
+
+  constructor(partial: Partial<RespondCreatedNewChatDto>) {
+    Object.assign(this, partial);
+  }
 }

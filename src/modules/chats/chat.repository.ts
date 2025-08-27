@@ -5,6 +5,7 @@ import { ChatTypes } from 'src/common/enums/chat-type.enum';
 import { RespondBatchedChatsDto } from './dtos/respond-batched-chat.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { RespondRemovedChatHistoryDto } from './dtos/respond-removed-chat-history.dto';
+import { GetBatchedChatDto } from './dtos/get-batched-chat.dto';
 
 @Injectable()
 export class ChatRepository extends Repository<Chat> {
@@ -14,10 +15,7 @@ export class ChatRepository extends Repository<Chat> {
 
   async findChatByTitleWithPaginate(
     userId: string,
-    type: ChatTypes,
-    page: number,
-    size: number,
-    searchKeyword?: string,
+    query: GetBatchedChatDto,
   ): Promise<ResponsePaginateDto<Partial<Chat>>> {
     let conversations: Chat[];
     let total: number;
@@ -25,12 +23,12 @@ export class ChatRepository extends Repository<Chat> {
       [conversations, total] = await this.findAndCount({
         relations: ['users'],
         where: {
-          type: type,
+          type: query.type,
           users: { id: userId },
-          title: Like(`%${searchKeyword ? searchKeyword : ''}%`),
+          title: Like(`%${query.searchKeyword ? query.searchKeyword : ''}%`),
         },
-        skip: (page - 1) * size,
-        take: size,
+        skip: (query.page - 1) * query.size,
+        take: query.size,
       });
     } catch (error) {
       throw new InternalServerErrorException('can not get conversations');
@@ -47,11 +45,11 @@ export class ChatRepository extends Repository<Chat> {
 
     return new ResponsePaginateDto({
       data: partialConversations,
-      page: page,
-      size: size,
+      page: query.page,
+      size: query.size,
       total: total,
       totalInPage: partialConversations.length,
-      totalPage: Math.ceil(total / size),
+      totalPage: Math.ceil(total / query.size),
     });
   }
 }
