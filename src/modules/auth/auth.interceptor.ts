@@ -19,7 +19,7 @@ export class AuthInterceptor implements NestInterceptor {
     return next.handle().pipe(
       map((data) => {
         const { user } = data;
-        if (clientId === clientIdConstants.admin) {
+        if (clientId === clientIdConstants.ADMIN) {
           if (user.role !== RoleType.USER.toLowerCase()) {
             return data;
           } else {

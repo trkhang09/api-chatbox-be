@@ -25,7 +25,7 @@ export class AuthGuard implements CanActivate {
     if (
       !clientId ||
       (clientId &&
-        ![clientIdConstants.admin, clientIdConstants.app].includes(clientId))
+        ![clientIdConstants.ADMIN, clientIdConstants.APP].includes(clientId))
     ) {
       throw new UnauthorizedException('x-client-id invalid');
     }

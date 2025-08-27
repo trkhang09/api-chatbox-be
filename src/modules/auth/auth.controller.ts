@@ -28,18 +28,12 @@ export class AuthController {
     description: 'Login successful',
     type: LoginResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @HttpCode(HttpStatus.OK)
   @Public()
   @UseInterceptors(AuthInterceptor)
   @Post('login')
   async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
     return await this.authService.login(loginDto);
-  }
-
-  @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
-    return await this.authService.register(registerDto);
   }
 
   @ApiOkResponse({
@@ -56,7 +50,6 @@ export class AuthController {
     description: 'Password reset email sent',
     type: Boolean,
   })
-  @ApiResponse({ status: 400, description: 'Invalid email' })
   @Public()
   @Post('forgot-password')
   async forgotPassaword(@Body() forgotPasswordDto: ForgotPasswordDto) {
@@ -68,7 +61,6 @@ export class AuthController {
     description: 'Password reset successful',
     type: Boolean,
   })
-  @ApiResponse({ status: 400, description: 'Invalid code or email' })
   @Public()
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {

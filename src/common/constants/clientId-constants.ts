@@ -1,4 +1,4 @@
 export const clientIdConstants = {
-  admin: 'admin',
-  app: 'app',
+  ADMIN: 'admin',
+  APP: 'app',
 };

@@ -72,31 +72,6 @@ export class AuthService {
     };
   }
 
-  async register(registerDto: RegisterDto) {
-    const userFound = await this.usersRepository.findOne({
-      where: {
-        email: registerDto.email,
-      },
-    });
-    if (userFound) {
-      throw new BadRequestException('account is exits, try login');
-    }
-    const saltRounds = Number(process.env.SALT_ROUNDS);
-    const hashPassword = await bcrypt.hash(registerDto.password, saltRounds);
-    const userStore = this.usersRepository.create({
-      fullname: registerDto.fullname,
-      email: registerDto.email,
-      password: hashPassword,
-      role: {
-        // id:"ee331ef5-fa89-4fef-abd7-e2eac347d6fe"
-        // id:"aa7c1a64-1acf-442c-bab7-5dc56049f68e"
-        id: '5937adaf-05eb-4e44-9491-dd83436783b3',
-      },
-    });
-    await this.usersRepository.save(userStore);
-    return 1;
-  }
-
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<boolean> {
     // check email
     const userFound = await this.usersRepository.findOne({
@@ -134,7 +109,7 @@ export class AuthService {
     });
 
     if (!userFound) {
-      throw new ForbiddenException('try again');
+      throw new NotFoundException('try again');
     }
 
     const isVerifyOtp = await this.otpService.verify(
@@ -143,7 +118,7 @@ export class AuthService {
     );
 
     if (!isVerifyOtp) {
-      throw new ForbiddenException('try again');
+      throw new NotFoundException('try again');
     }
 
     const saltRounds = Number(process.env.SALT_ROUNDS);
