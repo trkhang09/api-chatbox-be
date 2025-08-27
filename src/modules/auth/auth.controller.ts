@@ -2,8 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  HttpCode,
-  HttpStatus,
   Post,
   Req,
   UseInterceptors,
@@ -12,12 +10,12 @@ import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 import { AuthInterceptor } from './auth.interceptor';
 import { LoginDto } from './dtos/login.dto';
-import { ApiOkResponse, ApiResponse } from '@nestjs/swagger';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { LoginResponseDto } from './dtos/login-response.dto';
 import { MeDto } from './dtos/me.dto';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -27,17 +25,23 @@ export class AuthController {
   @Public()
   @UseInterceptors(AuthInterceptor)
   @Post('login')
+  @ApiOperation({ summary: 'Login into system' })
   async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
     return await this.authService.login(loginDto);
   }
 
   @ApiCommonResponseCustom(MeDto)
+  @ApiOperation({ summary: 'Get User data of this user' })
   @Get('me')
   async me(@Req() req: Request) {
     return req['user'];
   }
 
   @ApiCommonResponseCustom(Boolean, true)
+  @ApiOperation({
+    summary:
+      'Request to the system to mark that this user forgot their password',
+  })
   @Public()
   @Post('forgot-password')
   async forgotPassaword(@Body() forgotPasswordDto: ForgotPasswordDto) {
@@ -45,6 +49,7 @@ export class AuthController {
   }
 
   @ApiCommonResponseCustom(Boolean, true)
+  @ApiOperation({ summary: 'Reset the password of this user' })
   @Public()
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
