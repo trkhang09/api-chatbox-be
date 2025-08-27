@@ -1,5 +1,8 @@
 export class RespondRemovedChatHistoryDto {
   id: string;
   title: string;
-  removedAt: Date;
+
+  constructor(partial: Partial<RespondRemovedChatHistoryDto>) {
+    Object.assign(this, partial);
+  }
 }

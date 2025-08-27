@@ -13,69 +13,47 @@ import { User } from '../users/entities/user.entity';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
 import { RespondBatchedChatsDto } from './dtos/respond-batched-chat.dto';
 import { RespondChatDto } from './dtos/respond-chat.dto';
-import { RespondChangedChatTitleDto } from './dtos/respond-changed-chat-title.dtoå';
+import { RespondChangedChatTitleDto } from './dtos/respond-changed-chat-title.dto';
 import { RespondRemovedChatHistoryDto } from './dtos/respond-removed-chat-history.dto';
 import { MessagesService } from '../messages/messages.service';
+import { GetBatchedChatDto } from './dtos/get-batched-chat.dto';
+import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
+import { ChatRepository } from './chat.repository';
 
 @Injectable()
-export class ChatsService {
+export class ChatService {
   constructor(
     @InjectRepository(Chat)
-    private chatsRepository: Repository<Chat>,
+    private chatRepository: ChatRepository,
     private readonly messagesService: MessagesService,
   ) {}
 
   /**
-   * Get a batch of chat history.
-   * @param batch count from 1
-   * @param limit
+   * Find a list of 1 conversations based on a keyword or get all if no keyword is found.
+   * @param query.page
+   * @param query.size
+   * @param query.type
+   * @param query.searchKeyword is optional
    * @param user
-   * @returns Promise<RespondBatchedChatsDto>
+   * @returns Promise<ResponsePaginateDto<Partial<Chat>>>
    * @throws InternalServerErrorException
    */
   async getChatBatch(
-    batch: number,
-    limit: number,
-    type: ChatTypes,
+    query: GetBatchedChatDto,
     user: User,
-  ): Promise<RespondBatchedChatsDto> {
-    let chats: Chat[];
-    let total: number;
-
+  ): Promise<ResponsePaginateDto<Partial<Chat>>> {
     try {
-      [chats, total] = await this.chatsRepository.findAndCount({
-        relations: ['users'],
-        where: {
-          type,
-          users: {
-            id: user.id,
-          },
-          deletedAt: IsNull(),
-        },
-        skip: (batch - 1) * limit,
-        take: limit,
-      });
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'Failed to find chats with title. ' + error.message,
+      const response = await this.chatRepository.findChatByTitleWithPaginate(
+        user.id,
+        query.type,
+        query.page,
+        query.size,
+        query.searchKeyword,
       );
+      return response;
+    } catch (error) {
+      throw error;
     }
-
-    const getChatBatchDto = new RespondBatchedChatsDto();
-    getChatBatchDto.batch = batch;
-    getChatBatchDto.limit = limit;
-    getChatBatchDto.chats = chats.map((chat) => {
-      const chatDto = new RespondChatDto();
-      chatDto.id = chat.id;
-      chatDto.title = chat.title;
-      chatDto.type = chat.type;
-      chatDto.createdAt = chat.createdAt;
-
-      return chatDto;
-    });
-    getChatBatchDto.totalInBatch = chats.length;
-    getChatBatchDto.totalChats = total;
-    return getChatBatchDto;
   }
 
   /**
@@ -119,7 +97,7 @@ export class ChatsService {
     }
 
     try {
-      createdChat = this.chatsRepository.create({
+      createdChat = this.chatRepository.create({
         title,
         type,
         messages: [newMsg],
@@ -133,7 +111,7 @@ export class ChatsService {
 
     let savedChat: Chat;
     try {
-      savedChat = await this.chatsRepository.save(createdChat);
+      savedChat = await this.chatRepository.save(createdChat);
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to save new chat entity. ' + error.message,
@@ -164,7 +142,7 @@ export class ChatsService {
   ): Promise<RespondChangedChatTitleDto> {
     let foundChat: Chat | null;
     try {
-      foundChat = await this.chatsRepository.findOne({
+      foundChat = await this.chatRepository.findOne({
         where: { id },
       });
     } catch (error) {
@@ -184,19 +162,11 @@ export class ChatsService {
     const oldTitle = foundChat.title;
     newTitle = newTitle.trim();
 
-    if (newTitle.length === 0) {
-      throw new BadRequestException('Title cannot be empty');
-    }
-
-    if (newTitle === foundChat.title) {
-      throw new BadRequestException('Title has nothing changes');
-    }
-
     foundChat.title = newTitle;
 
     let savedChat: Chat;
     try {
-      savedChat = await this.chatsRepository.save(foundChat);
+      savedChat = await this.chatRepository.save(foundChat);
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to save renamed chat. ' + error.message,
@@ -221,15 +191,14 @@ export class ChatsService {
   async removeChatHistory(id: string): Promise<RespondRemovedChatHistoryDto> {
     let foundChat: Chat | null;
     try {
-      foundChat = await this.chatsRepository.findOne({
-        where: { id },
+      foundChat = await this.chatRepository.findOne({
+        where: { id: id },
       });
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to find chat. ' + error.message,
       );
     }
-
     if (!foundChat) {
       throw new NotFoundException('Chat not found');
     }
@@ -240,57 +209,12 @@ export class ChatsService {
       throw new InternalServerErrorException(error.message);
     }
 
-    foundChat.deletedAt = new Date();
+    await this.chatRepository.softDelete(foundChat);
 
-    let savedChat: Chat;
-    try {
-      savedChat = await this.chatsRepository.save(foundChat);
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'Failed to save chat after removing history. ' + error.message,
-      );
-    }
-    const respondremovedChatHistoryDto = new RespondRemovedChatHistoryDto();
-    respondremovedChatHistoryDto.id = savedChat.id;
-    respondremovedChatHistoryDto.title = savedChat.title;
-    respondremovedChatHistoryDto.removedAt =
-      savedChat.deletedAt ?? foundChat.deletedAt;
-    return respondremovedChatHistoryDto;
-  }
-
-  /**
-   * Search for chats by title.
-   * @param query The search query.
-   * @returns Promise<RespondChatDto[]> A list of chats that match the search query.
-   * @throws InternalServerErrorException
-   */
-  async searchChatsByTitle(
-    query: string,
-    limit: number,
-  ): Promise<RespondChatDto[]> {
-    let foundChats: Chat[];
-    try {
-      foundChats = await this.chatsRepository.find({
-        where: { title: Like(`%${query}%`), type: ChatTypes.BOT },
-        take: limit,
-      });
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'Failed to search chats by title. ' + error.message,
-      );
-    }
-
-    const dto: RespondChatDto[] = [];
-
-    foundChats.forEach((chat) => {
-      const chatDto = new RespondChatDto();
-      chatDto.id = chat.id;
-      chatDto.title = chat.title;
-      chatDto.createdAt = chat.createdAt;
-      chatDto.type = chat.type;
-      dto.push(chatDto);
+    const respondremovedChatHistoryDto = new RespondRemovedChatHistoryDto({
+      id: foundChat.id,
+      title: foundChat.title,
     });
-
-    return dto;
+    return respondremovedChatHistoryDto;
   }
 }

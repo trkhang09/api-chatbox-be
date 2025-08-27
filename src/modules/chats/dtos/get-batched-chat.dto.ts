@@ -1,4 +1,10 @@
-import { IsEnum, IsNumber, IsPositive } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+} from 'class-validator';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
 import { Type } from 'class-transformer';
 
@@ -6,14 +12,18 @@ export class GetBatchedChatDto {
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
-  readonly batch: number;
+  readonly page: number;
 
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
-  readonly limit: number;
+  readonly size: number;
 
   @Type(() => Number)
   @IsEnum(ChatTypes)
   readonly type: ChatTypes;
+
+  @IsOptional()
+  @IsString()
+  readonly searchKeyword?: string;
 }

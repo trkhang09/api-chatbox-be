@@ -11,7 +11,7 @@ import { RolesModule } from './modules/roles/roles.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { LoginOauthModule } from './modules/login-oauth/login-oauth.module';
 import { MessagesModule } from './modules/messages/messages.module';
-import { ChatsModule } from './modules/chats/chats.module';
+import { ChatsModule } from './modules/chats/chat.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { OpenaiModule } from './modules/openai/openai.module';
 
@@ -49,7 +49,7 @@ import { OpenaiModule } from './modules/openai/openai.module';
     MessagesModule,
     ChatsModule,
     AuthModule,
-    OpenaiModule
+    OpenaiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

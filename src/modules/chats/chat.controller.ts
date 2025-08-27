@@ -5,42 +5,34 @@ import {
   Delete,
   Get,
   NotFoundException,
+  Param,
   Patch,
   Post,
   Put,
   Query,
   Res,
 } from '@nestjs/common';
-import { ChatsService } from './chats.service';
+import { ChatService } from './chat.service';
 import { User } from '../users/entities/user.entity';
 import { GetBatchedChatDto } from './dtos/get-batched-chat.dto';
 import { CreateNewChatDto } from './dtos/create-new-chat.dto';
 import { ChangeChatTitleDto } from './dtos/change-chat-title.dto';
-import { RemoveChatHistoryDto } from './dtos/remove-chat-history.dto';
 import { SearchChatDto } from './dtos/search-chat.dto';
 
-@Controller('chats')
-export class ChatsController {
-  constructor(private readonly chatsService: ChatsService) {}
+@Controller('chat')
+export class ChatController {
+  constructor(private readonly chatService: ChatService) {}
 
   @Get('/batched')
   async getChatBatch(
-    @Res() res,
     @Query() query: GetBatchedChatDto,
     /*@JWTUser()*/ user: User,
   ) {
     try {
-      const batch = await this.chatsService.getChatBatch(
-        query.batch,
-        query.limit,
-        query.type,
-        user,
-      );
-
-      return res.status(200).json(batch);
+      const conversations = await this.chatService.getChatBatch(query, user);
+      return conversations;
     } catch (error) {
-      // InternalServerErrorException
-      return res.status(500).json(error.message);
+      throw error;
     }
   }
 
@@ -56,7 +48,7 @@ export class ChatsController {
     } as User;
 
     try {
-      const createdChat = await this.chatsService.createNewChatWithMessage(
+      const createdChat = await this.chatService.createNewChatWithMessage(
         body.message,
         user,
         receiver,
@@ -73,7 +65,7 @@ export class ChatsController {
   @Patch('/')
   async changeChatTitle(@Res() res, @Body() body: ChangeChatTitleDto) {
     try {
-      const changedChat = await this.chatsService.changeChatTitle(
+      const changedChat = await this.chatService.changeChatTitle(
         body.id,
         body.title,
       );
@@ -93,34 +85,29 @@ export class ChatsController {
     }
   }
 
-  @Delete('/')
-  async removeChatHistory(@Res() res, @Query() query: RemoveChatHistoryDto) {
+  @Delete('/:id')
+  async removeChatHistory(@Param('id') id: string) {
     try {
-      const removedChat = await this.chatsService.removeChatHistory(query.id);
+      const removedChat = await this.chatService.removeChatHistory(id);
 
-      return res.status(200).json(removedChat);
+      return removedChat;
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        return res.status(404).json(error.message);
-      }
-
-      // InternalServerErrorException
-      return res.status(500).json(error.message);
+      throw error;
     }
   }
 
-  @Get('/search')
-  async searchChatsByTitle(@Res() res, @Query() query: SearchChatDto) {
-    try {
-      const foundChats = await this.chatsService.searchChatsByTitle(
-        query.key,
-        query.limit,
-      );
+  // @Get('/search')
+  // async searchChatsByTitle(@Res() res, @Query() query: SearchChatDto) {
+  //   try {
+  //     const foundChats = await this.chatService.searchChatsByTitle(
+  //       query.key,
+  //       query.limit,
+  //     );
 
-      return res.status(200).json(foundChats);
-    } catch (error) {
-      // InternalServerErrorException
-      return res.status(500).json(error.message);
-    }
-  }
+  //     return res.status(200).json(foundChats);
+  //   } catch (error) {
+  //     // InternalServerErrorException
+  //     return res.status(500).json(error.message);
+  //   }
+  // }
 }
