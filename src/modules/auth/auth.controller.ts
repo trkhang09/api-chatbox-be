@@ -52,7 +52,7 @@ export class AuthController {
   })
   @Public()
   @Post('forgot-password')
-  async forgotPassaword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
