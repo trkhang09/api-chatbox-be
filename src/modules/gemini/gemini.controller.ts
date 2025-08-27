@@ -31,7 +31,7 @@ export class GeminiController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'Accepted file types: .pdf, .xlsx, .xls, .docx',
+          description: 'Accepted file types: .pdf, .docx',
         },
       },
     },
