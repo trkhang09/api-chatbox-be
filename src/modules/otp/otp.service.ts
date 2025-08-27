@@ -14,9 +14,10 @@ export class OtpService {
   async generate(userId: string): Promise<Otp> {
     const code = randomOtp();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-
     const otp = this.otpRepo.create({
-      userId,
+      user: {
+        id: userId,
+      },
       code,
       expiresAt,
     });
@@ -26,7 +27,13 @@ export class OtpService {
 
   async verify(userId: string, code: string): Promise<boolean> {
     const otp = await this.otpRepo.findOne({
-      where: { userId, code, isUsed: false },
+      where: {
+        user: {
+          id: userId,
+        },
+        code,
+        isUsed: false,
+      },
     });
 
     if (!otp) throw new BadRequestException('OTP không hợp lệ');
