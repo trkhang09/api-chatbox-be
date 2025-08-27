@@ -17,7 +17,7 @@ import { ApiProperty, ApiResponse } from '@nestjs/swagger';
 import { UserDto } from './dtos/user.dto';
 import { GetUsersDto } from './dtos/get-users.dto';
 import { UsersDto } from './dtos/users.dto';
-import { UserDetailDto } from './dtos/user-detail.dto';
+import { User } from 'src/common/decorators/user.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -31,10 +31,9 @@ export class UsersController {
   @Post('create')
   async createNewUser(
     @Body() createUserDto: CreateUserDto,
-    @Req() req: Request,
+    @User('sub') userId: string,
   ) {
-    const createdBy = req['user'].sub;
-    return await this.usersService.createNewUser(createUserDto, createdBy);
+    return await this.usersService.createNewUser(createUserDto, userId);
   }
 
   @ApiResponse({
@@ -82,21 +81,10 @@ export class UsersController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'user detail',
-    type: UserDetailDto,
+    type: UserDto,
   })
   @Get(':userId')
   async getUserDetail(@Param('userId') userId: string) {
     return this.usersService.getUserById(userId);
-  }
-
-  @ApiProperty()
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'reset password user',
-    type: Boolean,
-  })
-  @Put(':userId/reset-password')
-  async resetPassword(@Param('userId') userId: string) {
-    return this.usersService.resetPassword(userId);
   }
 }

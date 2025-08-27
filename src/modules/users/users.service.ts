@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,7 +16,7 @@ import { UserDto } from './dtos/user.dto';
 import { UserStatus } from 'src/common/enums/user-status.enum';
 import { GetUsersDto } from './dtos/get-users.dto';
 import { UsersDto } from './dtos/users.dto';
-import { UserDetailDto } from './dtos/user-detail.dto';
+import { RoleType } from 'src/common/constants/role-constants';
 
 @Injectable()
 export class UsersService {
@@ -42,8 +43,10 @@ export class UsersService {
     if (userFound) {
       throw new BadRequestException('email is used');
     }
-    const saltRounds = Number(process.env.SALT_ROUNDS);
-    const hashPassword = await bcrypt.hash(createUserDto.password, saltRounds);
+
+    const hashPassword = await this.generateHashPassword(
+      createUserDto.password,
+    );
 
     // found role exits
     const roleFound = await this.roleRepository.findOne({
@@ -70,7 +73,7 @@ export class UsersService {
       email: userStore.email,
       fullname: userStore.fullname,
       role: roleFound.code,
-      createdBy,
+      createdBy: userStore.createdByUserId,
       createdAt: userStore.createdAt,
       updatedAt: userStore.updatedAt,
     } as UserDto;
@@ -100,8 +103,7 @@ export class UsersService {
     }
 
     if (updateUserDto.password) {
-      const saltRounds = Number(process.env.SALT_ROUNDS);
-      user.password = await bcrypt.hash(updateUserDto.password, saltRounds);
+      user.password = await this.generateHashPassword(updateUserDto.password);
     }
 
     if (updateUserDto.fullname) {
@@ -126,6 +128,7 @@ export class UsersService {
       role: userUpdated.role.code,
       createdAt: userUpdated.createdAt,
       updatedAt: userUpdated.updatedAt,
+      createdBy: userUpdated.createdByUserId,
     } as UserDto;
   }
 
@@ -165,7 +168,7 @@ export class UsersService {
     // get online account have role is user
     const foundRole = await this.roleRepository.findOne({
       where: {
-        code: 'user',
+        code: RoleType.USER.toLowerCase(),
       },
     });
 
@@ -211,11 +214,12 @@ export class UsersService {
    * get user by id
    */
 
-  async getUserById(userId: string): Promise<UserDetailDto> {
+  async getUserById(userId: string): Promise<UserDto> {
     const userFound = await this.usersRepository.findOne({
       where: {
         id: userId,
       },
+      withDeleted: true,
     });
 
     if (!userFound) {
@@ -251,33 +255,16 @@ export class UsersService {
   }
 
   /**
-   * reset password user to default
+   * generate hash password
+   * @param password
+   * @returns
    */
-
-  async resetPassword(userId: string): Promise<boolean> {
-    const userFound = await this.usersRepository.findOne({
-      where: {
-        id: userId,
-      },
-    });
-    if (!userFound) {
-      throw new NotFoundException('account not found');
-    }
+  private async generateHashPassword(password: string) {
     const saltRounds = Number(process.env.SALT_ROUNDS);
-    const hashPassword = await bcrypt.hash(userFound.email, saltRounds);
-    userFound.password = hashPassword;
-    await this.usersRepository.save(userFound);
-
-    // // send email
-    // const template = replacePlaceHolder(resetPasswordTemplate.html, {
-    //   newPassword: userFound.email,
-    // });
-
-    // await this.emailService.sendEmail({
-    //   subject: resetPasswordTemplate.subject,
-    //   text: template,
-    //   to: userFound.email,
-    // });
-    return true;
+    const hashPassword = await bcrypt.hash(password, saltRounds);
+    if (!hashPassword) {
+      throw new InternalServerErrorException('has error, try again!');
+    }
+    return hashPassword;
   }
 }
