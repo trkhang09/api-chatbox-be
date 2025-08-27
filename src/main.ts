@@ -22,7 +22,6 @@ async function bootstrap() {
     .setTitle(String(configService.get('SWAGGER_TITLE')))
     .setDescription(String(configService.get('SWAGGER_DESCRIPTION')))
     .setVersion(String(configService.get('SWAGGER_VERSION')))
-    .addTag(String(configService.get('SWAGGER_TAG')))
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
