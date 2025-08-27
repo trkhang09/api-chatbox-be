@@ -17,7 +17,7 @@ import { ApiProperty, ApiResponse } from '@nestjs/swagger';
 import { UserDto } from './dtos/user.dto';
 import { GetUsersDto } from './dtos/get-users.dto';
 import { UsersDto } from './dtos/users.dto';
-import { User } from 'src/common/decorators/user.decorator';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -31,7 +31,7 @@ export class UsersController {
   @Post('create')
   async createNewUser(
     @Body() createUserDto: CreateUserDto,
-    @User('sub') userId: string,
+    @AuthUser('sub') userId: string,
   ) {
     return await this.usersService.createNewUser(createUserDto, userId);
   }

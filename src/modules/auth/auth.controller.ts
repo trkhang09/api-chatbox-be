@@ -18,6 +18,7 @@ import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { LoginResponseDto } from './dtos/login-response.dto';
 import { MeDto } from './dtos/me.dto';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -41,8 +42,8 @@ export class AuthController {
     type: MeDto,
   })
   @Get('me')
-  async me(@Req() req: Request) {
-    return req['user'];
+  async me(@AuthUser() user) {
+    return user;
   }
 
   @ApiResponse({
