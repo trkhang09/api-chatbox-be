@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LoginOauthController } from './login-oauth.controller';
-import { LoginOauthService } from './login-oauth.service';
+import { LoginOauthController } from '../../src/modules/login-oauth/login-oauth.controller';
+import { LoginOauthService } from '../../src/modules/login-oauth/login-oauth.service';
 
 describe('LoginOauthController', () => {
   let controller: LoginOauthController;

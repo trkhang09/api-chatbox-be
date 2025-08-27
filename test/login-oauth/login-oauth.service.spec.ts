@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LoginOauthService } from './login-oauth.service';
+import { LoginOauthService } from '../../src/modules/login-oauth/login-oauth.service';
 
 describe('LoginOauthService', () => {
   let service: LoginOauthService;

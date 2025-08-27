@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DocumentChunksController } from './document-chunks.controller';
+import { DocumentChunksController } from '../../src/modules/document-chunks/document-chunks.controller';
 
 describe('DocumentChunksController', () => {
   let controller: DocumentChunksController;
