@@ -16,6 +16,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OpenaiModule } from './modules/openai/openai.module';
 import { OtpModule } from './modules/otp/otp.module';
 import { EmailModule } from './modules/email/email.module';
+import { GeminiModule } from './modules/gemini/gemini.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { EmailModule } from './modules/email/email.module';
     OpenaiModule,
     OtpModule,
     EmailModule,
+    GeminiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
