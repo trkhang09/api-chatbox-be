@@ -10,8 +10,8 @@ export class Otp extends AbstractEntity {
   @Column({ default: false })
   isUsed: boolean;
 
-  @Column({ name: 'expires_at' })
-  expiresAt: Date;
+  @Column({ name: 'expired_at' })
+  expiredAt: Date;
 
   @ManyToOne(() => User, (user) => user.otps)
   @JoinColumn({ name: 'user_id' })
@@ -19,7 +19,7 @@ export class Otp extends AbstractEntity {
 
   get minutesLeft(): number {
     const now = new Date();
-    const diffMs = this.expiresAt.getTime() - now.getTime();
+    const diffMs = this.expiredAt.getTime() - now.getTime();
     return Math.max(0, Math.floor(diffMs / 1000 / 60));
   }
 }

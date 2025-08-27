@@ -13,13 +13,13 @@ export class OtpService {
 
   async generate(userId: string): Promise<Otp> {
     const code = randomOtp();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    const expiredAt = Number(process.env.OTP_EXPIRED_AT);
     const otp = this.otpRepo.create({
       user: {
         id: userId,
       },
       code,
-      expiresAt,
+      expiredAt,
     });
 
     return await this.otpRepo.save(otp);
@@ -38,7 +38,7 @@ export class OtpService {
 
     if (!otp) throw new BadRequestException('OTP không hợp lệ');
 
-    if (otp.expiresAt < new Date()) {
+    if (otp.expiredAt < new Date()) {
       throw new BadRequestException('OTP đã hết hạn');
     }
 
