@@ -31,7 +31,10 @@ async function bootstrap() {
   */
 
   // CORS
-  app.enableCors({ credentials: true, origin: '*' });
+  app.enableCors({
+    credentials: true,
+    origin: String(configService.get('CORS_ORIGIN')),
+  });
 
   // Validation
   app.useGlobalPipes(

@@ -14,6 +14,9 @@ import { MessagesModule } from './modules/messages/messages.module';
 import { ChatsModule } from './modules/chats/chat.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { OpenaiModule } from './modules/openai/openai.module';
+import { OtpModule } from './modules/otp/otp.module';
+import { EmailModule } from './modules/email/email.module';
+import { GeminiModule } from './modules/gemini/gemini.module';
 
 @Module({
   imports: [
@@ -50,6 +53,9 @@ import { OpenaiModule } from './modules/openai/openai.module';
     ChatsModule,
     AuthModule,
     OpenaiModule,
+    OtpModule,
+    EmailModule,
+    GeminiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
