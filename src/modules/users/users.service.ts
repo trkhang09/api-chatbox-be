@@ -165,7 +165,7 @@ export class UsersService {
       where.email = ILike(`%${getUsersDto.email}%`);
     }
 
-    // get online account have role is user
+    // get only account have role is user
     const foundRole = await this.roleRepository.findOne({
       where: {
         code: RoleType.USER.toLowerCase(),
