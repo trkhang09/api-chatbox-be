@@ -6,20 +6,20 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../users/entities/user.entity';
-import { UsersRepository } from '../users/users.repository';
-import LoginDto from './dtos/login.dto';
 import bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import PayloadJwt from './jwt/jwt-payload';
 import RegisterDto from './dtos/register.dto';
-import { Role } from '../roles/entities/role.entity';
-import ForgotPasswordDto from './dtos/forgot-password.dto';
+import { LoginDto } from './dtos/login.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { LoginResponseDto } from './dtos/login-response.dto';
+import { User } from '../users/entities/user.entity';
+import { UsersRepository } from '../users/users.repository';
 import { OtpService } from '../otp/otp.service';
-import { convertDateToMinute, replacePlaceHolder } from 'src/common/utils';
-import { newOtpTemplate } from 'src/common/utils/template';
 import { EmailService } from '../email/email.service';
-import ResetPasswordDto from './dtos/reset-password.dto';
+import { replacePlaceHolder } from 'src/common/utils';
+import { newOtpTemplate } from 'src/common/utils/template';
 @Injectable()
 export class AuthService {
   constructor(
@@ -34,7 +34,7 @@ export class AuthService {
    * service : login
    */
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
     const userFound = await this.usersRepository.findOne({
       where: {
         email: loginDto.email,
@@ -73,30 +73,31 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    // const userFound = await this.usersRepository.findOne({
-    //   where: {
-    //     email: registerDto.email,
-    //   },
-    // });
-    // if (userFound){
-    //     throw new BadRequestException("account is exits, try login")
-    // }
-    // const saltRounds = Number(process.env.SALT_ROUNDS);
-    // const hashPassword = await bcrypt.hash(registerDto.password,saltRounds);
-    // const userStore = this.usersRepository.create({
-    //     fullname:registerDto.fullname,
-    //     email:registerDto.email,
-    //     password:hashPassword,
-    //     role:{
-    //         // id:"ee331ef5-fa89-4fef-abd7-e2eac347d6fe"
-    //         id:"aa7c1a64-1acf-442c-bab7-5dc56049f68e"
-    //     }
-    // });
-    // await this.usersRepository.save(userStore);
-    // return 1;
+    const userFound = await this.usersRepository.findOne({
+      where: {
+        email: registerDto.email,
+      },
+    });
+    if (userFound) {
+      throw new BadRequestException('account is exits, try login');
+    }
+    const saltRounds = Number(process.env.SALT_ROUNDS);
+    const hashPassword = await bcrypt.hash(registerDto.password, saltRounds);
+    const userStore = this.usersRepository.create({
+      fullname: registerDto.fullname,
+      email: registerDto.email,
+      password: hashPassword,
+      role: {
+        // id:"ee331ef5-fa89-4fef-abd7-e2eac347d6fe"
+        // id:"aa7c1a64-1acf-442c-bab7-5dc56049f68e"
+        id: '5937adaf-05eb-4e44-9491-dd83436783b3',
+      },
+    });
+    await this.usersRepository.save(userStore);
+    return 1;
   }
 
-  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<boolean> {
     // check email
     const userFound = await this.usersRepository.findOne({
       where: {
@@ -125,7 +126,7 @@ export class AuthService {
     return true;
   }
 
-  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<boolean> {
     const userFound = await this.usersRepository.findOne({
       where: {
         email: resetPasswordDto.email,

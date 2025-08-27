@@ -5,10 +5,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { jwtConstants } from './jwt-constants';
 import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../public.decorator';
+import { clientIdConstants } from 'src/common/constants/clientId-constants';
+import { headerConstants } from 'src/common/constants/header-constants';
+import { jwtConstants } from 'src/common/constants/jwt-constants';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -19,8 +21,12 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const clientId = request.headers['x-client-id'];
-    if (!clientId || (clientId && !['admin', 'app'].includes(clientId))) {
+    const clientId = request.headers[headerConstants.xClientId];
+    if (
+      !clientId ||
+      (clientId &&
+        ![clientIdConstants.admin, clientIdConstants.app].includes(clientId))
+    ) {
       throw new UnauthorizedException('x-client-id invalid');
     }
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
