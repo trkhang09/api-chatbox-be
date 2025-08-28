@@ -2,65 +2,54 @@ import {
   Body,
   Controller,
   Get,
-  HttpCode,
-  HttpStatus,
   Post,
   Req,
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import type RegisterDto from './dtos/register.dto';
 import { Public } from './public.decorator';
 import { AuthInterceptor } from './auth.interceptor';
 import { LoginDto } from './dtos/login.dto';
-import { ApiOkResponse, ApiResponse } from '@nestjs/swagger';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { LoginResponseDto } from './dtos/login-response.dto';
 import { MeDto } from './dtos/me.dto';
+import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @ApiResponse({
-    status: 200,
-    description: 'Login successful',
-    type: LoginResponseDto,
-  })
-  @HttpCode(HttpStatus.OK)
+  @ApiCommonResponseCustom(LoginResponseDto)
   @Public()
   @UseInterceptors(AuthInterceptor)
   @Post('login')
+  @ApiOperation({ summary: 'Login into system' })
   async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
     return await this.authService.login(loginDto);
   }
 
-  @ApiOkResponse({
-    description: 'Returns the authenticated user',
-    type: MeDto,
-  })
+  @ApiCommonResponseCustom(MeDto)
+  @ApiOperation({ summary: 'Get User data of this user' })
   @Get('me')
   async me(@Req() req: Request) {
     return req['user'];
   }
 
-  @ApiResponse({
-    status: 200,
-    description: 'Password reset email sent',
-    type: Boolean,
+  @ApiCommonResponseCustom(Boolean, true)
+  @ApiOperation({
+    summary:
+      'Request to the system to mark that this user forgot their password',
   })
   @Public()
   @Post('forgot-password')
-  async forgotPassaword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
-  @ApiResponse({
-    status: 200,
-    description: 'Password reset successful',
-    type: Boolean,
-  })
+  @ApiCommonResponseCustom(Boolean, true)
+  @ApiOperation({ summary: 'Reset the password of this user' })
   @Public()
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
