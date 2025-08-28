@@ -23,7 +23,7 @@ import { newOtpTemplate } from 'src/common/utils/template';
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User)
+    // @InjectRepository(User)
     private readonly usersRepository: UsersRepository,
     private jwtService: JwtService,
     private readonly otpService: OtpService,
@@ -35,11 +35,9 @@ export class AuthService {
    */
 
   async login(loginDto: LoginDto): Promise<LoginResponseDto> {
-    const userFound = await this.usersRepository.findOne({
-      where: {
-        email: loginDto.email,
-      },
-    });
+    const userFound = await this.usersRepository.findByEmailWithRole(
+      loginDto.email,
+    );
 
     if (!userFound) {
       throw new UnauthorizedException('email or passsword incorrect');
@@ -74,11 +72,9 @@ export class AuthService {
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<boolean> {
     // check email
-    const userFound = await this.usersRepository.findOne({
-      where: {
-        email: forgotPasswordDto.email,
-      },
-    });
+    const userFound = await this.usersRepository.findByEmailWithRole(
+      forgotPasswordDto.email,
+    );
 
     if (!userFound) {
       throw new NotFoundException('account not exits');
@@ -90,7 +86,7 @@ export class AuthService {
     const template = newOtpTemplate;
     const params = {
       code: otpNew.code,
-      expiresMinutes: `${otpNew.minutesLeft} phút`,
+      expiresMinutes: `${Math.floor(Number(process.env.OTP_EXPIRED_AT)) / (1000 * 60)} phút`,
     };
     const content = replacePlaceHolder(template.html, params);
     await this.emailService.sendEmail({
@@ -102,11 +98,9 @@ export class AuthService {
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<boolean> {
-    const userFound = await this.usersRepository.findOne({
-      where: {
-        email: resetPasswordDto.email,
-      },
-    });
+    const userFound = await this.usersRepository.findByEmailWithRole(
+      resetPasswordDto.email,
+    );
 
     if (!userFound) {
       throw new NotFoundException('try again');

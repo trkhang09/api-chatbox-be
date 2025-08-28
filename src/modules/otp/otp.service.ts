@@ -13,16 +13,14 @@ export class OtpService {
 
   async generate(userId: string): Promise<Otp> {
     const code = randomOtp();
-    const expiredAt = Number(process.env.OTP_EXPIRED_AT);
-    const otp = this.otpRepo.create({
+    const expiredAt = new Date(Date.now() + Number(process.env.OTP_EXPIRED_AT));
+    return await this.otpRepo.save({
       user: {
         id: userId,
       },
       code,
       expiredAt,
     });
-
-    return await this.otpRepo.save(otp);
   }
 
   async verify(userId: string, code: string): Promise<boolean> {
