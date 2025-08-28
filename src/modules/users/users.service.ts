@@ -167,13 +167,8 @@ export class UsersService {
       ];
     }
 
-    if (getUsersDto?.roleIds?.length) {
-      const roleIds = Array.isArray(getUsersDto.roleIds)
-        ? getUsersDto.roleIds
-        : [getUsersDto.roleIds];
-      where.role = {
-        id: In(roleIds),
-      };
+    if (getUsersDto?.status !== undefined && getUsersDto?.status !== null) {
+      where.status = getUsersDto.status;
     }
 
     const [data, total] = await this.usersRepository.findAndCount({

@@ -2,6 +2,7 @@ import {
   IsEmail,
   IsIn,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -12,25 +13,18 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { PaginateDto } from 'src/common/dtos/paginate.dto';
+import { UserStatus } from 'src/common/enums/user-status.enum';
+import { IsNull } from 'typeorm';
 
 export class GetUsersDto extends PaginateDto {
   @ApiProperty()
   @IsOptional()
-  roleIds?: string[];
-
-  // @IsOptional()
-  // @IsString()
-  // fullname?: string;
-
-  // @ApiProperty()
-  // @IsOptional()
-  // @IsString()
-  // @IsEmail()
-  // email?: string;
-  @ApiProperty()
-  @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  status?: number | null;
 
   @ApiProperty()
   @IsOptional()
