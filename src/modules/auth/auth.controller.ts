@@ -15,8 +15,9 @@ import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { LoginResponseDto } from './dtos/login-response.dto';
 import { MeDto } from './dtos/me.dto';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Authentication and Authorization')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
