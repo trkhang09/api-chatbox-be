@@ -127,7 +127,10 @@ export class ChatController {
   /**
    * generate response stream
    */
-
+  @ApiOperation({
+    summary: 'chats generate answer with ai',
+  })
+  @ApiOkResponseCustom(Observable<MessageEvent>, true)
   @Sse('generate')
   generate(@Query('question') question: string): Observable<MessageEvent> {
     return this.chatService.generate(question);
