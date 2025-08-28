@@ -9,7 +9,7 @@ import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dtos/create-user.dto';
 import bcrypt from 'bcrypt';
-import { ILike, Repository } from 'typeorm';
+import { ILike, In, Repository } from 'typeorm';
 import { Role } from '../roles/entities/role.entity';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
@@ -17,6 +17,9 @@ import { UserStatus } from 'src/common/enums/user-status.enum';
 import { GetUsersDto } from './dtos/get-users.dto';
 import { UsersDto } from './dtos/users.dto';
 import { RoleType } from 'src/common/constants/role-constants';
+import { RoleRepository } from '../roles/role.repository';
+import { plainToInstance } from 'class-transformer';
+import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 
 @Injectable()
 export class UsersService {
@@ -24,7 +27,7 @@ export class UsersService {
     @InjectRepository(User)
     private usersRepository: UsersRepository,
     @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
+    private readonly roleRepository: RoleRepository,
   ) {}
 
   /**
@@ -35,55 +38,47 @@ export class UsersService {
     createUserDto: CreateUserDto,
     createdBy: string,
   ): Promise<UserDto> {
-    const userFound = await this.usersRepository.findOne({
-      where: {
-        email: createUserDto.email,
-      },
-    });
+    const [userFound, roleFound, hashPassword] = await Promise.all([
+      this.usersRepository.findOne({
+        where: { email: createUserDto.email },
+      }),
+      this.roleRepository.findOne({
+        where: { id: createUserDto.roleId },
+      }),
+      this.generateHashPassword(createUserDto.password),
+    ]);
+
     if (userFound) {
       throw new BadRequestException('email is used');
     }
-
-    const hashPassword = await this.generateHashPassword(
-      createUserDto.password,
-    );
-
-    // found role exits
-    const roleFound = await this.roleRepository.findOne({
-      where: {
-        id: createUserDto.roleId,
-      },
-    });
 
     if (!roleFound) {
       throw new NotFoundException('role not found');
     }
 
-    const userStore = this.usersRepository.create({
+    const userStore = await this.usersRepository.save({
       fullname: createUserDto.fullname,
       email: createUserDto.email,
       password: hashPassword,
       role: roleFound,
       createdByUserId: createdBy,
     });
-    await this.usersRepository.save(userStore);
 
-    return {
-      id: userStore.id,
-      email: userStore.email,
-      fullname: userStore.fullname,
-      role: roleFound.code,
-      createdBy: userStore.createdByUserId,
-      createdAt: userStore.createdAt,
-      updatedAt: userStore.updatedAt,
-    } as UserDto;
+    return plainToInstance(
+      UserDto,
+      {
+        ...userStore,
+        role: roleFound.code,
+      },
+      { excludeExtraneousValues: true },
+    );
   }
 
   /**
    * update user
    */
 
-  async updateUser(updateUserDto: UpdateUserDto): Promise<UserDto> {
+  async updateUser(updateUserDto: UpdateUserDto) {
     const user = await this.usersRepository.findOne({
       where: { id: updateUserDto.userId },
     });
@@ -102,14 +97,6 @@ export class UsersService {
       user.email = updateUserDto.email;
     }
 
-    if (updateUserDto.password) {
-      user.password = await this.generateHashPassword(updateUserDto.password);
-    }
-
-    if (updateUserDto.fullname) {
-      user.fullname = updateUserDto.fullname;
-    }
-
     if (updateUserDto.roleId && updateUserDto.roleId !== user.role.id) {
       const roleFound = await this.roleRepository.findOne({
         where: { id: updateUserDto.roleId },
@@ -120,16 +107,24 @@ export class UsersService {
       user.role = roleFound;
     }
 
+    if (updateUserDto.password) {
+      user.password = await this.generateHashPassword(updateUserDto.password);
+    }
+
+    if (updateUserDto.fullname) {
+      user.fullname = updateUserDto.fullname;
+    }
+
     const userUpdated = await this.usersRepository.save(user);
-    return {
-      id: userUpdated.id,
-      email: userUpdated.email,
-      fullname: userUpdated.fullname,
-      role: userUpdated.role.code,
-      createdAt: userUpdated.createdAt,
-      updatedAt: userUpdated.updatedAt,
-      createdBy: userUpdated.createdByUserId,
-    } as UserDto;
+
+    return plainToInstance(
+      UserDto,
+      {
+        ...userUpdated,
+        role: userUpdated.role.code,
+      },
+      { excludeExtraneousValues: true },
+    );
   }
 
   /**
@@ -140,7 +135,6 @@ export class UsersService {
       where: {
         id: userId,
       },
-      withDeleted: false,
     });
     if (!userFound) {
       throw new NotFoundException(
@@ -152,12 +146,12 @@ export class UsersService {
   }
 
   /**
-   * get user list
+   * get list user
    */
-
-  async getListUsers(getUsersDto: GetUsersDto): Promise<UsersDto> {
+  async getListUsers(
+    getUsersDto: GetUsersDto,
+  ): Promise<ResponsePaginateDto<Partial<User>>> {
     let where: any = {};
-
     if (getUsersDto?.fullname) {
       where.fullname = ILike(`%${getUsersDto.fullname}%`);
     }
@@ -165,48 +159,38 @@ export class UsersService {
       where.email = ILike(`%${getUsersDto.email}%`);
     }
 
-    // get only account have role is user
-    const foundRole = await this.roleRepository.findOne({
-      where: {
-        code: RoleType.USER.toLowerCase(),
-      },
-    });
-
-    if (!foundRole) {
-      throw new NotFoundException('check role and try again');
+    if (getUsersDto?.roleIds?.length) {
+      const roleIds = Array.isArray(getUsersDto.roleIds)
+        ? getUsersDto.roleIds
+        : [getUsersDto.roleIds];
+      where.role = {
+        id: In(roleIds),
+      };
     }
-
-    where = {
-      ...where,
-      role: {
-        id: foundRole.id,
-      },
-    };
 
     const [data, total] = await this.usersRepository.findAndCount({
       where,
+      select: {
+        id: true,
+        fullname: true,
+        updatedAt: true,
+        createdAt: true,
+        email: true,
+        status: true,
+        createdByUserId: true,
+      },
       order: { [getUsersDto.sortBy]: getUsersDto.sortOrder },
-      skip: (getUsersDto.page - 1) * getUsersDto.limit,
-      take: getUsersDto.limit,
-    });
-
-    const users = data.map((user) => {
-      return {
-        id: user.id,
-        email: user.email,
-        fullname: user.fullname,
-        role: foundRole.code,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-        createdBy: user.createdByUserId,
-      } as UserDto;
+      skip: (getUsersDto.page - 1) * getUsersDto.size,
+      take: getUsersDto.size,
     });
 
     return {
-      limit: getUsersDto.limit,
-      currentPage: getUsersDto.page,
-      totalPage: Math.ceil(total / getUsersDto.limit),
-      items: users,
+      data,
+      size: getUsersDto.size,
+      page: getUsersDto.page,
+      total: total,
+      totalInPage: data.length,
+      totalPage: Math.ceil(total / getUsersDto.size),
     };
   }
 
@@ -214,27 +198,27 @@ export class UsersService {
    * get user by id
    */
 
-  async getUserById(userId: string): Promise<UserDto> {
+  async getUserById(userId: string) {
     const userFound = await this.usersRepository.findOne({
       where: {
         id: userId,
       },
-      withDeleted: true,
+      select: {
+        id: true,
+        fullname: true,
+        updatedAt: true,
+        createdAt: true,
+        email: true,
+        status: true,
+        createdByUserId: true,
+      },
     });
 
     if (!userFound) {
       throw new NotFoundException('user not found');
     }
 
-    return {
-      id: userFound.id,
-      fullname: userFound.fullname,
-      email: userFound.email,
-      role: userFound.role.code,
-      createdAt: userFound.createdAt,
-      updatedAt: userFound.updatedAt,
-      createdBy: String(userFound.createdByUserId),
-    };
+    return userFound;
   }
 
   /**

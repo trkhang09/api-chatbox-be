@@ -4,27 +4,19 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { PaginateDto } from 'src/common/dtos/paginate.dto';
 
-export class GetUsersDto {
+export class GetUsersDto extends PaginateDto {
   @ApiProperty()
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(50)
-  limit: number = 10;
+  roleIds?: string[];
 
-  @ApiProperty()
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page: number = 1;
   @IsOptional()
   @IsString()
   fullname?: string;
