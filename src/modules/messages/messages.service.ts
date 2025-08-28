@@ -32,11 +32,8 @@ export class MessagesService {
   async getMessagesInChat(
     query: GetMessagesInChatDto,
   ): Promise<ResponsePaginateDto<RespondMessageDto>> {
-    const chat = await this.chatRepository.findOne({
-      where: { id: query.chatId },
-    });
-    if (!chat)
-      throw new Error(`Messages in Chat with id:${query.chatId} not found!`);
+    await this.chatRepository.findChat(query.chatId);
+
     try {
       const messages = await this.messageRepository.findWithPaginate(query);
       return messages;
@@ -46,23 +43,8 @@ export class MessagesService {
   }
 
   async createAiMessage(query: createMessageDto): Promise<Message> {
-    let aiResponse: AiResponseDto;
-    let chat: Chat | null;
-
-    aiResponse = await this.geminiService.generateResponse(query.content);
-
-    try {
-      chat = await this.chatRepository.findOne({
-        where: { id: query.chatId },
-      });
-    } catch (error) {
-      throw new InternalServerErrorException(`can not get chat`);
-    }
-
-    if (!chat)
-      throw new NotFoundException(
-        `The Conversations with id ${query.chatId} does not exists`,
-      );
+    const aiResponse = await this.geminiService.generateResponse(query.content);
+    const chat = await this.chatRepository.findChat(query.chatId);
 
     try {
       return await this.messageRepository.save({
