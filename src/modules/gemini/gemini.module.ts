@@ -7,5 +7,6 @@ import { DocumentChunksModule } from '../document-chunks/document-chunks.module'
   imports: [DocumentChunksModule],
   providers: [GeminiService],
   controllers: [GeminiController],
+  exports: [GeminiService],
 })
 export class GeminiModule {}

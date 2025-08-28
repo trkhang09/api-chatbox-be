@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Query,
+  Sse,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { User } from '../users/entities/user.entity';
@@ -121,4 +122,13 @@ export class ChatController {
   //     return res.status(500).json(error.message);
   //   }
   // }
+
+  /**
+   * generate response stream
+   */
+
+  @Get('generate')
+  async generate() {
+    return await this.chatService.generate();
+  }
 }

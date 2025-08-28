@@ -56,42 +56,93 @@ export class GeminiService {
     }
   }
 
-  async generateResponse(prompt: string): Promise<AiResponseDto> {
+  // async generateResponse(prompt: string): Promise<AiResponseDto> {
+  //   try {
+  //     const convertPrompt = await this.generateEmbedding(prompt);
+  //     // const query = await this.documentChunksRepository.findClosestByEmbedding(
+  //     //   convertPrompt[0].embedding,
+  //     // );
+
+  //     // const content = query?.content || '';
+  //     const content = 'Máu đỏ da vàng tôi là người việt nam'
+  //     const inDocuments = !!content;
+  //     const response = await this.googleGenAI.models.generateContent({
+  //       model: this.completionModel,
+  //       contents: [
+  //         {
+  //           parts: [
+  //             {
+  //               text: this.modelKnowledge,
+  //             },
+  //           ],
+  //           role: 'model',
+  //         },
+  //         {
+  //           parts: [
+  //             {
+  //               text: this.generateContext(content, prompt),
+  //             },
+  //           ],
+  //           role: 'user',
+  //         },
+  //       ],
+  //     });
+
+  //     return {
+  //       content: response.candidates?.[0]?.content?.parts?.[0]?.text ?? '',
+  //       model: this.completionModel,
+  //       inDocument: inDocuments,
+  //     };
+  //   } catch (error) {
+  //     throw new Error(
+  //       `Failed to get response from Gemini API: ${error.message}`,
+  //     );
+  //   }
+  // }
+
+  async *generateResponse(prompt: string) {
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     try {
       const convertPrompt = await this.generateEmbedding(prompt);
-      const query = await this.documentChunksRepository.findClosestByEmbedding(
-        convertPrompt[0].embedding,
-      );
+      // const query = await this.documentChunksRepository.findClosestByEmbedding(
+      //   convertPrompt[0].embedding,
+      // );
 
-      const content = query?.content || '';
+      // const content = query?.content || '';
+      const content = 'Máu đỏ da vàng tôi là người việt nam';
       const inDocuments = !!content;
-      const response = await this.googleGenAI.models.generateContent({
-        model: this.completionModel,
-        contents: [
-          {
-            parts: [
-              {
-                text: this.modelKnowledge,
-              },
-            ],
-            role: 'model',
-          },
-          {
-            parts: [
-              {
-                text: this.generateContext(content, prompt),
-              },
-            ],
-            role: 'user',
-          },
-        ],
-      });
+      // const response = await this.googleGenAI.models.generateContent({
+      //   model: this.completionModel,
+      //   contents: [
+      //     {
+      //       parts: [
+      //         {
+      //           text: this.modelKnowledge,
+      //         },
+      //       ],
+      //       role: 'model',
+      //     },
+      //     {
+      //       parts: [
+      //         {
+      //           text: this.generateContext(content, prompt),
+      //         },
+      //       ],
+      //       role: 'user',
+      //     },
+      //   ],
+      // });
 
-      return {
-        content: response.candidates?.[0]?.content?.parts?.[0]?.text ?? '',
-        model: this.completionModel,
-        inDocument: inDocuments,
-      };
+      // return {
+      //   content: response.candidates?.[0]?.content?.parts?.[0]?.text ?? '',
+      //   model: this.completionModel,
+      //   inDocument: inDocuments,
+      // };
+
+      while (true) {
+        await sleep(200);
+        yield 'Hello word chunk';
+      }
     } catch (error) {
       throw new Error(
         `Failed to get response from Gemini API: ${error.message}`,

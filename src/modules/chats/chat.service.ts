@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -19,6 +20,7 @@ import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ChatRepository } from './chat.repository';
 import { CreateNewChatDto } from './dtos/create-new-chat.dto';
 import { ChangeChatTitleDto } from './dtos/change-chat-title.dto';
+import type { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class ChatService {
@@ -27,6 +29,7 @@ export class ChatService {
     private readonly chatRepository: ChatRepository,
     private readonly dataSource: DataSource,
     private readonly messagesService: MessagesService,
+    @Inject('AI_SERVICE') private readonly aiService: AiService,
   ) {}
 
   /**
@@ -212,6 +215,14 @@ export class ChatService {
       throw new InternalServerErrorException(error.message);
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  /**
+   * generate
+   */
+  async generate() {
+    for await (chunk of this.aiService.generateResponse('konichiwa')) {
     }
   }
 }
