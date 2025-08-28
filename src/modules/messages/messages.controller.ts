@@ -1,47 +1,34 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import type { Response } from 'express';
+import { AiRespondWithoutLoginDto } from './dtos/ai-respond-without-login.dto';
+import { Public } from '../auth/public.decorator';
+import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
+import { RespondMessageDto } from './dtos/respond-message.dto';
 
 @Controller('messages')
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
   @Post('ai/without-login')
+  @Public()
   async createdAIMessageWithoutLogin(
     @Body() question: string,
-    @Res() res: Response,
-  ) {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+  ): Promise<AiRespondWithoutLoginDto> {
+    try {
+      const response =
+        await this.messagesService.createAiMessageWithoutLogin(question);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
 
-    //pending Gemini AI Service
-    // await this.geminiService.streamResponse(prompt, (text) => {
-    //     res.write(`data: ${text}\n\n`); // gửi chunk
-    // });
-    // res.write(`event: end\ndata: [DONE]\n\n`);
-    // res.end();
-
-    // Giả lập text chia thành các chunk
-    const fakeChunks = [
-      'Xin chào, ',
-      'tôi là AI ',
-      'và tôi đang ',
-      'trả lời ',
-      'theo dạng streaming.',
-    ];
-
-    let index = 0;
-
-    const interval = setInterval(() => {
-      if (index < fakeChunks.length) {
-        res.write(`data: ${fakeChunks[index]}\n\n`);
-        index++;
-      } else {
-        clearInterval(interval);
-        res.write(`event: end\ndata: [DONE]\n\n`);
-        res.end();
-      }
-    }, 500);
+  @Get('/')
+  async getMessagesInConversation(@Query() query: GetMessagesInChatDto) {
+    try {
+      const respond = await this.messagesService.getMessagesInChat(query);
+      return respond;
+    } catch (error) {}
   }
 }

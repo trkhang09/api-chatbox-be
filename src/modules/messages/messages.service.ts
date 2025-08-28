@@ -1,190 +1,208 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { User } from '../users/entities/user.entity';
 import { RespondCreatedFirstMessageDto } from './dtos/respond-created-first-message.dto';
 import { EntityManager } from 'typeorm';
-import { Repository } from 'typeorm';
 import { Message } from './entities/messages.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Chat } from '../chats/entities/chat.entity';
+import { GeminiService } from '../gemini/gemini.service';
+import { AiRespondWithoutLoginDto } from './dtos/ai-respond-without-login.dto';
+import { ChatRepository } from '../chats/chat.repository';
+import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
+import { MessageRepository } from './message.repository';
+import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
+import { AiResponseDto } from '../gemini/dto/ai-response.dto';
+import { createMessageDto } from './dtos/create-message.dto';
+import { EditMessageDto } from './dtos/edit-message.dto';
+import { RespondMessageDto } from './dtos/respond-message.dto';
 
 @Injectable()
 export class MessagesService {
   constructor(
     @InjectRepository(Message)
-    private readonly repo: Repository<Message>,
-    //pending Chat API management
-    // private readonly chatsService: ChatsService,
-    //pending User API management
-    // private readonly usersService: UsersService,
+    private readonly messageRepository: MessageRepository,
+    @InjectRepository(Chat)
+    private readonly chatRepository: ChatRepository,
+    private readonly geminiService: GeminiService,
   ) {}
-
-  async createFirstMessage(
-    message: string,
-    creator: User,
-  ): Promise<RespondCreatedFirstMessageDto> {
-    throw new Error('Method not implemented.');
-  }
-
-  async removeAllMessagesFromChat(chat: Chat, entityManager: EntityManager) {
-    throw new Error('Method not implemented.');
-  }
-
-  async getMessageInChat(chatId): Promise<Message[]> {
-    // const chat = await this.chatService.findOne({
-    //     where: { id: chatId },
-    // })
-    // if (!chat) throw new Error(`Messages in Chat with id:${chatId} not found!`);
-
-    const messages = await this.repo.find({
-      where: { chat: { id: chatId } },
+  async getMessagesInChat(
+    query: GetMessagesInChatDto,
+  ): Promise<ResponsePaginateDto<Partial<Message>>> {
+    const chat = await this.chatRepository.findOne({
+      where: { id: query.chatId },
     });
-    return messages;
+    if (!chat)
+      throw new Error(`Messages in Chat with id:${query.chatId} not found!`);
+    try {
+      const messages = await this.messageRepository.findWithPaginate(query);
+      return messages;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async createFirstAiMessage(content: string): Promise<Message> {
-    const message = this.repo.create({
-      content: content,
+  async createAiMessage(query: createMessageDto): Promise<Message> {
+    let aiResponse: AiResponseDto;
+    let chat: Chat | null;
+
+    try {
+      aiResponse = await this.geminiService.generateResponse(query.content);
+    } catch (error) {
+      throw error;
+    }
+
+    try {
+      chat = await this.chatRepository.findOne({
+        where: { id: query.chatId },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(`can not get chat`);
+    }
+    if (!chat)
+      throw new NotFoundException(
+        `The Conversations with id ${query.chatId} does not exists`,
+      );
+
+    const message = this.messageRepository.create({
+      content: aiResponse.content,
+      chat: chat,
       isRead: false,
+      createdAt: new Date(),
     });
-
-    return message;
-  }
-
-  async createAiMessage(chatId: string, content: string): Promise<Message> {
-    //find chat pending
-    // const chat = await this.chatRepo.findOne({
-    //     where: { id: chatId },
-    // })
-    // //if notfound
-    // if (!chat) throw new Error(`Chat with ${chatId} not Found!`);
-
-    const message = this.repo.create({
-      content: content,
-      chat: { id: chatId }, //pending chat API management
-      isRead: false,
-    });
-
-    return message;
+    try {
+      const saved = await this.messageRepository.save(message);
+      return saved;
+    } catch (error) {
+      throw new InternalServerErrorException(`failed to store Message`);
+    }
   }
 
   async createAiMessageWithoutLogin(
-    ask: string,
-  ): Promise<RespondAiMessageWithoutLoginDto> {
-    //call API gemini , pending
-    const content = 'this is response of Gemini if answer not in document';
-    const now = new Date();
+    question: string,
+  ): Promise<AiRespondWithoutLoginDto> {
+    //call API gemini in geminiService
+    const aiResponse = await this.geminiService.generateResponse(question);
 
-    const response = new RespondAiMessageWithoutLoginDto({
-      content: content,
-      createdAt: now,
-    });
+    const response = new AiRespondWithoutLoginDto(aiResponse);
     return response;
   }
-  async createFirstUserMessage(
-    userId: string,
-    content: string,
-  ): Promise<Message> {
-    //pending
-    // const user = await this.usersService.findOne({
-    //     where: {id : userId},
-    // })
 
-    const message = this.repo.create({
-      content: content,
-      updatedByUserId: userId,
-      createdAt: new Date(),
-      isRead: false,
-    });
-    return message;
+  async createTempMessage(
+    message: string,
+    creator: User,
+  ): Promise<RespondCreatedFirstMessageDto> {
+    try {
+      const title = await this.geminiService.generateSummary(message);
+
+      const respondMessage = this.messageRepository.create({
+        content: message,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdByUserId: creator.id,
+        isRead: false,
+      });
+
+      return new RespondCreatedFirstMessageDto({
+        chatTitle: title.content,
+        message: respondMessage,
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async createUserMessage(
-    chatId: string,
-    userId: string,
-    content: string,
+  async createMessage(
+    query: createMessageDto,
+    creator: User,
   ): Promise<Message> {
-    //pending Chat and User API Management
-    const chat = new Chat();
+    let chat: Chat | null;
+    try {
+      chat = await this.chatRepository.findOne({
+        where: { id: query.chatId },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(`can not get chat`);
+    }
 
-    const message = this.repo.create({
-      chat: chat,
-      content: content,
-      createdAt: new Date(),
-      createdByUserId: userId,
-      isRead: false,
-    });
-    const saved = await this.repo.save(message);
-    return saved;
+    if (!chat)
+      throw new NotFoundException(
+        `The Conversations with id ${query.chatId} does not exists.`,
+      );
+
+    try {
+      const saved = await this.messageRepository.save({
+        chat: chat,
+        content: query.content,
+        createdAt: new Date(),
+        createdByUserId: creator.id,
+        isRead: false,
+      });
+      return saved;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to store message.');
+    }
   }
 
   async editContentMessage(
-    userId: string,
-    messageId: string,
-    newContent: string,
+    user: User,
+    query: EditMessageDto,
   ): Promise<RespondMessageDto> {
     //find message to edit
-    const message = await this.repo.findOne({
-      where: { id: messageId },
+    const message = await this.messageRepository.findOne({
+      where: { id: query.id },
     });
 
     if (!message)
       throw new NotFoundException(
-        `this Message with id:${messageId} not found!`,
+        `this Message with id:${query.id} not found!`,
       );
 
-    if (!message.createdByUserId && message.createdByUserId !== userId)
+    if (!message.createdByUserId && message.createdByUserId !== user.id)
       throw new Error(
         `this User does not have permission to edit this message`,
       );
-    //replace new value and updated_At;
-    message.content = newContent;
-    message.updatedAt = new Date();
-    //save to database
-    const saved = await this.repo.save(message);
-    //return response to client
-    const response = new RespondMessageDto({
-      content: saved.content,
-      chat: saved.chat,
-      createdAt: saved.createdAt,
-      createdByUserId: saved.createdByUserId,
-    });
-    return response;
-  }
+    message.content = query.content;
+    try {
+      const saved = await this.messageRepository.save(message);
 
-  async softRemoveMessage(
-    messageId: string,
-  ): Promise<{ responseMessage: string }> {
-    const message = await this.repo.findOne({
-      where: { id: messageId },
-    });
-    if (!message)
-      throw new NotFoundException(`Message with id:${messageId} not found`);
-
-    message.deletedAt = new Date();
-    await this.repo.save(message);
-
-    return { responseMessage: 'Message deleted successfully.' };
-  }
-
-  async removeMessagesInChat(
-    chatId: string,
-  ): Promise<{ responseMessage: string }> {
-    const messages = await this.repo.find({
-      where: {
-        chat: { id: chatId },
-      },
-    });
-    if (!messages || messages.length === 0)
-      throw new NotFoundException(`No message found for this chat.`);
-
-    const now = new Date();
-    for (const msg of messages) {
-      msg.deletedAt = now;
+      const response = new RespondMessageDto({
+        content: saved.content,
+        createdAt: saved.createdAt,
+        createdByUserId: saved.createdByUserId,
+      });
+      return response;
+    } catch (error) {
+      throw error;
     }
-    await this.repo.save(messages);
+  }
 
-    return {
-      responseMessage: `All Message in Chat ${chatId} were deleted successfully.`,
-    };
+  async softRemoveMessage(id: string): Promise<boolean> {
+    try {
+      await this.messageRepository.softDelete(id);
+      return true;
+    } catch (error) {
+      throw new InternalServerErrorException('fail to remove message');
+    }
+  }
+
+  async removeAllMessagesFromChat(
+    chat: Chat,
+    entityManager: EntityManager,
+  ): Promise<boolean> {
+    try {
+      await entityManager
+        .getRepository(Message)
+        .softDelete({ chat: { id: chat.id } });
+
+      return true;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Failed to remove messages for chat ${chat.id}: ${error.message}`,
+      );
+    }
   }
 }
