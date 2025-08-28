@@ -1,17 +1,7 @@
-import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsPositive, IsString } from 'class-validator';
+import { PaginateDto } from 'src/common/dtos/paginate.dto';
 
-export class GetMessagesInChatDto {
-  @Type(() => Number)
-  @IsNumber()
-  @IsPositive()
-  readonly page: number = 1;
-
-  @Type(() => Number)
-  @IsNumber()
-  @IsPositive()
-  readonly size: number = 10;
-
+export class GetMessagesInChatDto extends PaginateDto {
   @IsString()
   @IsNotEmpty()
   readonly chatId: string;

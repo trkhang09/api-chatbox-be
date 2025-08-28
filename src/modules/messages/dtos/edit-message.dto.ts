@@ -6,5 +6,5 @@ export class EditMessageDto {
 
   @IsString()
   @IsNotEmpty()
-  readonly newContent: string;
+  readonly content: string;
 }
