@@ -173,15 +173,6 @@ export class UsersService {
 
     const [data, total] = await this.usersRepository.findAndCount({
       where,
-      select: {
-        id: true,
-        fullname: true,
-        updatedAt: true,
-        createdAt: true,
-        email: true,
-        status: true,
-        createdByUserId: true,
-      },
       order: { [getUsersDto.sortBy]: getUsersDto.sortOrder },
       skip: (getUsersDto.page - 1) * getUsersDto.size,
       take: getUsersDto.size,
@@ -205,15 +196,6 @@ export class UsersService {
     const userFound = await this.usersRepository.findOne({
       where: {
         id: userId,
-      },
-      select: {
-        id: true,
-        fullname: true,
-        updatedAt: true,
-        createdAt: true,
-        email: true,
-        status: true,
-        createdByUserId: true,
       },
     });
 
