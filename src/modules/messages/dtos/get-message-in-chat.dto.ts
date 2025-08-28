@@ -1,8 +1,8 @@
-import { IsNotEmpty, IsNumber, IsPositive, IsString } from 'class-validator';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 import { PaginateDto } from 'src/common/dtos/paginate.dto';
 
 export class GetMessagesInChatDto extends PaginateDto {
-  @IsString()
+  @IsUUID(4)
   @IsNotEmpty()
   readonly chatId: string;
 }
