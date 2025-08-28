@@ -7,6 +7,7 @@ import {
   IsUUID,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
@@ -17,15 +18,19 @@ export class GetUsersDto extends PaginateDto {
   @IsOptional()
   roleIds?: string[];
 
-  @IsOptional()
-  @IsString()
-  fullname?: string;
+  // @IsOptional()
+  // @IsString()
+  // fullname?: string;
 
+  // @ApiProperty()
+  // @IsOptional()
+  // @IsString()
+  // @IsEmail()
+  // email?: string;
   @ApiProperty()
   @IsOptional()
   @IsString()
-  @IsEmail()
-  email?: string;
+  search?: string;
 
   @ApiProperty()
   @IsOptional()

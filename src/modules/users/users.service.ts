@@ -115,6 +115,10 @@ export class UsersService {
       user.fullname = updateUserDto.fullname;
     }
 
+    if (updateUserDto.status) {
+      user.status = updateUserDto.status;
+    }
+
     const userUpdated = await this.usersRepository.save(user);
 
     return plainToInstance(
@@ -150,13 +154,17 @@ export class UsersService {
    */
   async getListUsers(
     getUsersDto: GetUsersDto,
-  ): Promise<ResponsePaginateDto<Partial<User>>> {
+  ): Promise<ResponsePaginateDto<User>> {
     let where: any = {};
-    if (getUsersDto?.fullname) {
-      where.fullname = ILike(`%${getUsersDto.fullname}%`);
-    }
-    if (getUsersDto?.email) {
-      where.email = ILike(`%${getUsersDto.email}%`);
+    if (getUsersDto?.search) {
+      where = [
+        {
+          fullname: ILike(`%${getUsersDto.search}%`),
+        },
+        {
+          email: ILike(`%${getUsersDto.search}%`),
+        },
+      ];
     }
 
     if (getUsersDto?.roleIds?.length) {

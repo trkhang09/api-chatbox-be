@@ -30,4 +30,8 @@ export class UserDto {
   @Expose()
   @ApiProperty()
   createdByUserId: string;
+
+  @Expose()
+  @ApiProperty()
+  status: number;
 }

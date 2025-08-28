@@ -1,13 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserDto } from './user.dto';
+import { User } from '../entities/user.entity';
 
 export class UsersDto {
   @ApiProperty({ type: () => UserDto, isArray: true })
-  items: UserDto[] = [];
-  @ApiProperty()
-  limit: Number;
-  @ApiProperty()
-  currentPage: Number;
-  @ApiProperty()
-  totalPage: Number;
+  items: User[] = [];
 }
