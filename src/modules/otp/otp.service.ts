@@ -14,7 +14,6 @@ export class OtpService {
   async generate(userId: string): Promise<Otp> {
     const code = randomOtp();
     const expiredAt = new Date(Date.now() + Number(process.env.OTP_EXPIRED_AT));
-    console.log(expiredAt);
     return await this.otpRepo.save({
       user: {
         id: userId,
