@@ -3,8 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Permission } from '../permissions/entities/permission.entity';
 import { Role } from './entities/role.entity';
-import { CreateRoleDto } from './dto/create-role.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
+import { CreateRoleRequestDto } from './dto/create-role-request.dto';
+import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
+import { RoleResponseDto } from './dto/role-response.dto';
 
 @Injectable()
 export class RolesService {
@@ -13,74 +14,172 @@ export class RolesService {
     @InjectRepository(Permission)
     private readonly permRepo: Repository<Permission>,
   ) {}
-
-  async findAll(): Promise<Role[]> {
+  /**
+   * Retrieve all roles with their associated permissions.
+   * @returns Promise<RoleResponseDto[]>
+   * @throws Error when roles cannot be retrieved or none are found.
+   */
+  async findAll(): Promise<RoleResponseDto[]> {
     try {
       const roles = await this.roleRepo.find({ relations: ['permissions'] });
-      return roles;
+      if (!roles) throw new NotFoundException('No roles found');
+
+      const result = roles.map((role) => ({
+        id: role.id,
+        name: role.name,
+        code: role.code,
+        permissions: role.permissions.map((perm) => perm.name),
+      }));
+      return result;
     } catch (error) {
-      throw new Error('Failed to retrieve roles: ' + error.message);
+      throw new NotFoundException('No roles found');
     }
   }
 
-  async findOne(id: string): Promise<Role> {
+  /**
+   * Retrieve a single role by its ID, including permissions.
+   * @param id Role ID
+   * @returns Promise<RoleResponseDto>
+   * @throws NotFoundException if the role does not exist.
+   * @throws Error when retrieval fails.
+   */
+  async findOne(id: string): Promise<RoleResponseDto> {
     try {
       const role = await this.roleRepo.findOne({
         where: { id },
         relations: ['permissions'],
+        withDeleted: true,
       });
+
       if (!role) throw new NotFoundException('Role not found');
-      return role;
+      return {
+        id: role.id,
+        name: role.name,
+        code: role.code,
+        permissions: role.permissions.map((perm) => perm.name),
+      };
     } catch (error) {
       console.error(error);
-      throw new Error(
-        'Failed to retrieve role with ID: ' + id + ' - ' + error.message,
-      );
+      throw new NotFoundException('Role not found');
     }
   }
 
-  async create(dto: CreateRoleDto, userId: string): Promise<Role> {
+  /**
+   * Create a new role with optional permissions.
+   * @param dto Data for creating a new role
+   * @param userId ID of the user creating the role
+   * @returns Promise<RoleResponseDto>
+   * @throws Error when creation fails.
+   */
+  async create(
+    dto: CreateRoleRequestDto,
+    userId: string,
+  ): Promise<RoleResponseDto> {
     try {
+      if (
+        await this.roleRepo.findOne({
+          where: { name: dto.name },
+          withDeleted: true,
+        })
+      ) {
+        throw new Error('Role with this name already exists');
+      }
+
       const permissions = dto.permissions
         ? await this.permRepo.find({ where: { id: In(dto.permissions) } })
         : [];
+
       const role = this.roleRepo.create({
         ...dto,
         permissions,
         createdByUserId: userId,
       });
-      return this.roleRepo.save(role);
+
+      const savedRole = await this.roleRepo.save(role);
+      return {
+        id: savedRole.id,
+        name: savedRole.name,
+        code: savedRole.code,
+        permissions: savedRole.permissions.map((perm) => perm.name),
+      };
     } catch (error) {
       throw new Error('Failed to create role: ' + error.message);
     }
   }
 
-  async update(id: string, dto: UpdateRoleDto, userId: string): Promise<Role> {
+  /**
+   * Update an existing role by its ID and modify permissions if provided.
+   * @param id Role ID to update
+   * @param dto Data to update the role
+   * @param userId ID of the user performing the update
+   * @returns Promise<RoleResponseDto>
+   * @throws NotFoundException if the role does not exist.
+   * @throws Error when update fails.
+   */
+  async update(
+    id: string,
+    dto: UpdateRoleRequestDto,
+    userId: string,
+  ): Promise<RoleResponseDto> {
     try {
-      const role = await this.findOne(id);
+      const role = await this.roleRepo.findOne({
+        where: { id },
+        withDeleted: true,
+      });
+      if (!role) throw new NotFoundException('Role not found');
+
       if (dto.permissions) {
         const permissions = await this.permRepo.find({
           where: { id: In(dto.permissions) },
         });
         role.permissions = permissions;
       }
-      Object.assign(role, dto);
       role.updatedByUserId = userId;
-      return this.roleRepo.save(role);
+      await this.roleRepo.save(role);
+
+      return {
+        id: role.id,
+        name: role.name,
+        code: role.code,
+        permissions: role.permissions.map((perm) => perm.name),
+      };
     } catch (error) {
-      throw new Error(
-        'Failed to update role with ID: ' + id + ' - ' + error.message,
-      );
+      throw new Error('Failed to update role: ' + error.message);
     }
   }
 
-  async remove(id: string): Promise<void> {
+  /**
+   * Soft delete a role by its ID.
+   * @param id Role ID to delete
+   * @param userId ID of the user performing the deletion
+   * @returns Promise<RoleResponseDto>
+   * @throws NotFoundException if the role does not exist.
+   * @throws Error when deletion fails.
+   */
+  async remove(id: string, userId: string): Promise<RoleResponseDto> {
     try {
-      await this.roleRepo.delete(id);
+      const role = await this.roleRepo.findOne({
+        where: { id },
+        relations: ['permissions'],
+        withDeleted: true,
+      });
+
+      if (!role) throw new NotFoundException('Role not found');
+
+      role.deletedAt = new Date();
+      role.updatedAt = new Date();
+      role.updatedByUserId = userId;
+
+      await this.roleRepo.save(role);
+
+      return {
+        id: role.id,
+        name: role.name,
+        code: role.code,
+        permissions: role.permissions.map((perm) => perm.name),
+      };
     } catch (error) {
-      throw new Error(
-        'Failed to delete role with ID: ' + id + ' - ' + error.message,
-      );
+      throw new Error('Failed to delete role: ' + error.message);
     }
   }
 }

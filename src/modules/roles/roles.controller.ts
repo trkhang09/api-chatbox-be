@@ -10,11 +10,8 @@ import {
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
-import { CreateRoleDto } from './dto/create-role.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
-import { UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-
+import { CreateRoleRequestDto } from './dto/create-role-request.dto';
+import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
 @Controller('roles')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
@@ -32,24 +29,27 @@ export class RolesController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create a new role' })
-  create(@Body() dto: CreateRoleDto, @Req() req) {
-    const userId = req.user.id;
+  create(@Body() dto: CreateRoleRequestDto, @Req() req) {
+    const userId = req['user'].sub;
     return this.rolesService.create(dto, userId);
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update a role' })
-  update(@Param('id') id: string, @Body() dto: UpdateRoleDto, @Req() req) {
-    const userId = req.user.id;
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateRoleRequestDto,
+    @Req() req,
+  ) {
+    const userId = req['user'].sub;
     return this.rolesService.update(id, dto, userId);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remove a role' })
-  remove(@Param('id') id: string) {
-    return this.rolesService.remove(id);
+  remove(@Param('id') id: string, @Req() req) {
+    const userId = req['user'].sub;
+    return this.rolesService.remove(id, userId);
   }
 }
