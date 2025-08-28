@@ -18,6 +18,7 @@ import { OtpModule } from './modules/otp/otp.module';
 import { EmailModule } from './modules/email/email.module';
 import { GeminiModule } from './modules/gemini/gemini.module';
 import { AiModule } from './modules/ai/ai.module';
+import { FileModule } from './modules/files/files.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { AiModule } from './modules/ai/ai.module';
     EmailModule,
     GeminiModule,
     AiModule,
+    FileModule,
   ],
   controllers: [AppController],
   providers: [AppService],
