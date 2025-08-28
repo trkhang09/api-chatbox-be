@@ -17,7 +17,7 @@ export const AiProvider: FactoryProvider = {
     if (provider === 'gemini') {
       return geminiService;
     }
-    return geminiService;
+    return openAiService;
   },
   inject: [ConfigService, OpenaiService, GeminiService],
 };

@@ -25,6 +25,7 @@ import { RespondCreatedNewChatDto } from './dtos/respond-created-new-chat.dto';
 import { RespondChangedChatTitleDto } from './dtos/respond-changed-chat-title.dto';
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
+import { Observable } from 'rxjs';
 
 @ApiTags('Conversation History')
 @Controller('chat')
@@ -127,8 +128,8 @@ export class ChatController {
    * generate response stream
    */
 
-  @Get('generate')
-  async generate() {
-    return await this.chatService.generate();
+  @Sse('generate')
+  generate(@Query('question') question: string): Observable<MessageEvent> {
+    return this.chatService.generate(question);
   }
 }

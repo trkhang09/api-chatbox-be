@@ -37,4 +37,28 @@ export class DocumentChunksRepository extends Repository<DocumentChunks> {
       );
     }
   }
+
+  async findByEmbedding(embedding: number[]): Promise<DocumentChunks[] | null> {
+    try {
+      const result = await this.documentChunksRepository
+        .createQueryBuilder('document_chunks')
+        .select('document_chunks.content')
+        .where(
+          'document_chunks.embedding <-> :embedding::vector < :threshold',
+          {
+            embedding: `[${embedding.join(', ')}]`,
+            threshold: this.SIMILARITY_THRESHOLD,
+          },
+        )
+        .orderBy('document_chunks.embedding <-> :embedding::vector', 'ASC')
+        .limit(3)
+        .getMany();
+
+      return result;
+    } catch (error) {
+      throw new Error(
+        'Error finding closest document chunk. Detail: ' + error.message,
+      );
+    }
+  }
 }

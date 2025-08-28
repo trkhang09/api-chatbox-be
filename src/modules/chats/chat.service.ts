@@ -21,6 +21,7 @@ import { ChatRepository } from './chat.repository';
 import { CreateNewChatDto } from './dtos/create-new-chat.dto';
 import { ChangeChatTitleDto } from './dtos/change-chat-title.dto';
 import type { AiService } from '../ai/ai.service';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class ChatService {
@@ -221,8 +222,20 @@ export class ChatService {
   /**
    * generate
    */
-  async generate() {
-    for await (chunk of this.aiService.generateResponse('konichiwa')) {
-    }
+  generate(question: string): Observable<MessageEvent> {
+    return new Observable<MessageEvent>((subscriber) => {
+      (async () => {
+        try {
+          for await (const chunk of this.aiService.generateStreamResponse(
+            question,
+          )) {
+            subscriber.next({ data: chunk } as MessageEvent);
+          }
+          subscriber.complete();
+        } catch (err) {
+          subscriber.error(err);
+        }
+      })();
+    });
   }
 }
