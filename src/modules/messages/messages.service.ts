@@ -31,7 +31,7 @@ export class MessagesService {
   ) {}
   async getMessagesInChat(
     query: GetMessagesInChatDto,
-  ): Promise<ResponsePaginateDto<Partial<Message>>> {
+  ): Promise<ResponsePaginateDto<RespondMessageDto>> {
     const chat = await this.chatRepository.findOne({
       where: { id: query.chatId },
     });
@@ -49,11 +49,7 @@ export class MessagesService {
     let aiResponse: AiResponseDto;
     let chat: Chat | null;
 
-    try {
-      aiResponse = await this.geminiService.generateResponse(query.content);
-    } catch (error) {
-      throw error;
-    }
+    aiResponse = await this.geminiService.generateResponse(query.content);
 
     try {
       chat = await this.chatRepository.findOne({
@@ -62,20 +58,17 @@ export class MessagesService {
     } catch (error) {
       throw new InternalServerErrorException(`can not get chat`);
     }
+
     if (!chat)
       throw new NotFoundException(
         `The Conversations with id ${query.chatId} does not exists`,
       );
 
-    const message = this.messageRepository.create({
-      content: aiResponse.content,
-      chat: chat,
-      isRead: false,
-      createdAt: new Date(),
-    });
     try {
-      const saved = await this.messageRepository.save(message);
-      return saved;
+      return await this.messageRepository.save({
+        content: aiResponse.content,
+        chat: chat,
+      });
     } catch (error) {
       throw new InternalServerErrorException(`failed to store Message`);
     }
@@ -100,10 +93,7 @@ export class MessagesService {
 
       const respondMessage = this.messageRepository.create({
         content: message,
-        createdAt: new Date(),
-        updatedAt: new Date(),
         createdByUserId: creator.id,
-        isRead: false,
       });
 
       return new RespondCreatedFirstMessageDto({
@@ -134,14 +124,11 @@ export class MessagesService {
       );
 
     try {
-      const saved = await this.messageRepository.save({
+      return await this.messageRepository.save({
         chat: chat,
         content: query.content,
-        createdAt: new Date(),
         createdByUserId: creator.id,
-        isRead: false,
       });
-      return saved;
     } catch (error) {
       throw new InternalServerErrorException('Failed to store message.');
     }
