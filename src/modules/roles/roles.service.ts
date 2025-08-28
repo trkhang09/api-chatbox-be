@@ -5,7 +5,6 @@ import { Permission } from '../permissions/entities/permission.entity';
 import { Role } from './entities/role.entity';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
-import { RoleResponseDto } from './dto/role-response.dto';
 
 @Injectable()
 export class RolesService {
@@ -15,88 +14,53 @@ export class RolesService {
     private readonly permRepo: Repository<Permission>,
   ) {}
 
-  async findAll(): Promise<RoleResponseDto[]> {
+  async findAll(statusId: number): Promise<Role[]> {
     try {
       const roles = await this.roleRepo.find({
-        where: { status: 1 },
-        withDeleted: true,
+        where: { status: statusId },
       });
 
-      if (!roles.length) throw new NotFoundException('No roles found');
-
-      const result = roles.map((role) => ({
-        id: role.id,
-        name: role.name,
-        code: role.code,
-      }));
-
-      return result;
+      return roles;
     } catch (error) {
       throw new Error('Failed to retrieve roles: ' + error.message);
     }
   }
 
-  async findOne(id: string): Promise<RoleResponseDto> {
+  async findOne(id: string): Promise<Role> {
     try {
       const role = await this.roleRepo.findOne({
-        where: { id, status: 1 },
+        where: { id },
       });
 
       if (!role) throw new NotFoundException('Role not found');
-      return {
-        id: role.id,
-        name: role.name,
-        code: role.code,
-        permissions: role.permissions.map((perm) => perm.name),
-      };
+
+      return role;
     } catch (error) {
       console.error(error);
       throw new NotFoundException('Role not found');
     }
   }
 
-  async create(
-    dto: CreateRoleRequestDto,
-    userId: string,
-  ): Promise<RoleResponseDto> {
+  async create(dto: CreateRoleRequestDto, userId: string): Promise<Role> {
     try {
-      if (
-        await this.roleRepo.findOne({
-          where: { code: dto.code },
-          withDeleted: true,
-        })
-      ) {
-        throw new Error('Role with this code already exists');
-      }
       const permissions = dto.permissions
         ? await this.permRepo.find({ where: { id: In(dto.permissions) } })
         : [];
       const role = {
-        dto,
+        ...dto,
         permissions,
         createdByUserId: userId,
       };
-      const savedRole = await this.roleRepo.save(role);
-      return {
-        id: savedRole.id,
-        name: savedRole.name,
-        code: savedRole.code,
-        permissions: savedRole.permissions.map((perm) => perm.name),
-      };
+      return await this.roleRepo.save(role);
     } catch (error) {
       throw new Error('Failed to create role: ' + error.message);
     }
   }
 
-  async update(
-    id: string,
-    dto: UpdateRoleRequestDto,
-    userId: string,
-  ): Promise<RoleResponseDto> {
+  async update(id: string, dto: UpdateRoleRequestDto): Promise<Role> {
     try {
       const role = await this.roleRepo.findOne({
         where: { id },
-        withDeleted: true,
       });
       if (!role) throw new NotFoundException('Role not found');
 
@@ -106,16 +70,13 @@ export class RolesService {
         });
         role.permissions = permissions;
       }
-      role.updatedByUserId = userId;
-      role.updatedAt = new Date();
+      role.status = dto.status ?? role.status;
+      role.name = dto.name ?? role.name;
+      role.code = dto.code ?? role.code;
+
       await this.roleRepo.save(role);
 
-      return {
-        id: role.id,
-        name: role.name,
-        code: role.code,
-        permissions: role.permissions.map((perm) => perm.name),
-      };
+      return role;
     } catch (error) {
       throw new Error('Failed to update role: ' + error.message);
     }
@@ -124,16 +85,11 @@ export class RolesService {
   async remove(id: string, userId: string): Promise<void> {
     try {
       const role = await this.roleRepo.findOne({
-        where: { id, status: 1 },
+        where: { id },
       });
       if (!role) throw new NotFoundException('Role not found');
 
-      role.updatedAt = new Date();
-      role.updatedByUserId = userId;
-      role.status = 0;
-
-      await this.roleRepo.save(role);
-      await this.roleRepo.softDelete(id);
+      await this.roleRepo.remove(role);
     } catch (error) {
       throw new Error('Failed to delete role: ' + error.message);
     }

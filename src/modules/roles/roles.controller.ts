@@ -7,19 +7,21 @@ import {
   Delete,
   Put,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
+
 @Controller('roles')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all roles' })
-  findAll() {
-    return this.rolesService.findAll();
+  findAll(@Query('status') status: number) {
+    return this.rolesService.findAll(status);
   }
 
   @Get(':id')
@@ -37,13 +39,8 @@ export class RolesController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Update a role' })
-  update(
-    @Param('id') id: string,
-    @Body() dto: UpdateRoleRequestDto,
-    @Req() req,
-  ) {
-    const userId = req['user'].sub;
-    return this.rolesService.update(id, dto, userId);
+  update(@Param('id') id: string, @Body() dto: UpdateRoleRequestDto) {
+    return this.rolesService.update(id, dto);
   }
 
   @Delete(':id')
