@@ -76,7 +76,7 @@ export class ChatService {
     let title: string;
 
     try {
-      const result = await this.messagesService.createFirstMessage(
+      const result = await this.messagesService.createTempMessage(
         body.message,
         creator,
       );
