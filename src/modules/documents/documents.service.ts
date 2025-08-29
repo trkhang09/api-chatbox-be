@@ -56,7 +56,6 @@ export class DocumentsService {
         const dto = new ResponseDocumentDto();
         Object.keys(dto).forEach((k) => {
           dto[k] = doc[k];
-          console.log(k, dto[k], doc[k]);
         });
 
         try {
@@ -122,7 +121,6 @@ export class DocumentsService {
       const dto = new ResponseCreatedDocumentDto();
       Object.keys(dto).forEach((k) => {
         dto[k] = savedDoc[k];
-        console.log(k, dto[k], savedDoc[k]);
       });
 
       return dto;
@@ -179,7 +177,6 @@ export class DocumentsService {
       const dto = new ResponseUpdatedDocumentDto();
       Object.keys(dto).forEach((k) => {
         dto[k] = savedDoc[k];
-        console.log(k, dto[k], savedDoc[k]);
       });
 
       return dto;
