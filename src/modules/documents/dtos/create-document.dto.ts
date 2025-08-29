@@ -33,17 +33,4 @@ export class CreateDocumentDto {
   @IsString()
   @IsNotEmpty()
   readonly filePath: string;
-
-  @ApiProperty({
-    description: 'The name of the document file (not accept space)',
-    example: 'Project_Plan',
-  })
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  @Matches(/^[^\s]+$/, {
-    message: 'fileName must not contain spaces (optional)',
-  })
-  readonly fileName?: string;
 }

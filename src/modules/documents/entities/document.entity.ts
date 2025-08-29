@@ -14,6 +14,9 @@ export class Document extends AbstractEntity {
   @Column({ name: 'file_path' })
   filePath: string;
 
+  @Column({ type: 'int' })
+  size: number;
+
   @Column({ type: 'int', default: DocumentStatus.ACTIVED })
   status: DocumentStatus;
 

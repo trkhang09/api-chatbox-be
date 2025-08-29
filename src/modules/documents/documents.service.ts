@@ -88,7 +88,6 @@ export class DocumentsService {
    * @param body
    * @param user
    * @returns Promise<ResponseCreatedDocumentDto>
-   * @throws BadRequestException
    * @throw NotFoundException
    * @throws InternalServerErrorException
    */
@@ -97,24 +96,10 @@ export class DocumentsService {
     user: User,
   ): Promise<ResponseCreatedDocumentDto> {
     try {
-      let filePath = body.filePath;
-      if (body.fileName) {
-        try {
-          filePath = await this.fileService.rename(
-            body.filePath,
-            body.fileName,
-          );
-        } catch (error) {
-          throw error;
-        }
-      }
-
       const savedDoc = await this.docRepo.save({
         title: body.title,
         description: body.description,
-        filePath,
-        createdAt: new Date(),
-        status: DocumentStatus.ACTIVED,
+        filePath: body.filePath,
         createdByUserId: user.id,
       });
 
@@ -138,7 +123,6 @@ export class DocumentsService {
    * @param user
    * @returns Promise<ResponseUpdatedDocumentDto>
    * @throws NotFoundException
-   * @throws BadRequestException
    * @throws InternalServerErrorException
    */
   async updateDocument(
@@ -146,29 +130,10 @@ export class DocumentsService {
     body: UpdateDocumentDto,
     user: User,
   ): Promise<ResponseUpdatedDocumentDto> {
-    let foundDoc: Document;
-    try {
-      foundDoc = await this.findDocumentById(id);
-    } catch (error) {
-      throw error;
-    }
-
-    if (body.fileName) {
-      try {
-        const filePath = await this.fileService.rename(
-          foundDoc.filePath,
-          body.fileName,
-        );
-
-        foundDoc.filePath = filePath;
-      } catch (error) {
-        throw error;
-      }
-    }
+    const foundDoc = await this.findDocumentById(id);
 
     foundDoc.title = body.title;
     foundDoc.description = body.description ?? '';
-    foundDoc.updatedAt = new Date();
     foundDoc.updatedByUserId = user.id;
 
     try {
@@ -192,20 +157,9 @@ export class DocumentsService {
    * @param id
    * @param user
    * @returns Promise<boolean>
-   * @throws NotFoundException
    * @throws InternalServerErrorExceptionx
    */
-  async removeDocument(id: string, user: User): Promise<boolean> {
-    let foundDoc: Document;
-
-    try {
-      foundDoc = await this.findDocumentById(id);
-    } catch (error) {
-      throw error;
-    }
-
-    foundDoc.updatedByUserId = user.id;
-
+  async removeDocument(id: string): Promise<boolean> {
     try {
       await this.docRepo.softDelete(id);
 

@@ -25,17 +25,4 @@ export class UpdateDocumentDto {
   @IsOptional()
   @IsString()
   readonly description?: string;
-
-  @ApiProperty({
-    description: 'The name of the document file (optional, not accept space)',
-    example: 'Project_Plan',
-  })
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  @Matches(/^[^\s]+$/, {
-    message: 'fileName must not contain spaces',
-  })
-  readonly fileName?: string;
 }

@@ -76,7 +76,7 @@ export class DocumentsController {
     example: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
     type: 'string',
   })
-  async removeDocument(@Param('id') id: string, /**@JWTUser*/ user: User) {
-    return this.docService.removeDocument(id, user);
+  async removeDocument(@Param('id') id: string) {
+    return this.docService.removeDocument(id);
   }
 }
