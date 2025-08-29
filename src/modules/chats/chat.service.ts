@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -19,6 +20,8 @@ import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ChatRepository } from './chat.repository';
 import { CreateNewChatDto } from './dtos/create-new-chat.dto';
 import { ChangeChatTitleDto } from './dtos/change-chat-title.dto';
+import type { AiService } from '../ai/ai.service';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class ChatService {
@@ -27,6 +30,7 @@ export class ChatService {
     private readonly chatRepository: ChatRepository,
     private readonly dataSource: DataSource,
     private readonly messagesService: MessagesService,
+    @Inject('AI_SERVICE') private readonly aiService: AiService,
   ) {}
 
   /**
@@ -76,7 +80,7 @@ export class ChatService {
     let title: string;
 
     try {
-      const result = await this.messagesService.createFirstMessage(
+      const result = await this.messagesService.createTempMessage(
         body.message,
         creator,
       );
@@ -213,5 +217,25 @@ export class ChatService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  /**
+   * generate
+   */
+  generate(question: string): Observable<MessageEvent> {
+    return new Observable<MessageEvent>((subscriber) => {
+      (async () => {
+        try {
+          for await (const chunk of this.aiService.generateStreamResponse(
+            question,
+          )) {
+            subscriber.next({ data: chunk } as MessageEvent);
+          }
+          subscriber.complete();
+        } catch (err) {
+          subscriber.error(err);
+        }
+      })();
+    });
   }
 }

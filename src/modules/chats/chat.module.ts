@@ -4,10 +4,21 @@ import { ChatController } from './chat.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Chat } from './entities/chat.entity';
 import { MessagesModule } from '../messages/messages.module';
+import { ConfigService } from '@nestjs/config';
+import { GeminiService } from '../gemini/gemini.service';
+import { OpenaiService } from '../openai/openai.service';
+import { GeminiModule } from '../gemini/gemini.module';
+import { OpenaiModule } from '../openai/openai.module';
+import { AiProvider } from '../ai/ai.provider';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Chat]), forwardRef(() => MessagesModule)],
-  providers: [ChatService],
+  imports: [
+    TypeOrmModule.forFeature([Chat]),
+    forwardRef(() => MessagesModule),
+    GeminiModule,
+    OpenaiModule,
+  ],
+  providers: [ChatService, AiProvider],
   controllers: [ChatController],
   exports: [ChatService],
 })

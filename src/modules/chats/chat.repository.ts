@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, Like, Repository } from 'typeorm';
 import { Chat } from './entities/chat.entity';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
@@ -51,5 +55,20 @@ export class ChatRepository extends Repository<Chat> {
       totalInPage: partialConversations.length,
       totalPage: Math.ceil(total / query.size),
     });
+  }
+
+  async findChat(id: string): Promise<Chat> {
+    try {
+      const chat = await this.findOne({
+        where: { id },
+      });
+      if (!chat)
+        throw new NotFoundException(
+          `The Conversations with id ${id} does not exists`,
+        );
+      return chat;
+    } catch (error) {
+      throw new InternalServerErrorException(`can not get chat`);
+    }
   }
 }

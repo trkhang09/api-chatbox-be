@@ -4,6 +4,8 @@ import { GoogleGenAI } from '@google/genai';
 import { DocumentChunksRepository } from '../document-chunks/document-chunks.repository';
 import { AiResponseDto } from './dto/ai-response.dto';
 import { EmbeddingResponseDto } from './dto/create-embedding-response.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DocumentChunks } from '../document-chunks/entities/document-chunks.entity';
 
 dotenv.config();
 
@@ -12,8 +14,12 @@ export class GeminiService {
   private readonly apiKey: string;
   private readonly googleGenAI: GoogleGenAI;
   private readonly embeddingModel: string = 'gemini-embedding-001';
-  private readonly completionModel: string = 'gemini-1.5-pro';
-  private readonly modelKnowledge: string = 'Bạn là một trợ lý ảo vui tính.';
+  private readonly completionModel: string = 'gemini-2.5-flash';
+  private readonly LIMIT_CONTENTS: number = 2;
+  // private readonly completionModel: string = 'gemini-1.5-pro';
+  //gemini-2.5-flash
+  private readonly modelKnowledge: string =
+    'Bạn là nữ trợ lý gen Z, lúc nào cũng dạ thưa';
 
   constructor(
     private readonly documentChunksRepository: DocumentChunksRepository,
@@ -24,7 +30,7 @@ export class GeminiService {
 
   private generateContext(content: string, prompt: string): string {
     if (content) {
-      return `Dưới đây là một số thông tin nội bộ được lấy từ tài liệu: ${content}. \nCâu hỏi của người dùng: ${prompt}.\nHãy dựa vào thông tin trên để trả lời tự nhiên, dễ hiểu.\nNếu thông tin không có trong dữ liệu, hãy trả lời rằng bạn không có thông tin.\nTuyệt đối không bịa ra câu trả lời.`;
+      return `Dưới đây là một số thông tin nội bộ được lấy từ tài liệu: ${content}. \nCâu hỏi của người dùng: ${prompt}.\nHãy dựa vào thông tin trên để trả lời tự nhiên, dễ hiểu.\nNếu thông tin không có trong dữ liệu, hãy trả lời rằng bạn không có thông tin.\nTuyệt đối không bịa ra câu trả lời.Gợi ý câu hỏi tiếp theo cho người dùng một cách tự nhiên`;
     } else {
       return `Câu hỏi của người dùng: ${prompt}.\nHãy trả lời dựa trên kiến thức của bạn một cách tự nhiên, dễ hiểu.\nTuyệt đối không bịa ra câu trả lời.`;
     }
@@ -92,6 +98,45 @@ export class GeminiService {
         model: this.completionModel,
         inDocument: inDocuments,
       };
+    } catch (error) {
+      throw new Error(
+        `Failed to get response from Gemini API: ${error.message}`,
+      );
+    }
+  }
+
+  async *generateStreamResponse(prompt: string) {
+    try {
+      const convertPrompt = await this.generateEmbedding(prompt);
+      const rawContent = await this.documentChunksRepository.findByEmbedding({
+        embedding: convertPrompt[0].embedding,
+        limit: this.LIMIT_CONTENTS,
+      });
+      const content = JSON.stringify(rawContent);
+      const response = await this.googleGenAI.models.generateContentStream({
+        model: this.completionModel,
+        contents: [
+          {
+            parts: [
+              {
+                text: this.modelKnowledge,
+              },
+            ],
+            role: 'model',
+          },
+          {
+            parts: [
+              {
+                text: this.generateContext(content, prompt),
+              },
+            ],
+            role: 'user',
+          },
+        ],
+      });
+      for await (const chunk of response) {
+        yield chunk.text;
+      }
     } catch (error) {
       throw new Error(
         `Failed to get response from Gemini API: ${error.message}`,
