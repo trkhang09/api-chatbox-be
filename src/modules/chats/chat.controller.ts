@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Query,
+  Sse,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { User } from '../users/entities/user.entity';
@@ -24,6 +25,7 @@ import { RespondCreatedNewChatDto } from './dtos/respond-created-new-chat.dto';
 import { RespondChangedChatTitleDto } from './dtos/respond-changed-chat-title.dto';
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
+import { Observable } from 'rxjs';
 
 @ApiTags('Conversation History')
 @Controller('chat')
@@ -121,4 +123,16 @@ export class ChatController {
   //     return res.status(500).json(error.message);
   //   }
   // }
+
+  /**
+   * generate response stream
+   */
+  @ApiOperation({
+    summary: 'chats generate answer with ai',
+  })
+  @ApiOkResponseCustom(Observable<MessageEvent>, true)
+  @Sse('generate')
+  generate(@Query('question') question: string): Observable<MessageEvent> {
+    return this.chatService.generate(question);
+  }
 }

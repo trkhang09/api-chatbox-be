@@ -17,6 +17,7 @@ import { OpenaiModule } from './modules/openai/openai.module';
 import { OtpModule } from './modules/otp/otp.module';
 import { EmailModule } from './modules/email/email.module';
 import { GeminiModule } from './modules/gemini/gemini.module';
+import { AiModule } from './modules/ai/ai.module';
 import { FileModule } from './modules/files/files.module';
 
 @Module({
@@ -57,6 +58,7 @@ import { FileModule } from './modules/files/files.module';
     OtpModule,
     EmailModule,
     GeminiModule,
+    AiModule,
     FileModule,
   ],
   controllers: [AppController],
