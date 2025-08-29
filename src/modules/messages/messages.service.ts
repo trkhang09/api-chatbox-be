@@ -73,7 +73,7 @@ export class MessagesService {
     try {
       const title = await this.geminiService.generateSummary(message);
 
-      const respondMessage = this.messageRepository.create({
+      const respondMessage = await this.messageRepository.save({
         content: message,
         createdByUserId: creator.id,
       });
