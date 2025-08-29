@@ -9,12 +9,14 @@ import {
   Req,
   Query,
   HttpStatus,
+  ClassSerializerInterceptor,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiResponse } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
-import { GetRolesDto } from './dto/get-roles-request.dto';
+import { RolesRequestDto } from './dto/roles-request.dto';
 import { Role } from './entities/role.entity';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 
@@ -28,7 +30,8 @@ export class RolesController {
     type: ResponsePaginateDto<Role>,
   })
   @Get('list')
-  findAll(@Query() query: GetRolesDto) {
+  @UseInterceptors(ClassSerializerInterceptor)
+  findAll(@Query() query: RolesRequestDto) {
     return this.rolesService.findAll(query);
   }
 

@@ -5,9 +5,11 @@ import { Permission } from '../permissions/entities/permission.entity';
 import { Role } from './entities/role.entity';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
-import { GetRolesDto } from './dto/get-roles-request.dto';
+import { RolesRequestDto } from './dto/roles-request.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
-
+import { plainToInstance } from 'class-transformer';
+import { RoleResponseDto } from './dto/roles-response.dto';
+import { PermissionResponseDto } from '../permissions/dto/permission-response.dto';
 @Injectable()
 export class RolesService {
   constructor(
@@ -16,7 +18,9 @@ export class RolesService {
     private readonly permRepo: Repository<Permission>,
   ) {}
 
-  async findAll(getRolesDto: GetRolesDto): Promise<ResponsePaginateDto<Role>> {
+  async findAll(
+    getRolesDto: RolesRequestDto,
+  ): Promise<ResponsePaginateDto<RoleResponseDto>> {
     try {
       let where = {};
 
@@ -33,10 +37,15 @@ export class RolesService {
         order: { [getRolesDto.sortBy]: getRolesDto.sortOrder },
         take: getRolesDto.size,
         skip: (getRolesDto.page - 1) * getRolesDto.size,
+        relations: ['permissions'],
+      });
+
+      const dtoData = plainToInstance(RoleResponseDto, data, {
+        excludeExtraneousValues: true,
       });
 
       return {
-        data,
+        data: dtoData,
         size: getRolesDto.size,
         page: getRolesDto.page,
         total: total,
@@ -48,7 +57,7 @@ export class RolesService {
     }
   }
 
-  async findOne(id: string): Promise<Role> {
+  async findOne(id: string): Promise<RoleResponseDto> {
     try {
       const role = await this.roleRepo.findOne({
         where: { id },
@@ -56,14 +65,19 @@ export class RolesService {
 
       if (!role) throw new NotFoundException('Role not found');
 
-      return role;
+      return plainToInstance(RoleResponseDto, role, {
+        excludeExtraneousValues: true,
+      });
     } catch (error) {
       console.error(error);
       throw new NotFoundException('Role not found');
     }
   }
 
-  async create(dto: CreateRoleRequestDto, userId: string): Promise<Role> {
+  async create(
+    dto: CreateRoleRequestDto,
+    userId: string,
+  ): Promise<RoleResponseDto> {
     try {
       const permissions = dto.permissions
         ? await this.permRepo.find({ where: { id: In(dto.permissions) } })
@@ -73,15 +87,22 @@ export class RolesService {
         permissions,
         createdByUserId: userId,
       };
-      return await this.roleRepo.save(role);
+      const savedRole = await this.roleRepo.save(role);
+      return plainToInstance(RoleResponseDto, savedRole, {
+        excludeExtraneousValues: true,
+      });
     } catch (error) {
       throw new Error('Failed to create role: ' + error.message);
     }
   }
 
-  async update(id: string, dto: UpdateRoleRequestDto): Promise<Role> {
+  async update(
+    id: string,
+    dto: UpdateRoleRequestDto,
+  ): Promise<RoleResponseDto> {
     try {
-      const role = await this.findOne(id);
+      const role = await this.roleRepo.findOne({ where: { id } });
+
       if (!role) throw new NotFoundException('Role not found');
 
       if (dto.permissions) {
@@ -96,7 +117,10 @@ export class RolesService {
 
       await this.roleRepo.save(role);
 
-      return role;
+      const dtoData = plainToInstance(RoleResponseDto, role, {
+        excludeExtraneousValues: true,
+      });
+      return dtoData;
     } catch (error) {
       throw new Error('Failed to update role: ' + error.message);
     }
