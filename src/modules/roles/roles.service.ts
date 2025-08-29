@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Query } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { ILike, In, Repository } from 'typeorm';
 import { Permission } from '../permissions/entities/permission.entity';
 import { Role } from './entities/role.entity';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
+import { GetRolesDto } from './dto/get-roles-request.dto';
+import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 
 @Injectable()
 export class RolesService {
@@ -14,13 +16,33 @@ export class RolesService {
     private readonly permRepo: Repository<Permission>,
   ) {}
 
-  async findAll(statusId: number): Promise<Role[]> {
+  async findAll(getRolesDto: GetRolesDto): Promise<ResponsePaginateDto<Role>> {
     try {
-      const roles = await this.roleRepo.find({
-        where: { status: statusId },
+      let where = {};
+
+      if (getRolesDto?.search) {
+        where = { ...where, name: ILike(`%${getRolesDto.search}%`) };
+      }
+
+      if (getRolesDto?.status) {
+        where = { ...where, status: getRolesDto.status };
+      }
+
+      const [data, total] = await this.roleRepo.findAndCount({
+        where,
+        order: { [getRolesDto.sortBy]: getRolesDto.sortOrder },
+        take: getRolesDto.size,
+        skip: (getRolesDto.page - 1) * getRolesDto.size,
       });
 
-      return roles;
+      return {
+        data,
+        size: getRolesDto.size,
+        page: getRolesDto.page,
+        total: total,
+        totalInPage: data.length,
+        totalPage: Math.ceil(total / getRolesDto.size),
+      };
     } catch (error) {
       throw new Error('Failed to retrieve roles: ' + error.message);
     }
@@ -59,9 +81,7 @@ export class RolesService {
 
   async update(id: string, dto: UpdateRoleRequestDto): Promise<Role> {
     try {
-      const role = await this.roleRepo.findOne({
-        where: { id },
-      });
+      const role = await this.findOne(id);
       if (!role) throw new NotFoundException('Role not found');
 
       if (dto.permissions) {
@@ -82,16 +102,15 @@ export class RolesService {
     }
   }
 
-  async remove(id: string, userId: string): Promise<void> {
+  async remove(id: string): Promise<boolean> {
     try {
-      const role = await this.roleRepo.findOne({
-        where: { id },
-      });
+      const role = await this.findOne(id);
       if (!role) throw new NotFoundException('Role not found');
 
-      await this.roleRepo.remove(role);
+      await this.roleRepo.softDelete(role.id);
+      return true;
     } catch (error) {
-      throw new Error('Failed to delete role: ' + error.message);
+      throw new Error('Failed to delete role: ' + error);
     }
   }
 }
