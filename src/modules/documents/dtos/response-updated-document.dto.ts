@@ -3,6 +3,12 @@ import { DocumentStatus } from 'src/common/enums/document-status.enum';
 
 export class ResponseUpdatedDocumentDto {
   @ApiProperty({
+    description: 'The uuid of the document',
+    example: '6b7b09a3-6f59-421b-909c-4907a51011e8',
+  })
+  id: string;
+
+  @ApiProperty({
     description: 'The title of the document',
     example: 'Project Plan',
   })

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateDocumentDto {
   @ApiProperty({
@@ -17,12 +23,27 @@ export class CreateDocumentDto {
   })
   @IsOptional()
   @IsString()
-  readonly description: string = '';
+  readonly description?: string;
 
   @ApiProperty({
     description:
       'File path where the document is stored (Accepted file types: .pdf, .docx)',
     example: '/uploads/documents/project-plan.pdf',
   })
-  filePath: string;
+  @IsString()
+  @IsNotEmpty()
+  readonly filePath: string;
+
+  @ApiProperty({
+    description: 'The name of the document file (not accept space)',
+    example: 'Project_Plan',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  @Matches(/^[^\s]+$/, {
+    message: 'fileName must not contain spaces (optional)',
+  })
+  readonly fileName?: string;
 }

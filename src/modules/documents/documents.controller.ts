@@ -7,8 +7,6 @@ import {
   Post,
   Put,
   Query,
-  UploadedFile,
-  UseInterceptors,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
@@ -18,42 +16,59 @@ import { ResponseDocumentDto } from './dtos/response-document.dto';
 import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
 import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-request-response.decorator';
 import { GetPaginatedDocumentsDto } from './dtos/get-paginated-documents.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateDocumentDto } from './dtos/create-document.dto';
-import { ApiConsumes, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiOperation, ApiParam } from '@nestjs/swagger';
 import { ResponseCreatedDocumentDto } from './dtos/response-created-document.dto';
 import { UpdateDocumentDto } from './dtos/update-document.dto';
 import { ResponseUpdatedDocumentDto } from './dtos/response-updated-document.dto';
-import { ResponseRemovedDocumentDto } from './dtos/response-removed-document.dto';
+import { User } from '../users/entities/user.entity';
+import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
 
 @Controller('documents')
 export class DocumentsController {
   constructor(private readonly docService: DocumentsService) {}
 
-  @Get('/paginated')
+  @Get('/')
   @ApiOperation({ summary: 'Get paginated list of documents' })
   @ApiPaginatedResponseCustom(ResponsePaginateDto, ResponseDocumentDto)
   @ApiBadRequestResponseCustom()
   @ApiInternalServerErrorResponseCustom()
-  async getPaginatedDocuments(@Query() query: GetPaginatedDocumentsDto) {}
+  async getPaginatedDocuments(@Query() query: GetPaginatedDocumentsDto) {
+    return this.docService.getPaginatedDocuments(query);
+  }
 
   @Post('/')
+  @ApiOperation({ summary: 'Create a new document' })
   @ApiCommonResponseCustom(ResponseCreatedDocumentDto)
-  @UseInterceptors(FileInterceptor('document'))
-  @ApiOperation({ summary: 'Upload a document file into server' })
-  @ApiConsumes('multipart/form-data')
-  async uploadDocument(
-    @UploadedFile() document: Express.Multer.File,
+  @ApiNotFoundResponseCustom()
+  async createDocument(
     @Body() body: CreateDocumentDto,
-  ) {}
+    /**@JWTUser*/ user: User,
+  ) {
+    return this.docService.createDocument(body, user);
+  }
 
-  @Put('/')
+  @Put('/:id')
   @ApiCommonResponseCustom(ResponseUpdatedDocumentDto)
+  @ApiNotFoundResponseCustom()
   @ApiOperation({ summary: "Update a specific document's information" })
-  async updateDocument(@Body() body: UpdateDocumentDto) {}
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the document which will be updated',
+    example: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
+    type: 'string',
+  })
+  async updateDocument(
+    @Param('id') id: string,
+    @Body() body: UpdateDocumentDto,
+    /**@JWTUser*/ user: User,
+  ) {
+    return this.docService.updateDocument(id, body, user);
+  }
 
   @Delete('/:id')
-  @ApiCommonResponseCustom(ResponseRemovedDocumentDto)
+  @ApiCommonResponseCustom(Boolean, true)
+  @ApiNotFoundResponseCustom()
   @ApiOperation({ summary: 'Softly remove a specific document' })
   @ApiParam({
     name: 'id',
@@ -61,5 +76,7 @@ export class DocumentsController {
     example: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
     type: 'string',
   })
-  async removeDocument(@Param('id') id: string) {}
+  async removeDocument(@Param('id') id: string, /**@JWTUser*/ user: User) {
+    return this.docService.removeDocument(id, user);
+  }
 }
