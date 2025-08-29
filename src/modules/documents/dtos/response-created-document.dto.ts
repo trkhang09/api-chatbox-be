@@ -28,13 +28,6 @@ export class ResponseCreatedDocumentDto {
   status: DocumentStatus;
 
   @ApiProperty({
-    description: 'Size of the file in kilobytes (kB)',
-    type: 'number',
-    example: 23,
-  })
-  size: number;
-
-  @ApiProperty({
     description: 'Date and time when the document was created',
     type: String,
     format: 'date-time',

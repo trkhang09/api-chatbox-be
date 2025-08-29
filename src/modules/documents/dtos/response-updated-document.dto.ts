@@ -28,13 +28,6 @@ export class ResponseUpdatedDocumentDto {
   status: DocumentStatus;
 
   @ApiProperty({
-    description: 'Size of the file in kilobytes (kB)',
-    type: 'number',
-    example: 23,
-  })
-  size: number;
-
-  @ApiProperty({
     description: 'Date and time when the document was updated',
     type: String,
     format: 'date-time',

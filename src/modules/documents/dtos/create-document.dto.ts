@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MaxLength,
-  ValidateIf,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateDocumentDto {
   @ApiProperty({
@@ -18,19 +12,17 @@ export class CreateDocumentDto {
   readonly title: string;
 
   @ApiProperty({
-    description: 'A short description of the document',
+    description: 'A short description of the document (optional)',
     example: 'This document contains the detailed project plan for Q1.',
   })
+  @IsOptional()
   @IsString()
-  readonly description: string;
+  readonly description: string = '';
 
   @ApiProperty({
-    type: 'string',
-    format: 'binary',
-    description: 'Accepted file types: .pdf, .docx',
-    example: '',
+    description:
+      'File path where the document is stored (Accepted file types: .pdf, .docx)',
+    example: '/uploads/documents/project-plan.pdf',
   })
-  @ValidateIf(() => false)
-  @IsOptional()
-  readonly document: any;
+  filePath: string;
 }

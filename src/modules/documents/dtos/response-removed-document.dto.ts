@@ -28,13 +28,6 @@ export class ResponseRemovedDocumentDto {
   status: DocumentStatus;
 
   @ApiProperty({
-    description: 'Size of the file in kilobytes (kB)',
-    type: 'number',
-    example: 23,
-  })
-  size: number;
-
-  @ApiProperty({
     description: 'Date and time when the document was removed',
     type: String,
     format: 'date-time',
