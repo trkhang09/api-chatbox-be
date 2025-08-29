@@ -10,6 +10,7 @@ import { OpenaiService } from '../openai/openai.service';
 import { GeminiModule } from '../gemini/gemini.module';
 import { OpenaiModule } from '../openai/openai.module';
 import { AiProvider } from '../ai/ai.provider';
+import { ChatRepository } from './chat.repository';
 
 @Module({
   imports: [
@@ -18,8 +19,8 @@ import { AiProvider } from '../ai/ai.provider';
     GeminiModule,
     OpenaiModule,
   ],
-  providers: [ChatService, AiProvider],
+  providers: [ChatService, AiProvider, ChatRepository],
   controllers: [ChatController],
-  exports: [ChatService],
+  exports: [ChatService, ChatRepository],
 })
 export class ChatModule {}
