@@ -5,30 +5,21 @@ import { AiRespondWithoutLoginDto } from './dtos/ai-respond-without-login.dto';
 import { Public } from '../auth/public.decorator';
 import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
+import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 
 @Controller('messages')
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
-  @Post('ai/without-login')
-  @Public()
-  async createdAIMessageWithoutLogin(
-    @Body() question: string,
-  ): Promise<AiRespondWithoutLoginDto> {
-    try {
-      const response =
-        await this.messagesService.createAiMessageWithoutLogin(question);
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  }
-
   @Get('/')
-  async getMessagesInConversation(@Query() query: GetMessagesInChatDto) {
+  async getMessagesInConversation(
+    @Query() query: GetMessagesInChatDto,
+  ): Promise<ResponsePaginateDto<RespondMessageDto>> {
     try {
       const respond = await this.messagesService.getMessagesInChat(query);
       return respond;
-    } catch (error) {}
+    } catch (error) {
+      throw error;
+    }
   }
 }
