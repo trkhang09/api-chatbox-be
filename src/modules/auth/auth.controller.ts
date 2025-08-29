@@ -14,6 +14,7 @@ import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { LoginResponseDto } from './dtos/login-response.dto';
 import { MeDto } from './dtos/me.dto';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -34,8 +35,8 @@ export class AuthController {
   @ApiCommonResponseCustom(MeDto)
   @ApiOperation({ summary: 'Get User data of this user' })
   @Get('me')
-  async me(@Req() req: Request) {
-    return req['user'];
+  async me(@AuthUser() user) {
+    return user;
   }
 
   @ApiCommonResponseCustom(Boolean, true)
