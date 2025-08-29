@@ -7,7 +7,7 @@ export class Otp extends AbstractEntity {
   @Column()
   code: string;
 
-  @Column({ default: false })
+  @Column({ name: 'is_used', default: false })
   isUsed: boolean;
 
   @Column({ name: 'expired_at' })
