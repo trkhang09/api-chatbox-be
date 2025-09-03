@@ -13,23 +13,52 @@ export class PermissionsService {
     private readonly permRepo: Repository<Permission>,
   ) {}
 
-  async findAll(
-    permissionFilterRequestDto: PermissionFilterRequestDto,
-  ): Promise<PermissionFilterResponseDto[]> {
-    let where = {};
+  async findAll(): Promise<Record<string, PermissionFilterResponseDto[]>> {
+    try {
+      const permissions = await this.permRepo.find();
 
-    if (permissionFilterRequestDto?.search) {
-      where = {
-        ...where,
-        name: ILike(`%${permissionFilterRequestDto.search}%`),
-      };
+      const grouped = permissions.reduce(
+        (accumulator, permission) => {
+          const [prefix] = permission.code.split('_');
+          const groupKey =
+            prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase();
+
+          if (!accumulator[groupKey]) {
+            accumulator[groupKey] = [];
+          }
+
+          accumulator[groupKey].push(
+            plainToInstance(PermissionFilterResponseDto, {
+              id: permission.id,
+              name: permission.name,
+            }),
+          );
+
+          return accumulator;
+        },
+        {} as Record<string, PermissionFilterResponseDto[]>,
+      );
+
+      return grouped;
+    } catch (error) {
+      throw new Error('Failed to retrieve permissions: ' + error.message);
     }
-    const permissions = await this.permRepo.find({
-      where,
-    });
-    const dtoData = plainToInstance(PermissionFilterResponseDto, permissions, {
-      excludeExtraneousValues: true,
-    });
-    return dtoData;
+  }
+  async findPermissionByRoleId(
+    param: PermissionFilterRequestDto,
+  ): Promise<PermissionFilterResponseDto[]> {
+    const { roleId } = param;
+
+    try {
+      const permissions = await this.permRepo.find({
+        where: { roles: { id: roleId } },
+      });
+
+      return plainToInstance(PermissionFilterResponseDto, permissions, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      throw new Error('Failed to retrieve permissions: ' + error.message);
+    }
   }
 }

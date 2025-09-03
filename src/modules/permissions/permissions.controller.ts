@@ -26,7 +26,16 @@ export class PermissionsController {
   })
   @Get()
   @UseInterceptors(ClassSerializerInterceptor)
-  findAll(@Query() query: PermissionFilterRequestDto) {
-    return this.permissionsService.findAll(query);
+  findAll() {
+    return this.permissionsService.findAll();
+  }
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of permissions for a specific role',
+    type: PermissionFilterResponseDto,
+  })
+  @Get('by-role/:roleId')
+  async findPermissionByRoleId(@Param() param: PermissionFilterRequestDto) {
+    return this.permissionsService.findPermissionByRoleId(param);
   }
 }

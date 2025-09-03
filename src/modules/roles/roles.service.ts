@@ -19,26 +19,26 @@ export class RolesService {
   ) {}
 
   async findAll(
-    roleFilterRequestDto: RoleFilterRequestDto,
+    query: RoleFilterRequestDto,
   ): Promise<ResponsePaginateDto<RoleFilterResponseDto>> {
     try {
       let where = {};
 
-      if (roleFilterRequestDto?.search) {
-        where = { ...where, name: ILike(`%${roleFilterRequestDto.search}%`) };
+      if (query?.search) {
+        where = { ...where, name: ILike(`%${query.search}%`) };
       }
 
-      if (roleFilterRequestDto?.status) {
-        where = { ...where, status: roleFilterRequestDto.status };
+      if (query?.status) {
+        where = { ...where, status: query.status };
       }
 
       const [data, total] = await this.roleRepo.findAndCount({
         where,
         order: {
-          [roleFilterRequestDto.sortBy]: roleFilterRequestDto.sortOrder,
+          [query.sortBy]: query.sortOrder,
         },
-        take: roleFilterRequestDto.size,
-        skip: (roleFilterRequestDto.page - 1) * roleFilterRequestDto.size,
+        take: query.size,
+        skip: (query.page - 1) * query.size,
       });
 
       const dtoData = plainToInstance(RoleFilterResponseDto, data, {
@@ -47,11 +47,11 @@ export class RolesService {
 
       return {
         data: dtoData,
-        size: roleFilterRequestDto.size,
-        page: roleFilterRequestDto.page,
+        size: query.size,
+        page: query.page,
         total: total,
         totalInPage: data.length,
-        totalPage: Math.ceil(total / roleFilterRequestDto.size),
+        totalPage: Math.ceil(total / query.size),
       };
     } catch (error) {
       throw new Error('Failed to retrieve roles: ' + error.message);
