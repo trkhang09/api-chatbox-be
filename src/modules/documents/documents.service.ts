@@ -6,12 +6,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, In, Like, Repository } from 'typeorm';
 import { Document } from './entities/document.entity';
-import { FileService } from '../files/file.service';
 import { ResponseDocumentDto } from './dtos/response-document.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { GetPaginatedDocumentsDto } from './dtos/get-paginated-documents.dto';
-import { plainToInstance } from 'class-transformer';
-import { DocumentStatus } from 'src/common/enums/document-status.enum';
 import { CreateDocumentDto } from './dtos/create-document.dto';
 import { ResponseCreatedDocumentDto } from './dtos/response-created-document.dto';
 import { User } from '../users/entities/user.entity';
@@ -23,8 +20,6 @@ export class DocumentsService {
   constructor(
     @InjectRepository(Document)
     private readonly docRepo: Repository<Document>,
-
-    private readonly fileService: FileService,
   ) {}
 
   /**
@@ -57,12 +52,6 @@ export class DocumentsService {
         Object.keys(dto).forEach((k) => {
           dto[k] = doc[k];
         });
-
-        try {
-          dto.size = (await this.fileService.readFileSize(doc.filePath)) / 1000;
-        } catch (error) {
-          dto.size = 0;
-        }
 
         data.push(dto);
       }
@@ -97,9 +86,7 @@ export class DocumentsService {
   ): Promise<ResponseCreatedDocumentDto> {
     try {
       const savedDoc = await this.docRepo.save({
-        title: body.title,
-        description: body.description,
-        filePath: body.filePath,
+        ...body,
         createdByUserId: user.id,
       });
 
