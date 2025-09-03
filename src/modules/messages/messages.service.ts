@@ -15,11 +15,9 @@ import { ChatRepository } from '../chats/chat.repository';
 import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
 import { MessageRepository } from './message.repository';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
-import { AiResponseDto } from '../gemini/dto/ai-response.dto';
 import { createMessageDto } from './dtos/create-message.dto';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
-import { promises } from 'dns';
 
 @Injectable()
 export class MessagesService {
@@ -162,14 +160,11 @@ export class MessagesService {
       const message = await this.messageRepository.findOne({
         where: {
           id: messageId,
+          createdByUserId: userId,
         },
       });
-      if (
-        !message ||
-        !message.createdByUserId ||
-        message.createdByUserId !== userId
-      ) {
-        throw new Error(
+      if (!message) {
+        throw new NotFoundException(
           `this User does not have permission to edit this message`,
         );
       }
