@@ -5,11 +5,11 @@ import { Permission } from '../permissions/entities/permission.entity';
 import { Role } from './entities/role.entity';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
-import { RolesRequestDto } from './dto/roles-request.dto';
+import { RoleFilterRequestDto } from './dto/role-filter-request.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { plainToInstance } from 'class-transformer';
-import { RoleResponseDto } from './dto/roles-response.dto';
-import { PermissionResponseDto } from '../permissions/dto/permission-response.dto';
+import { RoleFilterResponseDto } from './dto/role-filter-response.dto';
+
 @Injectable()
 export class RolesService {
   constructor(
@@ -19,45 +19,46 @@ export class RolesService {
   ) {}
 
   async findAll(
-    getRolesDto: RolesRequestDto,
-  ): Promise<ResponsePaginateDto<RoleResponseDto>> {
+    roleFilterRequestDto: RoleFilterRequestDto,
+  ): Promise<ResponsePaginateDto<RoleFilterResponseDto>> {
     try {
       let where = {};
 
-      if (getRolesDto?.search) {
-        where = { ...where, name: ILike(`%${getRolesDto.search}%`) };
+      if (roleFilterRequestDto?.search) {
+        where = { ...where, name: ILike(`%${roleFilterRequestDto.search}%`) };
       }
 
-      if (getRolesDto?.status) {
-        where = { ...where, status: getRolesDto.status };
+      if (roleFilterRequestDto?.status) {
+        where = { ...where, status: roleFilterRequestDto.status };
       }
 
       const [data, total] = await this.roleRepo.findAndCount({
         where,
-        order: { [getRolesDto.sortBy]: getRolesDto.sortOrder },
-        take: getRolesDto.size,
-        skip: (getRolesDto.page - 1) * getRolesDto.size,
-        relations: ['permissions'],
+        order: {
+          [roleFilterRequestDto.sortBy]: roleFilterRequestDto.sortOrder,
+        },
+        take: roleFilterRequestDto.size,
+        skip: (roleFilterRequestDto.page - 1) * roleFilterRequestDto.size,
       });
 
-      const dtoData = plainToInstance(RoleResponseDto, data, {
+      const dtoData = plainToInstance(RoleFilterResponseDto, data, {
         excludeExtraneousValues: true,
       });
 
       return {
         data: dtoData,
-        size: getRolesDto.size,
-        page: getRolesDto.page,
+        size: roleFilterRequestDto.size,
+        page: roleFilterRequestDto.page,
         total: total,
         totalInPage: data.length,
-        totalPage: Math.ceil(total / getRolesDto.size),
+        totalPage: Math.ceil(total / roleFilterRequestDto.size),
       };
     } catch (error) {
       throw new Error('Failed to retrieve roles: ' + error.message);
     }
   }
 
-  async findOne(id: string): Promise<RoleResponseDto> {
+  async findOne(id: string): Promise<RoleFilterResponseDto> {
     try {
       const role = await this.roleRepo.findOne({
         where: { id },
@@ -65,7 +66,7 @@ export class RolesService {
 
       if (!role) throw new NotFoundException('Role not found');
 
-      return plainToInstance(RoleResponseDto, role, {
+      return plainToInstance(RoleFilterResponseDto, role, {
         excludeExtraneousValues: true,
       });
     } catch (error) {
@@ -77,7 +78,7 @@ export class RolesService {
   async create(
     dto: CreateRoleRequestDto,
     userId: string,
-  ): Promise<RoleResponseDto> {
+  ): Promise<RoleFilterResponseDto> {
     try {
       const permissions = dto.permissions
         ? await this.permRepo.find({ where: { id: In(dto.permissions) } })
@@ -88,7 +89,7 @@ export class RolesService {
         createdByUserId: userId,
       };
       const savedRole = await this.roleRepo.save(role);
-      return plainToInstance(RoleResponseDto, savedRole, {
+      return plainToInstance(RoleFilterResponseDto, savedRole, {
         excludeExtraneousValues: true,
       });
     } catch (error) {
@@ -99,7 +100,7 @@ export class RolesService {
   async update(
     id: string,
     dto: UpdateRoleRequestDto,
-  ): Promise<RoleResponseDto> {
+  ): Promise<RoleFilterResponseDto> {
     try {
       const role = await this.roleRepo.findOne({ where: { id } });
 
@@ -117,7 +118,7 @@ export class RolesService {
 
       await this.roleRepo.save(role);
 
-      const dtoData = plainToInstance(RoleResponseDto, role, {
+      const dtoData = plainToInstance(RoleFilterResponseDto, role, {
         excludeExtraneousValues: true,
       });
       return dtoData;

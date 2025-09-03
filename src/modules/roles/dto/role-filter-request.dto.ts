@@ -3,7 +3,7 @@ import { Expose } from 'class-transformer';
 import { IsOptional, IsString, IsIn } from 'class-validator';
 import { PaginateDto } from 'src/common/dtos/paginate.dto';
 
-export class RolesRequestDto extends PaginateDto {
+export class RoleFilterRequestDto extends PaginateDto {
   @ApiProperty({
     example: 'Admin',
     description: 'Search term for role name',

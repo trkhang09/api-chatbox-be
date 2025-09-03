@@ -2,9 +2,9 @@ import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
 import { Permission } from 'src/modules/permissions/entities/permission.entity';
-import { PermissionResponseDto } from 'src/modules/permissions/dto/permission-response.dto';
+import { PermissionFilterResponseDto } from 'src/modules/permissions/dto/permission-filter-response.dto';
 
-export class RoleResponseDto {
+export class RoleFilterResponseDto {
   @Expose()
   @ApiProperty({
     example: 'uuid-role-1',
@@ -35,15 +35,4 @@ export class RoleResponseDto {
     description: 'Status of the role (1: active, 0: inactive)',
   })
   status: number;
-
-  @Expose()
-  @ApiProperty({
-    example: ['uuid-permission-1', 'uuid-permission-2'],
-    description: 'List of permission IDs (optional)',
-    required: false,
-  })
-  @IsArray()
-  @IsOptional()
-  @Type(() => PermissionResponseDto)
-  permissions?: PermissionResponseDto[];
 }

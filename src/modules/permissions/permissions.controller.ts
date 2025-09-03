@@ -9,10 +9,12 @@ import {
   HttpStatus,
   UseInterceptors,
   ClassSerializerInterceptor,
+  Query,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
 import { ApiResponse } from '@nestjs/swagger';
-import { PermissionResponseDto } from './dto/permission-response.dto';
+import { PermissionFilterResponseDto } from './dto/permission-filter-response.dto';
+import { PermissionFilterRequestDto } from './dto/permission-filter-request.dto';
 
 @Controller('permissions')
 export class PermissionsController {
@@ -20,11 +22,11 @@ export class PermissionsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of permissions',
-    type: PermissionResponseDto,
+    type: PermissionFilterResponseDto,
   })
   @Get()
   @UseInterceptors(ClassSerializerInterceptor)
-  findAll() {
-    return this.permissionsService.findAll();
+  findAll(@Query() query: PermissionFilterRequestDto) {
+    return this.permissionsService.findAll(query);
   }
 }

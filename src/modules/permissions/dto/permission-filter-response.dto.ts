@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
-export class PermissionResponseDto {
+export class PermissionFilterResponseDto {
   @Expose()
   @ApiProperty({
     example: 1,
     description: 'Unique identifier for the permission',
   })
-  id: number;
+  id: string;
 
   @Expose()
   @ApiProperty({

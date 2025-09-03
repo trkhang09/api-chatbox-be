@@ -16,7 +16,7 @@ import { ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
-import { RolesRequestDto } from './dto/roles-request.dto';
+import { RoleFilterRequestDto } from './dto/role-filter-request.dto';
 import { Role } from './entities/role.entity';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
@@ -30,7 +30,7 @@ import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-r
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
-  @Get('list')
+  @Get()
   @UseInterceptors(ClassSerializerInterceptor)
   @ApiOperation({
     summary: 'Get list of roles',
@@ -38,7 +38,7 @@ export class RolesController {
   @ApiPaginatedResponseCustom(ResponsePaginateDto, Role)
   @ApiBadRequestResponseCustom()
   @ApiInternalServerErrorResponseCustom()
-  findAll(@Query() query: RolesRequestDto) {
+  findAll(@Query() query: RoleFilterRequestDto) {
     return this.rolesService.findAll(query);
   }
 
