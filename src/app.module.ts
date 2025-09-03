@@ -19,6 +19,7 @@ import { EmailModule } from './modules/email/email.module';
 import { GeminiModule } from './modules/gemini/gemini.module';
 import { AiModule } from './modules/ai/ai.module';
 import { FileModule } from './modules/files/files.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { FileModule } from './modules/files/files.module';
     ]),
     SocketModule,
     UsersModule,
+    DocumentsModule,
     DocumentChunksModule,
     RolesModule,
     PermissionsModule,
