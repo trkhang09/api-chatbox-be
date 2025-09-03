@@ -5,10 +5,7 @@ import {
 } from '@nestjs/common';
 import { DataSource, Like, Repository } from 'typeorm';
 import { Chat } from './entities/chat.entity';
-import { ChatTypes } from 'src/common/enums/chat-type.enum';
-import { RespondBatchedChatsDto } from './dtos/respond-batched-chat.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
-import { RespondRemovedChatHistoryDto } from './dtos/respond-removed-chat-history.dto';
 import { GetBatchedChatDto } from './dtos/get-batched-chat.dto';
 
 @Injectable()

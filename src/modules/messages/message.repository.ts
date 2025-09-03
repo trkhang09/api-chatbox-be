@@ -44,7 +44,9 @@ export class MessageRepository extends Repository<Message> {
     });
   }
 
-  async saveAndReturnDto(message: Message): Promise<RespondMessageDto> {
+  async saveAndReturnDto(
+    message: Partial<Message>,
+  ): Promise<RespondMessageDto> {
     const saved = await super.save(message);
     const respond = plainToInstance(RespondMessageDto, saved, {
       excludeExtraneousValues: true,
