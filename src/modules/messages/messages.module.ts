@@ -7,6 +7,7 @@ import { ChatModule } from '../chats/chat.module';
 import { GeminiModule } from '../gemini/gemini.module';
 import { Chat } from '../chats/entities/chat.entity';
 import { MessageRepository } from './message.repository';
+import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
@@ -14,7 +15,15 @@ import { MessageRepository } from './message.repository';
     forwardRef(() => ChatModule),
     forwardRef(() => GeminiModule),
   ],
-  providers: [MessagesService, MessageRepository],
+  providers: [
+    {
+      provide: MessageRepository,
+      useFactory: (dataSource: DataSource) => new MessageRepository(dataSource),
+      inject: [DataSource],
+    },
+    MessagesService,
+    MessageRepository,
+  ],
   controllers: [MessagesController],
   exports: [MessagesService],
 })
