@@ -49,7 +49,6 @@ export class FileController {
   }
 
   @Post('/')
-  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'upload a file' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
