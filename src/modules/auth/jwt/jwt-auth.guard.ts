@@ -11,6 +11,7 @@ import { IS_PUBLIC_KEY } from '../public.decorator';
 import { clientIdConstants } from 'src/common/constants/clientId-constants';
 import { headerConstants } from 'src/common/constants/header-constants';
 import { jwtConstants } from 'src/common/constants/jwt-constants';
+import { IS_FILE_SECURITY_KEY } from 'src/common/decorators/file-security-key.decorator';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -21,6 +22,20 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+
+    const isFileSecurityKey = this.reflector.getAllAndOverride<boolean>(
+      IS_FILE_SECURITY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (isFileSecurityKey) {
+      const fileKey = request.headers['file-security-key'];
+      const fileSystemKey = process.env.FILE_SECURITY_KEY;
+      if (fileKey && fileKey === fileSystemKey) {
+        return true;
+      }
+    }
+
     const clientId = request.headers[headerConstants.xClientId];
     if (
       !clientId ||
@@ -33,6 +48,7 @@ export class AuthGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
+
     if (isPublic) return true;
 
     const token = this.extractTokenFromHeader(request);

@@ -16,6 +16,8 @@ import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-respon
 import { AuthGuard } from '../auth/jwt/jwt-auth.guard';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
+import { Public } from '../auth/public.decorator';
+import { FileSecurityKey } from 'src/common/decorators/file-security-key.decorator';
 
 @ApiTags('Upload Files')
 @Controller('files')
@@ -33,6 +35,7 @@ export class FileController {
     return this.fileService.getAllFiles();
   }
 
+  @FileSecurityKey()
   @Get('/:filePath')
   // @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Get buffer of a specific file' })
