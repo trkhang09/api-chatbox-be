@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
+import { UserDto } from 'src/modules/users/dtos/user.dto';
 
 export class RespondChatDto {
   @ApiProperty({
@@ -26,4 +27,7 @@ export class RespondChatDto {
     example: ChatTypes.BOT,
   })
   type: ChatTypes;
+
+  @ApiProperty()
+  user: UserDto;
 }

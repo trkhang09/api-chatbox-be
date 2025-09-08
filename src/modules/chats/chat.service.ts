@@ -21,6 +21,7 @@ import { CreateNewChatDto } from './dtos/create-new-chat.dto';
 import { ChangeChatTitleDto } from './dtos/change-chat-title.dto';
 import type { AiService } from '../ai/ai.service';
 import { Observable } from 'rxjs';
+import { RespondChatDto } from './dtos/respond-chat.dto';
 
 @Injectable()
 export class ChatService {
@@ -43,11 +44,11 @@ export class ChatService {
    */
   async getChatBatch(
     query: GetBatchedChatDto,
-    user: User,
-  ): Promise<ResponsePaginateDto<Partial<Chat>>> {
+    userId: string,
+  ): Promise<ResponsePaginateDto<RespondChatDto>> {
     try {
       const response = await this.chatRepository.findChatByTitleWithPaginate(
-        user.id,
+        userId,
         query,
       );
 
@@ -67,7 +68,7 @@ export class ChatService {
    */
   async createNewChatWithMessage(
     body: CreateNewChatDto,
-    creator: User,
+    creator: any,
   ): Promise<RespondCreatedNewChatDto> {
     // GET RECEIVER. pending UserService
     const receiver: User = {
@@ -80,7 +81,7 @@ export class ChatService {
     try {
       const result = await this.messagesService.createTempMessage(
         body.message,
-        creator,
+        creator.sub,
       );
       newMsg = result.message;
       title = result.chatTitle;
