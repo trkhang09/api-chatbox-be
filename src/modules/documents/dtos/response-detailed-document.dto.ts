@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
 
-export class ResponseDocumentDto {
+export class ResponseDetailedDocumentDto {
   @ApiProperty({
     description: 'The uuid of the document',
     example: '6b7b09a3-6f59-421b-909c-4907a51011e8',
@@ -19,7 +19,12 @@ export class ResponseDocumentDto {
     example: 'This document contains the detailed project plan for Q1.',
   })
   description: string;
-  s;
+
+  @ApiProperty({
+    description: 'File path where the document is stored',
+    example: '/uploads/documents/project-plan.pdf',
+  })
+  filePath: string;
 
   @ApiProperty({
     description: 'Current status of the document.',
@@ -49,7 +54,7 @@ export class ResponseDocumentDto {
     format: 'date-time',
     example: '2025-08-27T14:30:00.000Z',
   })
-  updatedAt: Date;
+  updatedAT: Date;
 
   @ApiProperty({
     description: 'The ID of the user who created the document',

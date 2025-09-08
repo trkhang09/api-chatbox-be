@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
@@ -23,12 +24,16 @@ import { UpdateDocumentDto } from './dtos/update-document.dto';
 import { ResponseUpdatedDocumentDto } from './dtos/response-updated-document.dto';
 import { User } from '../users/entities/user.entity';
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
+import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
+import { AuthGuard } from '../auth/jwt/jwt-auth.guard';
 
 @Controller('documents')
 export class DocumentsController {
   constructor(private readonly docService: DocumentsService) {}
 
   @Get('/')
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Get paginated list of documents' })
   @ApiPaginatedResponseCustom(ResponsePaginateDto, ResponseDocumentDto)
   @ApiBadRequestResponseCustom()
@@ -37,18 +42,34 @@ export class DocumentsController {
     return this.docService.getPaginatedDocuments(query);
   }
 
+  @Get('/:id')
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: "Get a specific document's information" })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the document which will be returned',
+    example: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
+    type: 'string',
+  })
+  @ApiCommonResponseCustom(ResponseDetailedDocumentDto)
+  async getDetailDocument(@Param('id') id: string) {
+    return this.docService.getDocument(id);
+  }
+
   @Post('/')
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Create a new document' })
   @ApiCommonResponseCustom(ResponseCreatedDocumentDto)
   @ApiNotFoundResponseCustom()
   async createDocument(
     @Body() body: CreateDocumentDto,
-    /**@JWTUser*/ user: User,
+    @AuthUser() user: User,
   ) {
     return this.docService.createDocument(body, user);
   }
 
   @Put('/:id')
+  @UseGuards(AuthGuard)
   @ApiCommonResponseCustom(ResponseUpdatedDocumentDto)
   @ApiNotFoundResponseCustom()
   @ApiOperation({ summary: "Update a specific document's information" })
@@ -61,12 +82,13 @@ export class DocumentsController {
   async updateDocument(
     @Param('id') id: string,
     @Body() body: UpdateDocumentDto,
-    /**@JWTUser*/ user: User,
+    @AuthUser() user: User,
   ) {
     return this.docService.updateDocument(id, body, user);
   }
 
   @Delete('/:id')
+  @UseGuards(AuthGuard)
   @ApiCommonResponseCustom(Boolean, true)
   @ApiNotFoundResponseCustom()
   @ApiOperation({ summary: 'Softly remove a specific document' })

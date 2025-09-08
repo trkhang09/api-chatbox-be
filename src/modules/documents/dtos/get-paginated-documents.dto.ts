@@ -16,7 +16,7 @@ export class GetPaginatedDocumentsDto extends PaginateDto {
         )
         .join(', '),
     enum: DocumentStatus,
-    example: DocumentStatus.ACTIVED,
+    example: DocumentStatus.PENDING,
   })
   @IsOptional()
   @Type(() => Number)
