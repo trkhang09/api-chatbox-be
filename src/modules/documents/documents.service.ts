@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, Like, Repository } from 'typeorm';
+import { FindOptionsWhere, Like, Repository } from 'typeorm';
 import { Document } from './entities/document.entity';
 import { ResponseDocumentDto } from './dtos/response-document.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
@@ -16,6 +16,7 @@ import { User } from '../users/entities/user.entity';
 import { UpdateDocumentDto } from './dtos/update-document.dto';
 import { ResponseUpdatedDocumentDto } from './dtos/response-updated-document.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import { FileService } from '../files/file.service';
 import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
 
 @Injectable()
@@ -24,6 +25,7 @@ export class DocumentsService {
     @Inject('DOCUMENT_CHUNKS_SERVICE') private client: ClientProxy,
     @InjectRepository(Document)
     private readonly docRepo: Repository<Document>,
+    private readonly fileService: FileService,
   ) {}
 
   /**
@@ -103,16 +105,20 @@ export class DocumentsService {
    * @param body
    * @param user
    * @returns Promise<ResponseCreatedDocumentDto>
-   * @throw NotFoundException
+   * @throws NotFoundException
    * @throws InternalServerErrorException
    */
   async createDocument(
     body: CreateDocumentDto,
     user: User,
   ): Promise<ResponseCreatedDocumentDto> {
+    const size = await this.fileService.readFileSize(body.filePath);
+
     try {
       const savedDoc = await this.docRepo.save({
         ...body,
+        description: body.description ?? '',
+        size,
         createdByUserId: user.id,
       });
 

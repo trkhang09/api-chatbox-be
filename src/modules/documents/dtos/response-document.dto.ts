@@ -19,7 +19,6 @@ export class ResponseDocumentDto {
     example: 'This document contains the detailed project plan for Q1.',
   })
   description: string;
-  s;
 
   @ApiProperty({
     description: 'Current status of the document.',
