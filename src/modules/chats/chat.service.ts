@@ -13,7 +13,6 @@ import { RespondCreatedNewChatDto } from './dtos/respond-created-new-chat.dto';
 import { User } from '../users/entities/user.entity';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
 import { RespondChangedChatTitleDto } from './dtos/respond-changed-chat-title.dto';
-import { RespondRemovedChatHistoryDto } from './dtos/respond-removed-chat-history.dto';
 import { MessagesService } from '../messages/messages.service';
 import { GetBatchedChatDto } from './dtos/get-batched-chat.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
@@ -26,7 +25,6 @@ import { Observable } from 'rxjs';
 @Injectable()
 export class ChatService {
   constructor(
-    @InjectRepository(Chat)
     private readonly chatRepository: ChatRepository,
     private readonly dataSource: DataSource,
     private readonly messagesService: MessagesService,

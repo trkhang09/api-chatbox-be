@@ -15,7 +15,6 @@ import { ChatRepository } from '../chats/chat.repository';
 import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
 import { MessageRepository } from './message.repository';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
-import { AiResponseDto } from '../gemini/dto/ai-response.dto';
 import { createMessageDto } from './dtos/create-message.dto';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
@@ -23,9 +22,7 @@ import { RespondMessageDto } from './dtos/respond-message.dto';
 @Injectable()
 export class MessagesService {
   constructor(
-    @InjectRepository(Message)
     private readonly messageRepository: MessageRepository,
-    @InjectRepository(Chat)
     private readonly chatRepository: ChatRepository,
     private readonly geminiService: GeminiService,
   ) {}
@@ -90,23 +87,11 @@ export class MessagesService {
   async createMessage(
     query: createMessageDto,
     creator: User,
-  ): Promise<Message> {
-    let chat: Chat | null;
-    try {
-      chat = await this.chatRepository.findOne({
-        where: { id: query.chatId },
-      });
-    } catch (error) {
-      throw new InternalServerErrorException(`can not get chat`);
-    }
-
-    if (!chat)
-      throw new NotFoundException(
-        `The Conversations with id ${query.chatId} does not exists.`,
-      );
+  ): Promise<RespondMessageDto> {
+    const chat = await this.chatRepository.findChat(query.chatId);
 
     try {
-      return await this.messageRepository.save({
+      return await this.messageRepository.saveAndReturnDto({
         chat: chat,
         content: query.content,
         createdByUserId: creator.id,
@@ -117,23 +102,11 @@ export class MessagesService {
   }
 
   async editContentMessage(
-    user: User,
     query: EditMessageDto,
+    user: User,
   ): Promise<RespondMessageDto> {
-    //find message to edit
-    const message = await this.messageRepository.findOne({
-      where: { id: query.id },
-    });
-
-    if (!message)
-      throw new NotFoundException(
-        `this Message with id:${query.id} not found!`,
-      );
-
-    if (!message.createdByUserId && message.createdByUserId !== user.id)
-      throw new Error(
-        `this User does not have permission to edit this message`,
-      );
+    //validate user ownership of message
+    const message = await this.validateMessageOwnership(query.id, user.id);
     message.content = query.content;
     try {
       const saved = await this.messageRepository.save(message);
@@ -149,8 +122,10 @@ export class MessagesService {
     }
   }
 
-  async softRemoveMessage(id: string): Promise<boolean> {
+  async softRemoveMessage(id: string, user: User): Promise<boolean> {
     try {
+      // Verify user ownership of message
+      await this.validateMessageOwnership(id, user.id);
       await this.messageRepository.softDelete(id);
       return true;
     } catch (error) {
@@ -171,6 +146,31 @@ export class MessagesService {
     } catch (error) {
       throw new InternalServerErrorException(
         `Failed to remove messages for chat ${chat.id}: ${error.message}`,
+      );
+    }
+  }
+
+  private async validateMessageOwnership(
+    messageId: string,
+    userId: string,
+  ): Promise<Message> {
+    try {
+      const message = await this.messageRepository.findOne({
+        where: {
+          id: messageId,
+          createdByUserId: userId,
+        },
+      });
+      if (!message) {
+        throw new NotFoundException(
+          `this User does not have permission to edit this message`,
+        );
+      }
+      return message;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'fail to validate Message Ownership!',
+        error.message,
       );
     }
   }

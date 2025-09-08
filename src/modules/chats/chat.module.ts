@@ -11,6 +11,7 @@ import { GeminiModule } from '../gemini/gemini.module';
 import { OpenaiModule } from '../openai/openai.module';
 import { AiProvider } from '../ai/ai.provider';
 import { ChatRepository } from './chat.repository';
+import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
@@ -19,7 +20,15 @@ import { ChatRepository } from './chat.repository';
     GeminiModule,
     OpenaiModule,
   ],
-  providers: [ChatService, AiProvider, ChatRepository],
+  providers: [
+    {
+      provide: ChatRepository,
+      useFactory: (dataSource: DataSource) => new ChatRepository(dataSource),
+      inject: [DataSource],
+    },
+    ChatService,
+    AiProvider,
+  ],
   controllers: [ChatController],
   exports: [ChatService, ChatRepository],
 })

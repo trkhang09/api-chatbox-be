@@ -26,10 +26,10 @@ export class InitMigration1755830442592 implements MigrationInterface {
       `CREATE TABLE "users" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "created_by_user_id" uuid, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "last_modified_by_user_id" uuid, "deleted_at" TIMESTAMP WITH TIME ZONE, "email" character varying NOT NULL, "password" character varying NOT NULL, "fullname" character varying NOT NULL, "status" integer NOT NULL DEFAULT '1', "role_id" uuid, CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TABLE "document_chunks" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "created_by_user_id" uuid, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "last_modified_by_user_id" uuid, "deleted_at" TIMESTAMP WITH TIME ZONE, "chunk_index" integer NOT NULL, "content" text NOT NULL, "embedding" text NOT NULL, "documentId" uuid, CONSTRAINT "PK_7f9060084e9b872dbb567193978" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "documents" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "created_by_user_id" uuid, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "last_modified_by_user_id" uuid, "deleted_at" TIMESTAMP WITH TIME ZONE, "title" character varying NOT NULL, "description" character varying NOT NULL, "file_path" character varying NOT NULL, "size" integer NOT NULL, "status" integer NOT NULL DEFAULT '1', CONSTRAINT "PK_ac51aa5181ee2036f5ca482857c" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TABLE "documents" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "created_by_user_id" uuid, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "last_modified_by_user_id" uuid, "deleted_at" TIMESTAMP WITH TIME ZONE, "title" character varying NOT NULL, "description" character varying NOT NULL, "file_path" character varying NOT NULL, "status" integer NOT NULL DEFAULT '1', CONSTRAINT "PK_ac51aa5181ee2036f5ca482857c" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "document_chunks" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "created_by_user_id" uuid, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "last_modified_by_user_id" uuid, "deleted_at" TIMESTAMP WITH TIME ZONE, "chunk_index" integer NOT NULL, "content" text NOT NULL, "embedding" text NOT NULL, "documentId" uuid, CONSTRAINT "PK_7f9060084e9b872dbb567193978" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TABLE "permissions_in_roles" ("role_id" uuid NOT NULL, "permission_id" uuid NOT NULL, CONSTRAINT "PK_8d8432e8e4789c229e832099da2" PRIMARY KEY ("role_id", "permission_id"))`,
@@ -120,8 +120,8 @@ export class InitMigration1755830442592 implements MigrationInterface {
       `DROP INDEX "public"."IDX_3a25711839bc3064f8396dd393"`,
     );
     await queryRunner.query(`DROP TABLE "permissions_in_roles"`);
-    await queryRunner.query(`DROP TABLE "documents"`);
     await queryRunner.query(`DROP TABLE "document_chunks"`);
+    await queryRunner.query(`DROP TABLE "documents"`);
     await queryRunner.query(`DROP TABLE "users"`);
     await queryRunner.query(`DROP TABLE "otps"`);
     await queryRunner.query(`DROP TABLE "chats"`);

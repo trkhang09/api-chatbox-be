@@ -7,10 +7,11 @@ import {
   MaxLength,
 } from 'class-validator';
 
-export class CreateDocumentDto {
+export class UpdateDocumentDto {
   @ApiProperty({
     description: 'The title of the document',
     example: 'Project Plan',
+    maxLength: 255,
   })
   @IsString()
   @IsNotEmpty()
@@ -24,13 +25,4 @@ export class CreateDocumentDto {
   @IsOptional()
   @IsString()
   readonly description?: string;
-
-  @ApiProperty({
-    description:
-      'File path where the document is stored (Accepted file types: .pdf, .docx)',
-    example: '/uploads/documents/project-plan.pdf',
-  })
-  @IsString()
-  @IsNotEmpty()
-  readonly filePath: string;
 }

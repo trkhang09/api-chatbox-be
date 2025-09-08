@@ -33,6 +33,8 @@ export class FileService {
    * @param file
    * @param fileName
    * Promise<string>
+   * @throws BadRequestException
+   * @throws InternalServerErrorException
    */
   async upload(file: Express.Multer.File, fileName: string): Promise<string> {
     const extension = Object.keys(AllowedFileTypes).find(
@@ -138,6 +140,31 @@ export class FileService {
 
       throw new InternalServerErrorException(
         'Cannot rename file: ' + error.message,
+      );
+    }
+  }
+
+  /**
+   * Read file's size
+   * @param fileName
+   * @returns Promise<number>
+   * @throws NotFoundException
+   * @throws InternalServerErrorException
+   */
+  async readFileSize(fileName: string): Promise<number> {
+    try {
+      const targetPath = path.join(this.uploadDir, fileName);
+
+      const stats = fs.statSync(targetPath);
+
+      return stats.size;
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        throw new NotFoundException('File not found');
+      }
+
+      throw new InternalServerErrorException(
+        "Cannot read file's size: " + error.message,
       );
     }
   }

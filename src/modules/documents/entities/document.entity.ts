@@ -14,12 +14,14 @@ export class Document extends AbstractEntity {
   @Column({ name: 'file_path' })
   filePath: string;
 
-  @Column({ type: 'int', default: DocumentStatus.ACTIVED })
-  status: DocumentStatus;
+  @Column({ type: 'int' })
+  size: number;
 
-  // progress
-  @Column()
+  @Column({ type: 'int' })
   progress: number;
+
+  @Column({ type: 'int', default: DocumentStatus.PENDING })
+  status: DocumentStatus;
 
   @OneToMany(() => DocumentChunks, (chunk) => chunk.document)
   chunks: DocumentChunks[];

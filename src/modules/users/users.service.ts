@@ -115,7 +115,7 @@ export class UsersService {
       user.fullname = updateUserDto.fullname;
     }
 
-    if (updateUserDto.status) {
+    if (updateUserDto.status != undefined) {
       user.status = updateUserDto.status;
     }
 

@@ -48,6 +48,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
     ]),
     SocketModule,
     UsersModule,
+    DocumentsModule,
     DocumentChunksModule,
     RolesModule,
     PermissionsModule,
