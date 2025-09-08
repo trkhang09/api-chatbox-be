@@ -17,6 +17,9 @@ export class Document extends AbstractEntity {
   @Column({ type: 'int' })
   size: number;
 
+  @Column({ type: 'int' })
+  progress: number;
+
   @Column({ type: 'int', default: DocumentStatus.PENDING })
   status: DocumentStatus;
 

@@ -62,6 +62,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
     GeminiModule,
     AiModule,
     FileModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

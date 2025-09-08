@@ -15,6 +15,7 @@ import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
+import { FileSecurityKey } from 'src/common/decorators/file-security-key.decorator';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { RoleType } from 'src/common/constants/role-constants';
 import { Roles } from 'src/common/decorators/role.decorator';
@@ -38,6 +39,7 @@ export class FileController {
     return this.fileService.getAllFiles();
   }
 
+  @FileSecurityKey()
   @Get('/:filePath')
   // @UseGuards(AuthGuard)
   @Roles(RoleType.SUPER_ADMIN)

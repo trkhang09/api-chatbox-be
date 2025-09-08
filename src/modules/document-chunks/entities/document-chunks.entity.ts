@@ -13,8 +13,8 @@ import { AbstractEntity } from 'src/common/entities/abstract.entity';
 
 @Entity('document_chunks')
 export class DocumentChunks extends AbstractEntity {
-  @Column({ name: 'chunk_index', type: 'int' })
-  chunkIndex: number;
+  // @Column({ name: 'chunk_index', type: 'int' })
+  // chunkIndex: number;
 
   @Column({ type: 'text' })
   content: string;

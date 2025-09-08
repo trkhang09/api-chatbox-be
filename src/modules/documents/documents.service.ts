@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -14,12 +15,14 @@ import { ResponseCreatedDocumentDto } from './dtos/response-created-document.dto
 import { User } from '../users/entities/user.entity';
 import { UpdateDocumentDto } from './dtos/update-document.dto';
 import { ResponseUpdatedDocumentDto } from './dtos/response-updated-document.dto';
+import { ClientProxy } from '@nestjs/microservices';
 import { FileService } from '../files/file.service';
 import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
 
 @Injectable()
 export class DocumentsService {
   constructor(
+    @Inject('DOCUMENT_CHUNKS_SERVICE') private client: ClientProxy,
     @InjectRepository(Document)
     private readonly docRepo: Repository<Document>,
     private readonly fileService: FileService,
@@ -119,6 +122,11 @@ export class DocumentsService {
         createdByUserId: user.id,
       });
 
+      this.client.emit('document_chunks_created', {
+        document_id: savedDoc.id,
+        file_path: savedDoc.filePath,
+      });
+
       const dto = new ResponseCreatedDocumentDto();
       Object.keys(dto).forEach((k) => {
         dto[k] = savedDoc[k];
@@ -130,6 +138,22 @@ export class DocumentsService {
         'Cannot create new document: ' + error.message,
       );
     }
+  }
+
+  /**
+   * get progress document
+   * @param documentId
+   * @returns
+   */
+  async getProgressDocument(documentId: string) {
+    return this.docRepo.findOne({
+      where: {
+        id: documentId,
+      },
+      select: {
+        progress: true,
+      },
+    });
   }
 
   /**

@@ -104,4 +104,18 @@ export class DocumentsController {
   async removeDocument(@Param('id') id: string) {
     return this.docService.removeDocument(id);
   }
+
+  @ApiOperation({
+    summary: 'request for get progress document',
+  })
+  @ApiParam({
+    name: 'documentId',
+    description: 'The ID of the document',
+    example: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
+    type: 'string',
+  })
+  @Get(':id/progress')
+  async getProgressDocument(@Param('id') id: string) {
+    return await this.docService.getProgressDocument(id);
+  }
 }
