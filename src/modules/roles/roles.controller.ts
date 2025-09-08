@@ -11,6 +11,7 @@ import {
   HttpStatus,
   ClassSerializerInterceptor,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
@@ -25,12 +26,17 @@ import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-reque
 import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { RoleType } from 'src/common/constants/role-constants';
 
 @Controller('roles')
+@UseGuards(RolesGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Get()
+  @Roles(RoleType.SUPER_ADMIN)
   @UseInterceptors(ClassSerializerInterceptor)
   @ApiOperation({
     summary: 'Get list of roles',
@@ -43,6 +49,7 @@ export class RolesController {
   }
 
   @Get(':id')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Get a specific role',
   })
@@ -60,6 +67,7 @@ export class RolesController {
   }
 
   @Post()
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Create a new role',
   })
@@ -70,6 +78,7 @@ export class RolesController {
   }
 
   @Put(':id')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Update a role',
   })
@@ -86,6 +95,7 @@ export class RolesController {
   }
 
   @Delete(':id')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Remove a role',
   })

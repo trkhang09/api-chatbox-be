@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
@@ -26,12 +27,17 @@ import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-r
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
 import { AuthGuard } from '../auth/jwt/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { RoleType } from 'src/common/constants/role-constants';
 
 @Controller('documents')
+@UseGuards(RolesGuard)
 export class DocumentsController {
   constructor(private readonly docService: DocumentsService) {}
 
   @Get('/')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get paginated list of documents' })
   @ApiPaginatedResponseCustom(ResponsePaginateDto, ResponseDocumentDto)
   @ApiBadRequestResponseCustom()
@@ -54,6 +60,7 @@ export class DocumentsController {
   }
 
   @Post('/')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({ summary: 'Create a new document' })
   @ApiCommonResponseCustom(ResponseCreatedDocumentDto)
   @ApiNotFoundResponseCustom()
@@ -65,6 +72,7 @@ export class DocumentsController {
   }
 
   @Put('/:id')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiCommonResponseCustom(ResponseUpdatedDocumentDto)
   @ApiNotFoundResponseCustom()
   @ApiOperation({ summary: "Update a specific document's information" })
@@ -83,6 +91,7 @@ export class DocumentsController {
   }
 
   @Delete('/:id')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiCommonResponseCustom(Boolean, true)
   @ApiNotFoundResponseCustom()
   @ApiOperation({ summary: 'Softly remove a specific document' })
