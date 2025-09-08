@@ -34,7 +34,7 @@ export class ResponseDetailedDocumentDto {
   status: DocumentStatus;
 
   @ApiProperty({
-    description: 'Size of the file (kB).',
+    description: 'Size of the file (Byte).',
     type: 'number',
     example: 23,
   })

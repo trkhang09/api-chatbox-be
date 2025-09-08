@@ -7,7 +7,6 @@ import {
   Post,
   Put,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
@@ -33,7 +32,6 @@ export class DocumentsController {
   constructor(private readonly docService: DocumentsService) {}
 
   @Get('/')
-  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Get paginated list of documents' })
   @ApiPaginatedResponseCustom(ResponsePaginateDto, ResponseDocumentDto)
   @ApiBadRequestResponseCustom()
@@ -43,7 +41,6 @@ export class DocumentsController {
   }
 
   @Get('/:id')
-  @UseGuards(AuthGuard)
   @ApiOperation({ summary: "Get a specific document's information" })
   @ApiParam({
     name: 'id',
@@ -57,7 +54,6 @@ export class DocumentsController {
   }
 
   @Post('/')
-  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Create a new document' })
   @ApiCommonResponseCustom(ResponseCreatedDocumentDto)
   @ApiNotFoundResponseCustom()
@@ -69,7 +65,6 @@ export class DocumentsController {
   }
 
   @Put('/:id')
-  @UseGuards(AuthGuard)
   @ApiCommonResponseCustom(ResponseUpdatedDocumentDto)
   @ApiNotFoundResponseCustom()
   @ApiOperation({ summary: "Update a specific document's information" })
@@ -88,7 +83,6 @@ export class DocumentsController {
   }
 
   @Delete('/:id')
-  @UseGuards(AuthGuard)
   @ApiCommonResponseCustom(Boolean, true)
   @ApiNotFoundResponseCustom()
   @ApiOperation({ summary: 'Softly remove a specific document' })
