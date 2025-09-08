@@ -3,6 +3,7 @@ import {
   Controller,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileService } from './file.service';
@@ -10,9 +11,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { Public } from '../auth/public.decorator';
+import { RolesGuard } from 'src/common/guards/role.guard';
 
 @ApiTags('Upload Files')
 @Controller('files')
+@UseGuards(RolesGuard)
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
