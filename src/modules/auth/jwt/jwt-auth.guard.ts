@@ -29,7 +29,7 @@ export class AuthGuard implements CanActivate {
     );
 
     if (isFileSecurityKey) {
-      const fileKey = request.headers['file-security-key'];
+      const fileKey = request.headers[headerConstants.xFileSecurityKey];
       const fileSystemKey = process.env.FILE_SECURITY_KEY;
       if (fileKey && fileKey === fileSystemKey) {
         return true;
