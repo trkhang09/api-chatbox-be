@@ -26,6 +26,7 @@ import { RespondChangedChatTitleDto } from './dtos/respond-changed-chat-title.dt
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 import { Observable } from 'rxjs';
+import { Public } from '../auth/public.decorator';
 
 @ApiTags('Conversation History')
 @Controller('chat')
@@ -130,6 +131,7 @@ export class ChatController {
   @ApiOperation({
     summary: 'chats generate answer with ai',
   })
+  @Public()
   @ApiOkResponseCustom(Observable<MessageEvent>, true)
   @Sse('generate')
   generate(@Query('question') question: string): Observable<MessageEvent> {

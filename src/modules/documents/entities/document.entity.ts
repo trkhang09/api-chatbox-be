@@ -17,6 +17,10 @@ export class Document extends AbstractEntity {
   @Column({ type: 'int', default: DocumentStatus.ACTIVED })
   status: DocumentStatus;
 
+  // progress
+  @Column()
+  progress: number;
+
   @OneToMany(() => DocumentChunks, (chunk) => chunk.document)
   chunks: DocumentChunks[];
 }

@@ -15,7 +15,7 @@ export class GeminiService {
   private readonly googleGenAI: GoogleGenAI;
   private readonly embeddingModel: string = 'gemini-embedding-001';
   private readonly completionModel: string = 'gemini-2.5-flash';
-  private readonly LIMIT_CONTENTS: number = 2;
+  private readonly LIMIT_CONTENTS: number = 1;
   // private readonly completionModel: string = 'gemini-1.5-pro';
   //gemini-2.5-flash
   private readonly modelKnowledge: string =
