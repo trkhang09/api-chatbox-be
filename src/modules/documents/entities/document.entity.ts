@@ -17,7 +17,7 @@ export class Document extends AbstractEntity {
   @Column({ type: 'int' })
   size: number;
 
-  @Column({ type: 'int', default: DocumentStatus.ACTIVED })
+  @Column({ type: 'int', default: DocumentStatus.PENDING })
   status: DocumentStatus;
 
   @OneToMany(() => DocumentChunks, (chunk) => chunk.document)

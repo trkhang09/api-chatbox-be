@@ -29,7 +29,7 @@ export class ResponseUpdatedDocumentDto {
   @ApiProperty({
     description: 'Current status of the document',
     enum: DocumentStatus,
-    example: DocumentStatus.ACTIVED,
+    example: DocumentStatus.PENDING,
   })
   status: DocumentStatus;
 

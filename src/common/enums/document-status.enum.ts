@@ -1,4 +1,5 @@
 export enum DocumentStatus {
-  ACTIVED = 1,
-  INACTIVE = 0,
+  PENDING = 1,
+  PROGRESSING = 2,
+  DONE = 3,
 }
