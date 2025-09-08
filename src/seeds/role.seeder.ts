@@ -15,7 +15,6 @@ export default class RoleSeeder {
   public async run(): Promise<void> {
     const roleRepo = appDataSource.getRepository(Role);
     const permRepo = appDataSource.getRepository(Permission);
-    const adminPermissionPrefix = '';
 
     const allPermissions = await permRepo.find();
     if (!allPermissions.length) {
@@ -24,24 +23,19 @@ export default class RoleSeeder {
       );
     }
 
-    const adminPermissions = allPermissions.filter(
-      (p) => p.code.startsWith('USER_') || p.code.startsWith('DOCUMENT_'),
-    );
-
     const superAdminRole = roleRepo.create({
       name: formatName(RoleType.SUPER_ADMIN),
       code: RoleType.SUPER_ADMIN,
       permissions: allPermissions,
     });
 
-    const adminRole = roleRepo.create({
-      name: formatName(RoleType.ADMIN),
-      code: RoleType.ADMIN,
-      permissions: adminPermissions,
+    const userRole = roleRepo.create({
+      name: formatName(RoleType.USER),
+      code: RoleType.USER,
     });
 
-    await roleRepo.save(adminRole);
     await roleRepo.save(superAdminRole);
+    await roleRepo.save(userRole);
   }
 }
 
