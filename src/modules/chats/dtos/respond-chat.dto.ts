@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
+import { UserDto } from 'src/modules/users/dtos/user.dto';
 
 export class RespondChatDto {
   @ApiProperty({
@@ -26,4 +27,26 @@ export class RespondChatDto {
     example: ChatTypes.BOT,
   })
   type: ChatTypes;
+
+  @ApiProperty({
+    description: 'another user in this chat',
+    oneOf: [
+      {
+        example: {
+          id: '8f5d6b20-2e3d-4f0b-b1a3-6f5b9a2f3c4d',
+          email: 'johndoe@example.com',
+          fullname: 'John Doe',
+          role: 'user',
+          createdAt: '2025-09-09T08:30:00.000Z',
+          updatedAt: '2025-09-09T08:45:00.000Z',
+          createdByUserId: '123e4567-e89b-12d3-a456-426614174000',
+          status: 1,
+        },
+      },
+      {
+        example: null,
+      },
+    ],
+  })
+  user?: UserDto | null;
 }

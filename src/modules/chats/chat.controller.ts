@@ -27,6 +27,7 @@ import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-r
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 import { Observable } from 'rxjs';
 import { Public } from '../auth/public.decorator';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 
 @ApiTags('Conversation History')
 @Controller('chat')
@@ -43,12 +44,10 @@ export class ChatController {
   @ApiInternalServerErrorResponseCustom()
   async getChatBatch(
     @Query() query: GetBatchedChatDto,
-    /*@JWTUser()*/ user: User,
+    @AuthUser('sub') userId: string,
   ) {
     try {
-      const conversations = await this.chatService.getChatBatch(query, user);
-
-      // conversations.data.map((c) => c as RespondChatDto);
+      const conversations = await this.chatService.getChatBatch(query, userId);
 
       return conversations;
     } catch (error) {
@@ -63,7 +62,7 @@ export class ChatController {
   @ApiCommonResponseCustom(RespondCreatedNewChatDto)
   async createNewChatWithMessage(
     @Body() body: CreateNewChatDto,
-    /*@JWTUser()*/ user: User,
+    @AuthUser() user: any,
   ) {
     try {
       const createdChat = await this.chatService.createNewChatWithMessage(
@@ -109,21 +108,6 @@ export class ChatController {
       throw error;
     }
   }
-
-  // @Get('/search')
-  // async searchChatsByTitle(@Res() res, @Query() query: SearchChatDto) {
-  //   try {
-  //     const foundChats = await this.chatService.searchChatsByTitle(
-  //       query.key,
-  //       query.limit,
-  //     );
-
-  //     return res.status(200).json(foundChats);
-  //   } catch (error) {
-  //     // InternalServerErrorException
-  //     return res.status(500).json(error.message);
-  //   }
-  // }
 
   /**
    * generate response stream
