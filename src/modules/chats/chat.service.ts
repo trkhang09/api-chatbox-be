@@ -25,7 +25,6 @@ import { Observable } from 'rxjs';
 @Injectable()
 export class ChatService {
   constructor(
-    @InjectRepository(Chat)
     private readonly chatRepository: ChatRepository,
     private readonly dataSource: DataSource,
     private readonly messagesService: MessagesService,

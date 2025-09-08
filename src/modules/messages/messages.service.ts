@@ -22,9 +22,7 @@ import { RespondMessageDto } from './dtos/respond-message.dto';
 @Injectable()
 export class MessagesService {
   constructor(
-    @InjectRepository(Message)
     private readonly messageRepository: MessageRepository,
-    @InjectRepository(Chat)
     private readonly chatRepository: ChatRepository,
     private readonly geminiService: GeminiService,
   ) {}
