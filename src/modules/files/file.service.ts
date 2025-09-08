@@ -6,14 +6,10 @@ import {
 } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
+import { AllowedFileTypes } from 'src/common/enums/allowed-file-type.enum';
 
 const UPLOAD_DIR_NAME = 'uploads';
 const INVLAID_FILE_NAME_REGEX = /[\/\\:*?<>]/;
-
-export enum AllowedFileTypes {
-  pdf = 'application/pdf',
-  docx = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-}
 
 @Injectable()
 export class FileService {

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { GetHttpResponseDto } from '../dtos/get-http-response.dto';
+import { isArray } from 'class-validator';
 
 @Catch()
 export default class AllExceptionsFilter implements ExceptionFilter {
@@ -29,7 +30,7 @@ export default class AllExceptionsFilter implements ExceptionFilter {
 
     const dto = new GetHttpResponseDto();
     dto.statusCode = status;
-    dto.message = [message];
+    dto.message = isArray(message) ? message : [message];
     dto.timestamp = new Date();
     dto.path = request.url;
 
