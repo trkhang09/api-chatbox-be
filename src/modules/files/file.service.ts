@@ -8,8 +8,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const UPLOAD_DIR_NAME = 'uploads';
+const INVLAID_FILE_NAME_REGEX = /[\/\\:*?<>]/;
 
-enum AllowedFileTypes {
+export enum AllowedFileTypes {
   pdf = 'application/pdf',
   docx = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 }
@@ -175,11 +176,7 @@ export class FileService {
    * @returns boolean
    */
   private isValidFileName(fileName: string): boolean {
-    if (fileName.includes('/') || fileName.includes('\\')) {
-      return false;
-    }
-
-    if (/\s/.test(fileName)) {
+    if (INVLAID_FILE_NAME_REGEX.test(fileName)) {
       return false;
     }
 
@@ -217,7 +214,8 @@ export class FileService {
       );
     }
 
-    fileName = `${fileName}-${new Date().toISOString()}.${extension}`;
+    const timestampt = new Date().toISOString().replaceAll(':', '-');
+    fileName = `${fileName}-${timestampt}.${extension}`;
 
     return fileName;
   }

@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, Like, Repository } from 'typeorm';
+import { FindOptionsWhere, Like, Repository } from 'typeorm';
 import { Document } from './entities/document.entity';
 import { ResponseDocumentDto } from './dtos/response-document.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
@@ -14,12 +14,15 @@ import { ResponseCreatedDocumentDto } from './dtos/response-created-document.dto
 import { User } from '../users/entities/user.entity';
 import { UpdateDocumentDto } from './dtos/update-document.dto';
 import { ResponseUpdatedDocumentDto } from './dtos/response-updated-document.dto';
+import { FileService } from '../files/file.service';
+import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
 
 @Injectable()
 export class DocumentsService {
   constructor(
     @InjectRepository(Document)
     private readonly docRepo: Repository<Document>,
+    private readonly fileService: FileService,
   ) {}
 
   /**
@@ -44,6 +47,10 @@ export class DocumentsService {
         where: whereCondititon,
         take: query.size,
         skip: (query.page - 1) * query.size,
+        order: {
+          createdAt: { direction: 'DESC' },
+          updatedAt: { direction: 'DESC', nulls: 'FIRST' },
+        },
       });
 
       const data: ResponseDocumentDto[] = [];
@@ -72,21 +79,43 @@ export class DocumentsService {
   }
 
   /**
+   * get a specific document by its id
+   * @param id
+   * @returns Promise<ResponseDetailedDocumentDto>
+   * @throws NotFoundException
+   * @throws InternalServerErrorException
+   */
+  async getDocument(id: string): Promise<ResponseDetailedDocumentDto> {
+    const foundDoc = await this.findDocumentById(id);
+
+    const dto = new ResponseDetailedDocumentDto();
+    Object.keys(dto).forEach((k) => {
+      dto[k] = foundDoc[k];
+    });
+
+    return dto;
+  }
+
+  /**
    * upload new document
    * @param document
    * @param body
    * @param user
    * @returns Promise<ResponseCreatedDocumentDto>
-   * @throw NotFoundException
+   * @throws NotFoundException
    * @throws InternalServerErrorException
    */
   async createDocument(
     body: CreateDocumentDto,
     user: User,
   ): Promise<ResponseCreatedDocumentDto> {
+    const size = await this.fileService.readFileSize(body.filePath);
+
     try {
       const savedDoc = await this.docRepo.save({
         ...body,
+        description: body.description ?? '',
+        size,
         createdByUserId: user.id,
       });
 

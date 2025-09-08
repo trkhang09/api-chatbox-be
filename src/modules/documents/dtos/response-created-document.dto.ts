@@ -27,9 +27,15 @@ export class ResponseCreatedDocumentDto {
   filePath: string;
 
   @ApiProperty({
+    description: 'Size fo the file which is stored',
+    example: 2048,
+  })
+  size: number;
+
+  @ApiProperty({
     description: 'Current status of the document',
     enum: DocumentStatus,
-    example: DocumentStatus.ACTIVED,
+    example: DocumentStatus.PENDING,
   })
   status: DocumentStatus;
 

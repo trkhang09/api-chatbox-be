@@ -23,6 +23,9 @@ import { UpdateDocumentDto } from './dtos/update-document.dto';
 import { ResponseUpdatedDocumentDto } from './dtos/response-updated-document.dto';
 import { User } from '../users/entities/user.entity';
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
+import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
+import { AuthGuard } from '../auth/jwt/jwt-auth.guard';
 
 @Controller('documents')
 export class DocumentsController {
@@ -37,13 +40,26 @@ export class DocumentsController {
     return this.docService.getPaginatedDocuments(query);
   }
 
+  @Get('/:id')
+  @ApiOperation({ summary: "Get a specific document's information" })
+  @ApiParam({
+    name: 'id',
+    description: 'The ID of the document which will be returned',
+    example: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
+    type: 'string',
+  })
+  @ApiCommonResponseCustom(ResponseDetailedDocumentDto)
+  async getDetailDocument(@Param('id') id: string) {
+    return this.docService.getDocument(id);
+  }
+
   @Post('/')
   @ApiOperation({ summary: 'Create a new document' })
   @ApiCommonResponseCustom(ResponseCreatedDocumentDto)
   @ApiNotFoundResponseCustom()
   async createDocument(
     @Body() body: CreateDocumentDto,
-    /**@JWTUser*/ user: User,
+    @AuthUser() user: User,
   ) {
     return this.docService.createDocument(body, user);
   }
@@ -61,7 +77,7 @@ export class DocumentsController {
   async updateDocument(
     @Param('id') id: string,
     @Body() body: UpdateDocumentDto,
-    /**@JWTUser*/ user: User,
+    @AuthUser() user: User,
   ) {
     return this.docService.updateDocument(id, body, user);
   }
