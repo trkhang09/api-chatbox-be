@@ -10,6 +10,7 @@ import {
   Put,
   Query,
   Req,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -31,12 +32,17 @@ import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-r
 import { ApiPaginatedResponseCustom } from 'src/common/decorators/api-paginated-response.decorator';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-request-response.decorator';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { RoleType } from 'src/common/constants/role-constants';
+import { Roles } from 'src/common/decorators/role.decorator';
 
 @Controller('users')
+@UseGuards(RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post('create')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Create new user',
   })
@@ -49,6 +55,7 @@ export class UsersController {
   }
 
   @Put('update')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Update a specific user',
   })
@@ -59,6 +66,7 @@ export class UsersController {
   }
 
   @Delete(':userId')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Delete a specific user',
   })
@@ -75,6 +83,7 @@ export class UsersController {
   }
 
   @Put(':userId/restore')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Restore a specific user',
   })
@@ -91,6 +100,7 @@ export class UsersController {
   }
 
   @Get('list')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Get list of users',
   })
@@ -102,6 +112,7 @@ export class UsersController {
   }
 
   @Get(':userId')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Get detailed information of a specific user',
   })

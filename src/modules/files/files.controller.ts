@@ -16,13 +16,18 @@ import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-respon
 import { AuthGuard } from '../auth/jwt/jwt-auth.guard';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { RoleType } from 'src/common/constants/role-constants';
+import { Roles } from 'src/common/decorators/role.decorator';
 
 @ApiTags('Upload Files')
 @Controller('files')
+@UseGuards(RolesGuard)
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
   @Get('/')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get all files uploaded to server' })
   @ApiOkResponseCustom(Array<String>, [
     'Cover-2025-09-05T07-45-32.753Z.docx',
@@ -35,6 +40,7 @@ export class FileController {
 
   @Get('/:filePath')
   // @UseGuards(AuthGuard)
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get buffer of a specific file' })
   @ApiCommonResponseCustom(
     Buffer<ArrayBufferLike>,
@@ -49,6 +55,7 @@ export class FileController {
   }
 
   @Post('/')
+  @Roles(RoleType.SUPER_ADMIN)
   @ApiOperation({ summary: 'upload a file' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
