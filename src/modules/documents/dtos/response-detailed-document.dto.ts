@@ -21,6 +21,12 @@ export class ResponseDetailedDocumentDto {
   description: string;
 
   @ApiProperty({
+    description: 'A embedding progress of the document',
+    example: 'This document contains the progress of embedding.',
+  })
+  progress: number;
+
+  @ApiProperty({
     description: 'File path where the document is stored',
     example: '/uploads/documents/project-plan.pdf',
   })

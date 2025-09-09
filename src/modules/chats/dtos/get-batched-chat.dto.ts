@@ -1,33 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsPositive,
-  IsString,
-} from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
 import { Type } from 'class-transformer';
+import { PaginateDto } from 'src/common/dtos/paginate.dto';
 
-export class GetBatchedChatDto {
-  @ApiProperty({
-    description: 'The page number to retrieve (must be positive)',
-    example: 1,
-  })
-  @Type(() => Number)
-  @IsNumber()
-  @IsPositive()
-  readonly page: number;
-
-  @ApiProperty({
-    description: 'The number of items per page (must be positive)',
-    example: 20,
-  })
-  @Type(() => Number)
-  @IsNumber()
-  @IsPositive()
-  readonly size: number;
-
+export class GetBatchedChatDto extends PaginateDto {
   @ApiProperty({
     description: 'Type of chat to filter',
     enum: ChatTypes,

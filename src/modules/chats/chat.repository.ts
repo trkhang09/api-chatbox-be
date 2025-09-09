@@ -56,7 +56,7 @@ export class ChatRepository extends Repository<Chat> {
           type: conversation.type,
           createdAt: conversation.createdAt,
           createdByUserId: conversation.createdByUserId,
-          user: plainToInstance(UserDto, conversation.users[0], {
+          receiver: plainToInstance(UserDto, conversation.users[0], {
             excludeExtraneousValues: true,
           }),
         };
@@ -83,6 +83,38 @@ export class ChatRepository extends Repository<Chat> {
           `The Conversations with id ${id} does not exists`,
         );
       return chat;
+    } catch (error) {
+      throw new InternalServerErrorException(`can not get chat`);
+    }
+  }
+
+  async findChatAndReturDto(
+    id: string,
+    userId: string,
+  ): Promise<RespondChatDto> {
+    try {
+      const chat = await this.createQueryBuilder('chat')
+        .leftJoinAndSelect('chat.users', 'users', 'users.id != :userId')
+        .where(
+          'EXISTS (SELECT 1 FROM chat_participants cp WHERE cp."chat_id" = chat.id AND cp."user_id" = :userId)',
+          { userId },
+        )
+        .andWhere('chat.id = :id', { id })
+        .getOne();
+      if (!chat) {
+        throw new NotFoundException(
+          `The Conversations with id ${id} does not exists`,
+        );
+      }
+      return new RespondChatDto({
+        id: chat.id,
+        title: chat.title,
+        createdAt: chat.createdAt,
+        type: chat.type,
+        receiver: plainToInstance(UserDto, chat.users[0], {
+          excludeExtraneousValues: true,
+        }),
+      });
     } catch (error) {
       throw new InternalServerErrorException(`can not get chat`);
     }

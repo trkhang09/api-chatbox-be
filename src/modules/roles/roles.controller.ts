@@ -8,12 +8,11 @@ import {
   Put,
   Req,
   Query,
-  HttpStatus,
   ClassSerializerInterceptor,
   UseInterceptors,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiSecurity } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
@@ -26,17 +25,17 @@ import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-reque
 import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
-import { RolesGuard } from 'src/common/guards/role.guard';
-import { Roles } from 'src/common/decorators/role.decorator';
-import { RoleType } from 'src/common/constants/role-constants';
-
+import { PermissionGuard } from 'src/common/guards/permission.guard';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { PermissionType } from 'src/common/constants/permission-constants';
+import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
 @Controller('roles')
-@UseGuards(RolesGuard)
+@UseGuards(PermissionGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Get()
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.ROLE_GET)
   @UseInterceptors(ClassSerializerInterceptor)
   @ApiOperation({
     summary: 'Get list of roles',
@@ -49,7 +48,7 @@ export class RolesController {
   }
 
   @Get(':id')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.ROLE_GET)
   @ApiOperation({
     summary: 'Get a specific role',
   })
@@ -67,7 +66,7 @@ export class RolesController {
   }
 
   @Post()
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.ROLE_CREATE)
   @ApiOperation({
     summary: 'Create a new role',
   })
@@ -78,7 +77,7 @@ export class RolesController {
   }
 
   @Put(':id')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.ROLE_UPDATE)
   @ApiOperation({
     summary: 'Update a role',
   })
@@ -95,7 +94,7 @@ export class RolesController {
   }
 
   @Delete(':id')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.ROLE_DELETE)
   @ApiOperation({
     summary: 'Remove a role',
   })

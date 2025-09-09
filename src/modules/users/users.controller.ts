@@ -1,17 +1,13 @@
 import {
   Body,
-  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
-  HttpStatus,
   Param,
   Post,
   Put,
   Query,
-  Req,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
@@ -20,29 +16,31 @@ import {
   ApiInternalServerErrorResponse,
   ApiOperation,
   ApiParam,
-  ApiProperty,
-  ApiResponse,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { UserDto } from './dtos/user.dto';
 import { GetUsersDto } from './dtos/get-users.dto';
-import { UsersDto } from './dtos/users.dto';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
 import { ApiPaginatedResponseCustom } from 'src/common/decorators/api-paginated-response.decorator';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-request-response.decorator';
-import { RolesGuard } from 'src/common/guards/role.guard';
-import { RoleType } from 'src/common/constants/role-constants';
-import { Roles } from 'src/common/decorators/role.decorator';
+import { PermissionGuard } from 'src/common/guards/permission.guard';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { PermissionType } from 'src/common/constants/permission-constants';
+import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
 
 @Controller('users')
-@UseGuards(RolesGuard)
+@ApiSecurity('bare-token')
+@ApiSecurity('x-client-id')
+@ApiForbiddenResponseCustom()
+@UseGuards(PermissionGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post('create')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.USER_CREATE)
   @ApiOperation({
     summary: 'Create new user',
   })
@@ -55,7 +53,7 @@ export class UsersController {
   }
 
   @Put('update')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.USER_UPDATE)
   @ApiOperation({
     summary: 'Update a specific user',
   })
@@ -66,7 +64,7 @@ export class UsersController {
   }
 
   @Delete(':userId')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.USER_DELETE)
   @ApiOperation({
     summary: 'Delete a specific user',
   })
@@ -83,7 +81,7 @@ export class UsersController {
   }
 
   @Put(':userId/restore')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.USER_RESTORE)
   @ApiOperation({
     summary: 'Restore a specific user',
   })
@@ -100,7 +98,7 @@ export class UsersController {
   }
 
   @Get('list')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.USER_GET)
   @ApiOperation({
     summary: 'Get list of users',
   })
@@ -112,7 +110,7 @@ export class UsersController {
   }
 
   @Get(':userId')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.USER_GET)
   @ApiOperation({
     summary: 'Get detailed information of a specific user',
   })
