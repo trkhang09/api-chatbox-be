@@ -21,6 +21,8 @@ import { CreateNewChatDto } from './dtos/create-new-chat.dto';
 import { ChangeChatTitleDto } from './dtos/change-chat-title.dto';
 import type { AiService } from '../ai/ai.service';
 import { Observable } from 'rxjs';
+import { RespondChatDto } from './dtos/respond-chat.dto';
+import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 
 @Injectable()
 export class ChatService {
@@ -43,11 +45,11 @@ export class ChatService {
    */
   async getChatBatch(
     query: GetBatchedChatDto,
-    user: User,
-  ): Promise<ResponsePaginateDto<Partial<Chat>>> {
+    userId: string,
+  ): Promise<ResponsePaginateDto<RespondChatDto>> {
     try {
       const response = await this.chatRepository.findChatByTitleWithPaginate(
-        user.id,
+        userId,
         query,
       );
 
@@ -67,20 +69,18 @@ export class ChatService {
    */
   async createNewChatWithMessage(
     body: CreateNewChatDto,
-    creator: User,
+    creator: AuthUserDto,
   ): Promise<RespondCreatedNewChatDto> {
-    // GET RECEIVER. pending UserService
     const receiver: User = {
       id: body.receiverId,
     } as User;
-
     let newMsg: Message;
     let title: string;
 
     try {
       const result = await this.messagesService.createTempMessage(
         body.message,
-        creator,
+        creator.sub,
       );
       newMsg = result.message;
       title = result.chatTitle;
@@ -94,7 +94,7 @@ export class ChatService {
     const participants: User[] = [];
     let type: ChatTypes = ChatTypes.BOT;
 
-    participants.push(creator);
+    participants.push({ id: creator.sub } as User);
 
     if (receiver) {
       participants.push(receiver);
