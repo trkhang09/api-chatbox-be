@@ -8,12 +8,11 @@ import {
   Put,
   Req,
   Query,
-  HttpStatus,
   ClassSerializerInterceptor,
   UseInterceptors,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiSecurity } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
@@ -29,6 +28,7 @@ import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-r
 import { PermissionGuard } from 'src/common/guards/permission.guard';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
+import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
 @Controller('roles')
 @UseGuards(PermissionGuard)
 export class RolesController {

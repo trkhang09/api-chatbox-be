@@ -1,17 +1,13 @@
 import {
   Body,
-  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
-  HttpStatus,
   Param,
   Post,
   Put,
   Query,
-  Req,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
@@ -20,12 +16,10 @@ import {
   ApiInternalServerErrorResponse,
   ApiOperation,
   ApiParam,
-  ApiProperty,
-  ApiResponse,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { UserDto } from './dtos/user.dto';
 import { GetUsersDto } from './dtos/get-users.dto';
-import { UsersDto } from './dtos/users.dto';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
@@ -35,8 +29,12 @@ import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-reque
 import { PermissionGuard } from 'src/common/guards/permission.guard';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
+import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
 
 @Controller('users')
+@ApiSecurity('bare-token')
+@ApiSecurity('x-client-id')
+@ApiForbiddenResponseCustom()
 @UseGuards(PermissionGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
