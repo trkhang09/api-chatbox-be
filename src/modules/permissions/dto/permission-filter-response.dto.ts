@@ -15,4 +15,11 @@ export class PermissionFilterResponseDto {
     description: 'Name of the permission',
   })
   name: string;
+
+  @Expose()
+  @ApiProperty({
+    example: 'View Users',
+    description: 'Code of the permission',
+  })
+  code: string;
 }

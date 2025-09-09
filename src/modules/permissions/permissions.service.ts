@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { ILike, Repository } from 'typeorm';
@@ -44,14 +44,18 @@ export class PermissionsService {
       throw new Error('Failed to retrieve permissions: ' + error.message);
     }
   }
-  async findPermissionByRoleId(
-    param: PermissionFilterRequestDto,
+  async findPermissionsByRoleCode(
+    query: PermissionFilterRequestDto,
   ): Promise<PermissionFilterResponseDto[]> {
-    const { roleId } = param;
+    const { roleCode } = query;
+
+    if (!roleCode) {
+      throw new NotFoundException('Not Found Role Code!');
+    }
 
     try {
       const permissions = await this.permRepo.find({
-        where: { roles: { id: roleId } },
+        where: { roles: { code: roleCode } },
       });
 
       return plainToInstance(PermissionFilterResponseDto, permissions, {

@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { IsString, IsUUID } from 'class-validator';
 import { PaginateDto } from 'src/common/dtos/paginate.dto';
 
 export class PermissionFilterRequestDto extends PaginateDto {
   @ApiProperty({
-    description: 'Role ID to filter permissions',
+    description: 'Role Code to filter permissions',
   })
-  @IsUUID()
-  roleId: string;
+  @IsString()
+  roleCode: string;
 }

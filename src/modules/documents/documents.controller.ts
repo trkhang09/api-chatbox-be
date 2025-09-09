@@ -27,17 +27,17 @@ import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-r
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
 import { AuthGuard } from '../auth/jwt/jwt-auth.guard';
-import { RolesGuard } from 'src/common/guards/role.guard';
-import { Roles } from 'src/common/decorators/role.decorator';
-import { RoleType } from 'src/common/constants/role-constants';
+import { PermissionGuard } from 'src/common/guards/permission.guard';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { PermissionType } from 'src/common/constants/permission-constants';
 
 @Controller('documents')
-@UseGuards(RolesGuard)
+@UseGuards(PermissionGuard)
 export class DocumentsController {
   constructor(private readonly docService: DocumentsService) {}
 
   @Get('/')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.DOCUMENT_GET)
   @ApiOperation({ summary: 'Get paginated list of documents' })
   @ApiPaginatedResponseCustom(ResponsePaginateDto, ResponseDocumentDto)
   @ApiBadRequestResponseCustom()
@@ -60,7 +60,7 @@ export class DocumentsController {
   }
 
   @Post('/')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.DOCUMENT_CREATE)
   @ApiOperation({ summary: 'Create a new document' })
   @ApiCommonResponseCustom(ResponseCreatedDocumentDto)
   @ApiNotFoundResponseCustom()
@@ -72,7 +72,7 @@ export class DocumentsController {
   }
 
   @Put('/:id')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.DOCUMENT_UPDATE)
   @ApiCommonResponseCustom(ResponseUpdatedDocumentDto)
   @ApiNotFoundResponseCustom()
   @ApiOperation({ summary: "Update a specific document's information" })
@@ -91,7 +91,7 @@ export class DocumentsController {
   }
 
   @Delete('/:id')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.DOCUMENT_DELETE)
   @ApiCommonResponseCustom(Boolean, true)
   @ApiNotFoundResponseCustom()
   @ApiOperation({ summary: 'Softly remove a specific document' })
