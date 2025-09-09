@@ -22,6 +22,24 @@ async function bootstrap() {
     .setTitle(String(configService.get('SWAGGER_TITLE')))
     .setDescription(String(configService.get('SWAGGER_DESCRIPTION')))
     .setVersion(String(configService.get('SWAGGER_VERSION')))
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'Authorization',
+        in: 'header',
+        description: 'Enter your token directly (with "Bearer " prefix)',
+      },
+      'bare-token',
+    )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'x-client-id',
+        in: 'header',
+        description: 'Custom header for requests',
+      },
+      'x-client-id',
+    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
