@@ -8,9 +8,9 @@ import {
   Put,
   Query,
   Sse,
+  UseGuards,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { User } from '../users/entities/user.entity';
 import { GetBatchedChatDto } from './dtos/get-batched-chat.dto';
 import { CreateNewChatDto } from './dtos/create-new-chat.dto';
 import { ChangeChatTitleDto } from './dtos/change-chat-title.dto';
@@ -29,6 +29,7 @@ import { Observable } from 'rxjs';
 import { Public } from '../auth/public.decorator';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
+import { AuthGuard } from '../auth/jwt/jwt-auth.guard';
 
 @ApiTags('Conversation History')
 @Controller('chat')
@@ -124,5 +125,14 @@ export class ChatController {
   @Sse('generate')
   generate(@Query('question') question: string): Observable<MessageEvent> {
     return this.chatService.generate(question);
+  }
+
+  @Get('/:id')
+  @ApiOperation({
+    summary: 'get conversation with users by conversation id',
+  })
+  @UseGuards(AuthGuard)
+  async getChatById(@Param('id') id: string, @AuthUser('sub') userId: string) {
+    return this.chatService.findChatById(id, userId);
   }
 }

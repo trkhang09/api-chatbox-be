@@ -236,4 +236,8 @@ export class ChatService {
       })();
     });
   }
+
+  async findChatById(id: string, userId: string): Promise<RespondChatDto> {
+    return await this.chatRepository.findChatAndReturDto(id, userId);
+  }
 }
