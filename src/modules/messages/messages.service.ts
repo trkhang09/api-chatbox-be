@@ -65,14 +65,14 @@ export class MessagesService {
 
   async createTempMessage(
     message: string,
-    creator: User,
+    creatorId: string,
   ): Promise<RespondCreatedFirstMessageDto> {
     try {
       const title = await this.geminiService.generateSummary(message);
 
       const respondMessage = await this.messageRepository.save({
         content: message,
-        createdByUserId: creator.id,
+        createdByUserId: creatorId,
       });
 
       return new RespondCreatedFirstMessageDto({

@@ -43,10 +43,7 @@ export class RespondChatDto {
           status: 1,
         },
       },
-      {
-        example: null,
-      },
     ],
   })
-  user?: UserDto | null;
+  user?: UserDto;
 }
