@@ -1,14 +1,23 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
+import { IsNumber, IsPositive } from 'class-validator';
 
 export class PaginateDto {
+  @ApiProperty({
+    description: 'The page number to retrieve (must be positive)',
+    example: 1,
+  })
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
   readonly page: number = 1;
 
+  @ApiProperty({
+    description: 'The number of items per page (must be positive)',
+    example: 20,
+  })
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
-  readonly size: number = 10;
+  readonly size: number = 20;
 }
