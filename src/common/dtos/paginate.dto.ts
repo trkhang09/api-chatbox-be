@@ -10,7 +10,7 @@ export class PaginateDto {
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
-  readonly page: number;
+  readonly page: number = 1;
 
   @ApiProperty({
     description: 'The number of items per page (must be positive)',
@@ -19,5 +19,5 @@ export class PaginateDto {
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
-  readonly size: number;
+  readonly size: number = 20;
 }
