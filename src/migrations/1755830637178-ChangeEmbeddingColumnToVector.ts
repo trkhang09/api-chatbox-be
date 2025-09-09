@@ -9,7 +9,7 @@ export class ChangeEmbeddingColumnToVector1755830637178
     await queryRunner.query(`
         ALTER TABLE document_chunks
         ALTER COLUMN embedding
-        TYPE vector(3072)
+        TYPE vector(1536)
         USING embedding::vector
     `);
   }
