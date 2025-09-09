@@ -1,8 +1,10 @@
 import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
 import { OpenaiService } from './openai.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 
+@ApiSecurity('bare-token')
+@ApiSecurity('x-client-id')
 @ApiTags('Open AI')
 @Controller('openai')
 export class OpenaiController {

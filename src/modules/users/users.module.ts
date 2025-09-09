@@ -6,9 +6,14 @@ import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { Role } from '../roles/entities/role.entity';
 import { RolesModule } from '../roles/roles.module';
+import { PermissionsModule } from '../permissions/permissions.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Role]), RolesModule],
+  imports: [
+    TypeOrmModule.forFeature([User, Role]),
+    RolesModule,
+    PermissionsModule,
+  ],
   providers: [UsersService, UsersRepository],
   controllers: [UsersController],
   exports: [UsersRepository],

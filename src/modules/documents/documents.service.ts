@@ -141,22 +141,6 @@ export class DocumentsService {
   }
 
   /**
-   * get progress document
-   * @param documentId
-   * @returns
-   */
-  async getProgressDocument(documentId: string) {
-    return this.docRepo.findOne({
-      where: {
-        id: documentId,
-      },
-      select: {
-        progress: true,
-      },
-    });
-  }
-
-  /**
    * update a document and its reference file
    * @param id
    * @param body
