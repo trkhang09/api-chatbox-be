@@ -28,6 +28,7 @@ import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decor
 import { Observable } from 'rxjs';
 import { Public } from '../auth/public.decorator';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
+import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 
 @ApiTags('Conversation History')
 @Controller('chat')
@@ -44,10 +45,13 @@ export class ChatController {
   @ApiInternalServerErrorResponseCustom()
   async getChatBatch(
     @Query() query: GetBatchedChatDto,
-    @AuthUser('sub') userId: string,
+    @AuthUser() user: AuthUserDto,
   ) {
     try {
-      const conversations = await this.chatService.getChatBatch(query, userId);
+      const conversations = await this.chatService.getChatBatch(
+        query,
+        user.sub,
+      );
 
       return conversations;
     } catch (error) {
@@ -62,7 +66,7 @@ export class ChatController {
   @ApiCommonResponseCustom(RespondCreatedNewChatDto)
   async createNewChatWithMessage(
     @Body() body: CreateNewChatDto,
-    @AuthUser() user: any,
+    @AuthUser() user: AuthUserDto,
   ) {
     try {
       const createdChat = await this.chatService.createNewChatWithMessage(

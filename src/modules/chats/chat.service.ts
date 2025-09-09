@@ -22,6 +22,7 @@ import { ChangeChatTitleDto } from './dtos/change-chat-title.dto';
 import type { AiService } from '../ai/ai.service';
 import { Observable } from 'rxjs';
 import { RespondChatDto } from './dtos/respond-chat.dto';
+import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 
 @Injectable()
 export class ChatService {
@@ -68,12 +69,11 @@ export class ChatService {
    */
   async createNewChatWithMessage(
     body: CreateNewChatDto,
-    creator: any /* is the user type defined by JWT */,
+    creator: AuthUserDto,
   ): Promise<RespondCreatedNewChatDto> {
     const receiver: User = {
       id: body.receiverId,
     } as User;
-
     let newMsg: Message;
     let title: string;
 
@@ -94,7 +94,7 @@ export class ChatService {
     const participants: User[] = [];
     let type: ChatTypes = ChatTypes.BOT;
 
-    participants.push(creator);
+    participants.push({ id: creator.sub } as User);
 
     if (receiver) {
       participants.push(receiver);
