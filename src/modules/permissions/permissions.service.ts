@@ -5,7 +5,6 @@ import { ILike, Repository } from 'typeorm';
 import { PermissionFilterResponseDto } from './dto/permission-filter-response.dto';
 import { Permission } from './entities/permission.entity';
 import { PermissionFilterRequestDto } from './dto/permission-filter-request.dto';
-import { error } from 'console';
 
 @Injectable()
 export class PermissionsService {

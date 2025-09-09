@@ -30,7 +30,7 @@ export class PermissionsController {
 
   @ApiCommonResponseCustom(PermissionFilterResponseDto)
   @Get('by-role-code')
-  async findPermissionByRoleId(@Query() query: PermissionFilterRequestDto) {
+  async findPermissionByRoleCode(@Query() query: PermissionFilterRequestDto) {
     return this.permissionsService.findPermissionsByRoleCode(query);
   }
 }

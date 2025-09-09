@@ -83,7 +83,7 @@ export class UsersController {
   }
 
   @Put(':userId/restore')
-  @Permissions(PermissionType.ROLE_UPDATE)
+  @Permissions(PermissionType.USER_RESTORE)
   @ApiOperation({
     summary: 'Restore a specific user',
   })
