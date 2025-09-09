@@ -32,17 +32,17 @@ import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-r
 import { ApiPaginatedResponseCustom } from 'src/common/decorators/api-paginated-response.decorator';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-request-response.decorator';
-import { RolesGuard } from 'src/common/guards/role.guard';
-import { RoleType } from 'src/common/constants/role-constants';
-import { Roles } from 'src/common/decorators/role.decorator';
+import { PermissionGuard } from 'src/common/guards/permission.guard';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { PermissionType } from 'src/common/constants/permission-constants';
 
 @Controller('users')
-@UseGuards(RolesGuard)
+@UseGuards(PermissionGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post('create')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.USER_CREATE)
   @ApiOperation({
     summary: 'Create new user',
   })
@@ -55,7 +55,7 @@ export class UsersController {
   }
 
   @Put('update')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.USER_UPDATE)
   @ApiOperation({
     summary: 'Update a specific user',
   })
@@ -66,7 +66,7 @@ export class UsersController {
   }
 
   @Delete(':userId')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.USER_DELETE)
   @ApiOperation({
     summary: 'Delete a specific user',
   })
@@ -83,7 +83,7 @@ export class UsersController {
   }
 
   @Put(':userId/restore')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.ROLE_UPDATE)
   @ApiOperation({
     summary: 'Restore a specific user',
   })
@@ -100,7 +100,7 @@ export class UsersController {
   }
 
   @Get('list')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.USER_GET)
   @ApiOperation({
     summary: 'Get list of users',
   })
@@ -112,7 +112,7 @@ export class UsersController {
   }
 
   @Get(':userId')
-  @Roles(RoleType.SUPER_ADMIN)
+  @Permissions(PermissionType.USER_GET)
   @ApiOperation({
     summary: 'Get detailed information of a specific user',
   })
