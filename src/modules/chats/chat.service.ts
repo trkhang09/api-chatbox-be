@@ -68,9 +68,8 @@ export class ChatService {
    */
   async createNewChatWithMessage(
     body: CreateNewChatDto,
-    creator: any,
+    creator: any /* is the user type defined by JWT */,
   ): Promise<RespondCreatedNewChatDto> {
-    // GET RECEIVER. pending UserService
     const receiver: User = {
       id: body.receiverId,
     } as User;

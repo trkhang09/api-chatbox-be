@@ -56,9 +56,11 @@ export class ChatRepository extends Repository<Chat> {
           type: conversation.type,
           createdAt: conversation.createdAt,
           createdByUserId: conversation.createdByUserId,
-          user: plainToInstance(UserDto, conversation.users[0], {
-            excludeExtraneousValues: true,
-          }),
+          user: conversation.users[0]
+            ? plainToInstance(UserDto, conversation.users[0], {
+                excludeExtraneousValues: true,
+              })
+            : null,
         };
       },
     );
