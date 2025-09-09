@@ -17,6 +17,7 @@ import { MeDto } from './dtos/me.dto';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 
 @ApiTags('Authentication and Authorization')
 @Controller('auth')
@@ -35,7 +36,7 @@ export class AuthController {
   @ApiCommonResponseCustom(MeDto)
   @ApiOperation({ summary: 'Get User data of this user' })
   @Get('me')
-  async me(@AuthUser() user) {
+  async me(@AuthUser() user: AuthUserDto) {
     return user;
   }
 
