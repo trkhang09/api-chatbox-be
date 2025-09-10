@@ -3,7 +3,7 @@ import {
   Get,
   UseInterceptors,
   ClassSerializerInterceptor,
-  Query
+  Query,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
 import { PermissionFilterResponseDto } from './dto/permission-filter-response.dto';

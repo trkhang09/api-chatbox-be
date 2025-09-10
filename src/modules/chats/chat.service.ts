@@ -5,7 +5,6 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Chat } from './entities/chat.entity';
 import { DataSource } from 'typeorm';
 import { Message } from '../messages/entities/messages.entity';
@@ -235,5 +234,9 @@ export class ChatService {
         }
       })();
     });
+  }
+
+  async findChatById(id: string, userId: string): Promise<RespondChatDto> {
+    return await this.chatRepository.findChatWithUser(id, userId);
   }
 }
