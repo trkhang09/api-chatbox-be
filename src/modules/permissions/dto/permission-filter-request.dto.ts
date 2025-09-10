@@ -4,8 +4,8 @@ import { PaginateDto } from 'src/common/dtos/paginate.dto';
 
 export class PermissionFilterRequestDto extends PaginateDto {
   @ApiProperty({
-    description: 'Role Code to filter permissions',
+    description: 'Role ID to filter permissions',
   })
-  @IsString()
+  @IsUUID()
   roleId: string;
 }

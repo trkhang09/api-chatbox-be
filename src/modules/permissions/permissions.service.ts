@@ -49,10 +49,6 @@ export class PermissionsService {
   ): Promise<PermissionFilterResponseDto[]> {
     const { roleId } = param;
 
-    if (!roleId) {
-      throw new NotFoundException('Not Found Role ID!');
-    }
-
     try {
       const permissions = await this.permRepo.find({
         where: { roles: { id: roleId } },

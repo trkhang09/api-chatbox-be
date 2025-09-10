@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -87,12 +88,12 @@ export class RolesService {
     userId: string,
   ): Promise<RoleFilterResponseDto> {
     try {
-      const existingRole = await this.roleRepo.findOne({
+      const existingRole = await this.roleRepo.exists({
         where: { code: dto.code },
       });
 
       if (existingRole) {
-        throw new Error('Role already exists');
+        throw new BadRequestException('Role already exists');
       }
 
       const permissions = dto.permissions
