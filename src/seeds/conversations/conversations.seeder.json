@@ -1,0 +1,354 @@
+[
+  {
+    "title": "General Discussion",
+    "type": 3,
+    "messages": [
+      { "content": "Hey everyone, welcome to the chat!", "isRead": true },
+      { "content": "Thanks! Glad to be here.", "isRead": false }
+    ]
+  },
+  {
+    "title": "Project Alpha",
+    "type": 2,
+    "messages": [
+      { "content": "Let’s meet tomorrow at 10 AM.", "isRead": true },
+      { "content": "Sounds good, see you then.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Bot Assistant",
+    "type": 1,
+    "messages": [
+      { "content": "Hello! I’m your virtual assistant.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Team Updates",
+    "type": 2,
+    "messages": [
+      { "content": "Reminder: Weekly meeting at 3 PM.", "isRead": true },
+      { "content": "Got it, I’ll be there.", "isRead": false }
+    ]
+  },
+  {
+    "title": "Random Chat",
+    "type": 3,
+    "messages": [
+      { "content": "Anyone watching the new series?", "isRead": false },
+      { "content": "Yes! It's so good.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Design Team",
+    "type": 2,
+    "messages": [
+      { "content": "Please upload your mockups by tonight.", "isRead": true },
+      { "content": "I’ve uploaded mine already.", "isRead": true }
+    ]
+  },
+  {
+    "title": "DevOps Alerts",
+    "type": 1,
+    "messages": [
+      { "content": "Server CPU usage is high.", "isRead": false },
+      { "content": "Issue acknowledged, working on it.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Customer Support",
+    "type": 2,
+    "messages": [
+      { "content": "Ticket #245 has been resolved.", "isRead": true },
+      { "content": "Thanks for the update.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Gaming Lounge",
+    "type": 3,
+    "messages": [
+      { "content": "Who’s up for a match tonight?", "isRead": false },
+      { "content": "Count me in!", "isRead": true }
+    ]
+  },
+  {
+    "title": "HR Announcements",
+    "type": 2,
+    "messages": [
+      { "content": "Office will be closed on Friday.", "isRead": true },
+      { "content": "Noted, thanks for informing.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Marketing Campaign",
+    "type": 2,
+    "messages": [
+      { "content": "New campaign launches next week.", "isRead": true },
+      { "content": "I’ll prepare the assets.", "isRead": false }
+    ]
+  },
+  {
+    "title": "Travel Buddies",
+    "type": 3,
+    "messages": [
+      { "content": "Planning a trip this summer?", "isRead": true },
+      { "content": "Yes, thinking about Da Nang.", "isRead": true }
+    ]
+  },
+  {
+    "title": "AI Assistant",
+    "type": 1,
+    "messages": [{ "content": "How can I help you today?", "isRead": true }]
+  },
+  {
+    "title": "Book Club",
+    "type": 2,
+    "messages": [
+      { "content": "Next book is 'Atomic Habits'.", "isRead": true },
+      { "content": "I’ll grab a copy today.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Finance Updates",
+    "type": 2,
+    "messages": [
+      { "content": "Monthly report uploaded.", "isRead": true },
+      { "content": "Review before Friday meeting.", "isRead": false }
+    ]
+  },
+  {
+    "title": "Memes Only",
+    "type": 3,
+    "messages": [
+      { "content": "Check this meme 😂", "isRead": true },
+      { "content": "LOL, that’s hilarious.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Fitness Goals",
+    "type": 3,
+    "messages": [
+      { "content": "Did my 5k run today!", "isRead": false },
+      { "content": "Awesome job 💪", "isRead": true }
+    ]
+  },
+  {
+    "title": "Dev Chat",
+    "type": 2,
+    "messages": [
+      { "content": "Push latest commits by 6 PM.", "isRead": true },
+      { "content": "On it!", "isRead": true }
+    ]
+  },
+  {
+    "title": "Bot Notifier",
+    "type": 1,
+    "messages": [
+      { "content": "You have 3 new tasks pending.", "isRead": false }
+    ]
+  },
+  {
+    "title": "Movie Night",
+    "type": 3,
+    "messages": [
+      { "content": "What movie this weekend?", "isRead": true },
+      { "content": "How about 'Inception'?", "isRead": false }
+    ]
+  },
+  {
+    "title": "Music Lovers",
+    "type": 3,
+    "messages": [
+      { "content": "New Taylor Swift album dropped.", "isRead": true },
+      { "content": "Listening now 🎶", "isRead": true }
+    ]
+  },
+  {
+    "title": "Cooking Club",
+    "type": 2,
+    "messages": [
+      { "content": "Let’s try Italian recipes next week.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Daily Bot",
+    "type": 1,
+    "messages": [{ "content": "Your schedule is clear today.", "isRead": true }]
+  },
+  {
+    "title": "Startup Ideas",
+    "type": 2,
+    "messages": [
+      { "content": "Brainstorming session tonight.", "isRead": false },
+      { "content": "I’ll bring my notes.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Study Group",
+    "type": 2,
+    "messages": [
+      { "content": "Let’s review chapter 5 tomorrow.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Crypto Talk",
+    "type": 3,
+    "messages": [
+      { "content": "BTC just hit a new high.", "isRead": true },
+      { "content": "Time to sell?", "isRead": false }
+    ]
+  },
+  {
+    "title": "Weekend Plans",
+    "type": 3,
+    "messages": [
+      { "content": "Anyone free on Saturday?", "isRead": true },
+      { "content": "Yes, let’s hang out.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Photo Sharing",
+    "type": 3,
+    "messages": [
+      { "content": "Uploaded vacation pics!", "isRead": true },
+      { "content": "They look amazing 🌴", "isRead": true }
+    ]
+  },
+  {
+    "title": "Bot Reminder",
+    "type": 1,
+    "messages": [{ "content": "Don’t forget to drink water.", "isRead": true }]
+  },
+  {
+    "title": "Writers Room",
+    "type": 2,
+    "messages": [
+      { "content": "Submit your drafts by Sunday.", "isRead": true },
+      { "content": "Mine is almost ready.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Photography Club",
+    "type": 2,
+    "messages": [
+      { "content": "Photo walk this weekend?", "isRead": false },
+      { "content": "Count me in 📷", "isRead": true }
+    ]
+  },
+  {
+    "title": "Pet Lovers",
+    "type": 3,
+    "messages": [
+      { "content": "Look at my new puppy!", "isRead": true },
+      { "content": "So cute 🐶", "isRead": true }
+    ]
+  },
+  {
+    "title": "Daily Inspiration",
+    "type": 1,
+    "messages": [
+      { "content": "Quote of the day: Stay positive.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Math Study Group",
+    "type": 2,
+    "messages": [
+      { "content": "Anyone solved problem 12?", "isRead": false },
+      { "content": "Yes, I’ll explain later.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Language Exchange",
+    "type": 2,
+    "messages": [
+      { "content": "Let’s practice Japanese today.", "isRead": true },
+      { "content": "Sure, はじめまして!", "isRead": true }
+    ]
+  },
+  {
+    "title": "Friends Hangout",
+    "type": 3,
+    "messages": [
+      { "content": "BBQ at my place Friday?", "isRead": true },
+      { "content": "I’ll bring snacks.", "isRead": false }
+    ]
+  },
+  {
+    "title": "Bot News",
+    "type": 1,
+    "messages": [
+      { "content": "Breaking news: Market updates available.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Coding Bootcamp",
+    "type": 2,
+    "messages": [
+      { "content": "Homework is due Sunday.", "isRead": true },
+      { "content": "I need help with question 3.", "isRead": false }
+    ]
+  },
+  {
+    "title": "Coffee Lovers",
+    "type": 3,
+    "messages": [
+      { "content": "Best coffee shop downtown?", "isRead": true },
+      { "content": "Try Latte House!", "isRead": true }
+    ]
+  },
+  {
+    "title": "Photography Bot",
+    "type": 1,
+    "messages": [
+      { "content": "New photo challenge available.", "isRead": false }
+    ]
+  },
+  {
+    "title": "Sports Fans",
+    "type": 3,
+    "messages": [
+      { "content": "Who watched the game last night?", "isRead": true },
+      { "content": "Amazing comeback!", "isRead": true }
+    ]
+  },
+  {
+    "title": "Writers Bot",
+    "type": 1,
+    "messages": [
+      { "content": "Tip of the day: Show, don’t tell.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Art Club",
+    "type": 2,
+    "messages": [
+      { "content": "Next week’s theme: Abstract.", "isRead": true },
+      { "content": "I’ll bring paints.", "isRead": true }
+    ]
+  },
+  {
+    "title": "Bot Calendar",
+    "type": 1,
+    "messages": [{ "content": "You have a meeting at 2 PM.", "isRead": true }]
+  },
+  {
+    "title": "Travel Ideas",
+    "type": 3,
+    "messages": [
+      { "content": "Dream vacation spot?", "isRead": true },
+      { "content": "Japan for sure!", "isRead": true }
+    ]
+  },
+  {
+    "title": "Bot Translator",
+    "type": 1,
+    "messages": [{ "content": "Translate: Hello → こんにちは", "isRead": true }]
+  },
+  {
+    "title": "Photography Tips",
+    "type": 2,
+    "messages": [
+      { "content": "Use natural light for portraits.", "isRead": true }
+    ]
+  }
+]

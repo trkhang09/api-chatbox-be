@@ -25,8 +25,12 @@
     "migration:show": "npx typeorm migration:show -d dist/data-source.js",
     "migration:gen": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate ./src/migrations/InitMigration -d ./src/data-source.ts",
     "migration:create": "npx typeorm migration:create",
-    "seed:permissions": "ts-node -r tsconfig-paths/register src/seeds/permission.seeder.ts",
-    "seed:roles": "ts-node -r tsconfig-paths/register src/seeds/role.seeder.ts"
+    "seed:permissions": "ts-node -r tsconfig-paths/register src/seeds/permissions/permission.seeder.ts",
+    "seed:roles": "ts-node -r tsconfig-paths/register src/seeds/roles/role.seeder.ts",
+    "seed:users": "ts-node -r tsconfig-paths/register src/seeds/users/user.seeder.ts",
+    "seed:conversations": "ts-node -r tsconfig-paths/register src/seeds/conversations/conversation.seeder.ts",
+    "seed:documents": "ts-node -r tsconfig-paths/register src/seeds/documents/document.seeder.ts",
+    "seed:all": "ts-node -r tsconfig-paths/register src/seeds/main.seeder.ts"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
