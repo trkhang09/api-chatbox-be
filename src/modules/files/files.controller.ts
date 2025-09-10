@@ -56,7 +56,7 @@ export class FileController {
   }
 
   @Post('/')
-  @Permissions(PermissionType.FILE_UPLOAD)
+  @Permissions(PermissionType.FILE_CREATE)
   @ApiOperation({ summary: 'upload a file' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
