@@ -1,6 +1,8 @@
 import { Permission } from 'src/modules/permissions/entities/permission.entity';
 import { PermissionType } from 'src/common/constants/permission-constants';
 import { appDataSource } from 'src/data-source';
+import { In } from 'typeorm';
+import { ISeeder } from '../main.seeder';
 
 const formatName = (code: string): string => {
   return code
@@ -9,13 +11,30 @@ const formatName = (code: string): string => {
     .join(' ');
 };
 
-export default class PermissionSeeder {
+export class PermissionSeeder implements ISeeder {
   public async run(): Promise<void> {
     const repo = appDataSource.getRepository(Permission);
-    const permissions = Object.values(PermissionType).map((name) => ({
+
+    const permissionNames = Object.values(PermissionType);
+
+    const foundPermissions = (
+      await repo.find({
+        where: { code: In(permissionNames) },
+        select: {
+          code: true,
+        },
+      })
+    ).map((p) => p.code);
+
+    const newPermissions = permissionNames.filter(
+      (name) => !foundPermissions.includes(name),
+    );
+
+    const permissions = newPermissions.map((name) => ({
       name: formatName(name),
       code: name,
     }));
+
     await repo.insert(permissions);
   }
 }
