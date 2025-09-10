@@ -17,13 +17,17 @@ import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decor
 import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
 import { FileSecurityKey } from 'src/common/decorators/file-security-key.decorator';
 import { AllowedFileTypes } from 'src/common/enums/allowed-file-type.enum';
-
+import { PermissionGuard } from 'src/common/guards/permission.guard';
+import { PermissionType } from 'src/common/constants/permission-constants';
+import { Permissions } from 'src/common/decorators/permission.decorator';
 @ApiTags('Upload Files')
 @Controller('files')
+@UseGuards(PermissionGuard)
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
   @Get('/')
+  @Permissions(PermissionType.FILE_GET)
   @ApiOperation({ summary: 'Get all files uploaded to server' })
   @ApiOkResponseCustom(Array<String>, [
     'Cover-2025-09-05T07-45-32.753Z.docx',
@@ -36,6 +40,7 @@ export class FileController {
 
   @FileSecurityKey()
   @Get('/:filePath')
+  @Permissions(PermissionType.FILE_GET)
   // @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Get buffer of a specific file' })
   @ApiCommonResponseCustom(
@@ -51,6 +56,7 @@ export class FileController {
   }
 
   @Post('/')
+  @Permissions(PermissionType.FILE_UPLOAD)
   @ApiOperation({ summary: 'upload a file' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
