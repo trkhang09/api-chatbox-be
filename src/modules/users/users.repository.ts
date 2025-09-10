@@ -33,9 +33,10 @@ export class UsersRepository extends Repository<User> {
         relations: ['chats'],
         where: {
           chats: { id: chatId },
-          id: Not(senderId), // loại bỏ sender
+          id: Not(senderId),
         },
       });
+      if (!user) throw new InternalServerErrorException('User not found');
       const userDto: UserDto = plainToInstance(UserDto, user, {
         excludeExtraneousValues: true,
       });

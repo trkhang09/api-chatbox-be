@@ -24,10 +24,9 @@ import { EditMessageDto } from '../messages/dtos/edit-message.dto';
 export class SocketGateway implements OnGatewayConnection {
   @WebSocketServer()
   public server: Server;
-  // userId -> clientId
   private onlineUsers = new Map<string, string[]>();
-  // userId -> chatId hoặc null (chat hiện tại mà user đang mở)
   private currentChat = new Map<string, string | null>();
+
   constructor(
     private readonly socketService: SocketService,
     private readonly configService: ConfigService,
@@ -106,7 +105,6 @@ export class SocketGateway implements OnGatewayConnection {
     @MessageBody() body: { query: createMessageDto; creatorId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    // Lưu message vào DB
     const message = await this.messageService.createMessage(
       body.query,
       body.creatorId,
@@ -198,7 +196,6 @@ export class SocketGateway implements OnGatewayConnection {
         });
       }
     } catch (error) {
-      console.error('❌ Error while soft deleting message:', error);
       client.emit('error', {
         message: 'Failed to delete message',
         details: error.message,
@@ -213,7 +210,6 @@ export class SocketGateway implements OnGatewayConnection {
         sockets.filter((sid) => sid !== client.id),
       );
 
-      // nếu user không còn socket nào thì xoá khỏi map
       if (this.onlineUsers.get(userId)?.length === 0) {
         this.onlineUsers.delete(userId);
       }
