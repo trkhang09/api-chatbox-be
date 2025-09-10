@@ -88,7 +88,7 @@ export class ChatRepository extends Repository<Chat> {
     }
   }
 
-  async findChatAndReturDto(
+  async findChatAndReturnDto(
     id: string,
     userId: string,
   ): Promise<RespondChatDto> {
