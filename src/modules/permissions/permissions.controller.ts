@@ -4,6 +4,7 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   Query,
+  Param,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
 import { PermissionFilterResponseDto } from './dto/permission-filter-response.dto';
