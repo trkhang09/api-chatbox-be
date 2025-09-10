@@ -15,9 +15,9 @@ import { RoleFilterRequestDto } from './dto/role-filter-request.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { plainToInstance } from 'class-transformer';
 import { RoleFilterResponseDto } from './dto/role-filter-response.dto';
-
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 import { RoleType } from 'src/common/constants/role-constants';
+
 @Injectable()
 export class RolesService {
   constructor(
