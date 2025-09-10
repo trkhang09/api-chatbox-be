@@ -102,10 +102,10 @@ export class MessagesService {
 
   async editContentMessage(
     query: EditMessageDto,
-    user: User,
+    userId: string,
   ): Promise<RespondMessageDto> {
     //validate user ownership of message
-    const message = await this.validateMessageOwnership(query.id, user.id);
+    const message = await this.validateMessageOwnership(query.id, userId);
     message.content = query.content;
     try {
       const saved = await this.messageRepository.save(message);
@@ -121,10 +121,10 @@ export class MessagesService {
     }
   }
 
-  async softRemoveMessage(id: string, user: User): Promise<boolean> {
+  async softRemoveMessage(id: string, userId: string): Promise<boolean> {
     try {
       // Verify user ownership of message
-      await this.validateMessageOwnership(id, user.id);
+      await this.validateMessageOwnership(id, userId);
       await this.messageRepository.softDelete(id);
       return true;
     } catch (error) {
@@ -148,6 +148,8 @@ export class MessagesService {
       );
     }
   }
+
+  async getUnreadMessagesInChat() {}
 
   private async validateMessageOwnership(
     messageId: string,

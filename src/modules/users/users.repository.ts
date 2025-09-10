@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { DataSource, Not, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UserDto } from './dtos/user.dto';
@@ -28,17 +28,24 @@ export class UsersRepository extends Repository<User> {
   }
 
   async findReceiver(chatId: string, senderId: string): Promise<UserDto> {
-    const user = await this.findOne({
-      relations: ['chats'],
-      where: {
-        chats: { id: chatId },
-        id: Not(senderId), // loại bỏ sender
-      },
-    });
-    const userDto: UserDto = plainToInstance(UserDto, user, {
-      excludeExtraneousValues: true,
-    });
+    try {
+      const user = await this.findOne({
+        relations: ['chats'],
+        where: {
+          chats: { id: chatId },
+          id: Not(senderId), // loại bỏ sender
+        },
+      });
+      const userDto: UserDto = plainToInstance(UserDto, user, {
+        excludeExtraneousValues: true,
+      });
 
-    return userDto;
+      return userDto;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Can not get User in this conversation',
+        error.message,
+      );
+    }
   }
 }

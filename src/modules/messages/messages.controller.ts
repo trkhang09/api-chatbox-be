@@ -25,6 +25,7 @@ import { User } from '../users/entities/user.entity';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 
 @ApiSecurity('bare-token')
 @ApiSecurity('x-client-id')
@@ -68,7 +69,10 @@ export class MessagesController {
   @ApiBadRequestResponseCustom()
   @ApiInternalServerErrorResponse()
   @ApiNotFoundResponse()
-  async editMessage(@Body() body: EditMessageDto, user: User) {
+  async editMessage(
+    @Body() body: EditMessageDto,
+    @AuthUser('sub') user: string,
+  ) {
     return this.messagesService.editContentMessage(body, user);
   }
 
@@ -79,7 +83,10 @@ export class MessagesController {
   @ApiOkResponseCustom(Boolean, true)
   @ApiNotFoundResponse()
   @ApiInternalServerErrorResponse()
-  async removeMessage(@Param('id') id: string, user: User) {
-    return this.messagesService.softRemoveMessage(id, user);
+  async removeMessage(
+    @Param('id') id: string,
+    @AuthUser('sub') userId: string,
+  ) {
+    return this.messagesService.softRemoveMessage(id, userId);
   }
 }
