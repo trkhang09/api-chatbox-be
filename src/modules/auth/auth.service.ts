@@ -53,7 +53,9 @@ export class AuthService {
     const payload = {
       sub: userFound.id,
       email: userFound.email,
-      role: userFound.role.code,
+      fullname: userFound.fullname,
+      roleId: userFound.role.id,
+      roleName: userFound.role.name,
     } as PayloadJwt;
 
     const accessToken = await this.jwtService.signAsync(payload);
@@ -62,7 +64,8 @@ export class AuthService {
         email: userFound.email,
         fullname: userFound.fullname,
         userId: userFound.id,
-        role: userFound.role.code,
+        roleName: userFound.role.name,
+        roleId: userFound.role.id,
       },
       tokens: {
         accessToken,

@@ -14,6 +14,7 @@ export class UsersRepository extends Repository<User> {
       .select([
         'user.id',
         'user.email',
+        'user.fullname',
         'user.password',
         'user.createdByUserId',
         'role.id',
