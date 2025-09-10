@@ -36,7 +36,7 @@ export class RespondChatDto {
 
   @Expose()
   @ApiProperty({
-    description: 'another user in this chat',
+    description: 'receiver in this chat',
     oneOf: [
       {
         example: {

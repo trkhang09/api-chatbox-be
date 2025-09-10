@@ -26,10 +26,7 @@ export class UsersRepository extends Repository<User> {
       .getOne();
   }
 
-  async findOtherUsersInChat(
-    chatId: string,
-    senderId: string,
-  ): Promise<UserDto> {
+  async findReceiver(chatId: string, senderId: string): Promise<UserDto> {
     const user = await this.findOne({
       relations: ['chats'],
       where: {

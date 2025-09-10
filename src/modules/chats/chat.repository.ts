@@ -88,10 +88,7 @@ export class ChatRepository extends Repository<Chat> {
     }
   }
 
-  async findChatAndReturnDto(
-    id: string,
-    userId: string,
-  ): Promise<RespondChatDto> {
+  async findChatWithUser(id: string, userId: string): Promise<RespondChatDto> {
     try {
       const chat = await this.createQueryBuilder('chat')
         .leftJoinAndSelect('chat.users', 'users', 'users.id != :userId')
