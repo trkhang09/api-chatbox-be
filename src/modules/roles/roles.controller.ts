@@ -29,6 +29,8 @@ import { PermissionGuard } from 'src/common/guards/permission.guard';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
 import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
+import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 @Controller('roles')
 @UseGuards(PermissionGuard)
 export class RolesController {
@@ -107,7 +109,7 @@ export class RolesController {
   @ApiOkResponseCustom(Boolean, true)
   @ApiNotFoundResponseCustom()
   @ApiInternalServerErrorResponseCustom()
-  remove(@Param('id') id: string) {
-    return this.rolesService.remove(id);
+  remove(@Param('id') id: string, @AuthUser() user: AuthUserDto) {
+    return this.rolesService.remove(id, user);
   }
 }
