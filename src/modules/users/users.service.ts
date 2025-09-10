@@ -9,14 +9,11 @@ import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dtos/create-user.dto';
 import bcrypt from 'bcrypt';
-import { ILike, In, Repository } from 'typeorm';
+import { ILike } from 'typeorm';
 import { Role } from '../roles/entities/role.entity';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
-import { UserStatus } from 'src/common/enums/user-status.enum';
 import { GetUsersDto } from './dtos/get-users.dto';
-import { UsersDto } from './dtos/users.dto';
-import { RoleType } from 'src/common/constants/role-constants';
 import { RoleRepository } from '../roles/role.repository';
 import { plainToInstance } from 'class-transformer';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
@@ -45,7 +42,7 @@ export class UsersService {
       this.roleRepository.findOne({
         where: { id: createUserDto.roleId },
       }),
-      this.generateHashPassword(createUserDto.password),
+      UsersService.generateHashPassword(createUserDto.password),
     ]);
 
     if (userFound) {
@@ -108,7 +105,9 @@ export class UsersService {
     }
 
     if (updateUserDto.password) {
-      user.password = await this.generateHashPassword(updateUserDto.password);
+      user.password = await UsersService.generateHashPassword(
+        updateUserDto.password,
+      );
     }
 
     if (updateUserDto.fullname) {
@@ -228,7 +227,7 @@ export class UsersService {
    * @param password
    * @returns
    */
-  private async generateHashPassword(password: string) {
+  static async generateHashPassword(password: string) {
     const saltRounds = Number(process.env.SALT_ROUNDS);
     const hashPassword = await bcrypt.hash(password, saltRounds);
     if (!hashPassword) {
