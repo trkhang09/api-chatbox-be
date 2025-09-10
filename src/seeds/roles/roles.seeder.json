@@ -1,0 +1,33 @@
+[
+  {
+    "code": "USER_MANAGER",
+    "status": 1,
+    "permissions": [
+      "USER_GET",
+      "USER_CREATE",
+      "USER_UPDATE",
+      "USER_DELETE",
+      "USER_RESTORE"
+    ]
+  },
+  {
+    "code": "DOCUMENT_MANAGER",
+    "status": 1,
+    "permissions": [
+      "DOCUMENT_GET",
+      "DOCUMENT_CREATE",
+      "DOCUMENT_UPDATE",
+      "DOCUMENT_DELETE"
+    ]
+  },
+  {
+    "code": "ROLE_MANAGER",
+    "status": 1,
+    "permissions": ["ROLE_GET", "ROLE_CREATE", "ROLE_UPDATE", "ROLE_DELETE"]
+  },
+  {
+    "code": "VIEWER",
+    "status": 1,
+    "permissions": ["DOCUMENT_GET", "USER_GET", "ROLE_GET"]
+  }
+]

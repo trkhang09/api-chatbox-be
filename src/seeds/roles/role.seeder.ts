@@ -3,6 +3,10 @@ import { Role } from 'src/modules/roles/entities/role.entity';
 import { Permission } from 'src/modules/permissions/entities/permission.entity';
 import { RoleType } from 'src/common/constants/role-constants';
 import { NotFoundException } from '@nestjs/common';
+import { ISeeder } from '../main.seeder';
+import seededRoles from './roles.seeder.json';
+import { RoleStatus } from 'src/common/enums/role-status.enum';
+import { In } from 'typeorm';
 
 const formatName = (code: string): string => {
   return code
@@ -11,7 +15,7 @@ const formatName = (code: string): string => {
     .join(' ');
 };
 
-export default class RoleSeeder {
+export class RoleSeeder implements ISeeder {
   public async run(): Promise<void> {
     const roleRepo = appDataSource.getRepository(Role);
     const permRepo = appDataSource.getRepository(Permission);
@@ -34,8 +38,35 @@ export default class RoleSeeder {
       code: RoleType.USER,
     });
 
-    await roleRepo.save(superAdminRole);
-    await roleRepo.save(userRole);
+    const foundRoleCodes = (
+      await roleRepo.find({
+        where: { code: In(seededRoles.map((r) => r.code)) },
+        select: ['code'],
+      })
+    ).map((r) => r.code);
+
+    const newRoles = seededRoles.filter((c) => foundRoleCodes.includes(c.code));
+
+    const roles = newRoles.map((role) => ({
+      ...role,
+      name: formatName(role.code),
+      status: Object.values(RoleStatus).includes(role.status)
+        ? role.status
+        : RoleStatus.ACTIVED,
+      permissions: allPermissions.filter((p) =>
+        role.permissions.includes(p.code),
+      ),
+    }));
+
+    if (!(await roleRepo.exists({ where: { code: RoleType.SUPER_ADMIN } }))) {
+      roles.push(superAdminRole);
+    }
+
+    if (!(await roleRepo.exists({ where: { code: RoleType.USER } }))) {
+      roles.push(userRole);
+    }
+
+    await roleRepo.save(roles);
   }
 }
 
