@@ -1,5 +1,7 @@
 export default interface PayloadJwt {
   sub: string;
   email: string;
-  role: string;
+  fullname: string;
+  roleId: string;
+  roleName: string;
 }

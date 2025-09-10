@@ -16,6 +16,7 @@ export class UsersRepository extends Repository<User> {
       .select([
         'user.id',
         'user.email',
+        'user.fullname',
         'user.password',
         'user.createdByUserId',
         'role.id',
@@ -26,10 +27,7 @@ export class UsersRepository extends Repository<User> {
       .getOne();
   }
 
-  async findOtherUsersInChat(
-    chatId: string,
-    senderId: string,
-  ): Promise<UserDto> {
+  async findReceiver(chatId: string, senderId: string): Promise<UserDto> {
     const user = await this.findOne({
       relations: ['chats'],
       where: {

@@ -13,8 +13,14 @@ export class UserResponseDto {
   @ApiProperty({ example: 'John Doe', description: 'Full name of the user' })
   fullname: string;
 
-  @ApiProperty({ example: 'user', description: 'Role of the user' })
-  role: string;
+  @ApiProperty({
+    example: 'd76a90d8-4909-4740-b559-5216a18d27ca',
+    description: 'UUID of the role',
+  })
+  roleId: string;
+
+  @ApiProperty({ example: 'Admin', description: 'Role name of the user' })
+  roleName: string;
 }
 
 export class TokensResponseDto {
