@@ -4,7 +4,6 @@ import {
   WebSocketServer,
   SubscribeMessage,
   MessageBody,
-  WsException,
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
@@ -13,9 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { UseFilters } from '@nestjs/common';
 import { WsExceptionFilter } from 'src/common/filters';
 import { MessagesService } from '../messages/messages.service';
-import { emit } from 'process';
 import { createMessageDto } from '../messages/dtos/create-message.dto';
-import { User } from '../users/entities/user.entity';
 import { UsersRepository } from '../users/users.repository';
 import { EditMessageDto } from '../messages/dtos/edit-message.dto';
 
@@ -40,10 +37,6 @@ export class SocketGateway implements OnGatewayConnection {
 
   handleConnection(socket: Socket): void {
     this.socketService.handleConnection(socket);
-    // console.log(
-    //   'Socket.IO listening at PORT = ' +
-    //   this.configService.get<number>('WEBSK_PORT') + new Date(),
-    // );
   }
 
   @SubscribeMessage('message')
@@ -77,9 +70,6 @@ export class SocketGateway implements OnGatewayConnection {
     if (sockets && !sockets.includes(client.id)) {
       sockets.push(client.id);
     }
-
-    console.log(`✅ User ${data.userId} registered with socket ${client.id}`);
-    console.log(this.onlineUsers);
   }
   @SubscribeMessage('signOut')
   handleSignOut(
@@ -96,8 +86,6 @@ export class SocketGateway implements OnGatewayConnection {
         this.onlineUsers.delete(data.userId);
       }
     }
-    console.log(`🚪 User ${data.userId} signed out from socket ${client.id}`);
-    console.log(this.onlineUsers);
   }
   @SubscribeMessage('joinChat')
   handleJoinChat(
@@ -105,8 +93,6 @@ export class SocketGateway implements OnGatewayConnection {
     @ConnectedSocket() client: Socket,
   ) {
     this.currentChat.set(body.userId, body.chatId);
-
-    console.log(`👤 User ${body.userId} joined chat ${body.chatId}`);
   }
   @SubscribeMessage('leaveChat')
   handleLeaveChat(
@@ -114,8 +100,6 @@ export class SocketGateway implements OnGatewayConnection {
     @ConnectedSocket() client: Socket,
   ) {
     this.currentChat.set(body.userId, null);
-
-    console.log(`👤 User ${body.userId} left current chat`);
   }
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
@@ -133,9 +117,11 @@ export class SocketGateway implements OnGatewayConnection {
       body.query.chatId,
       body.creatorId,
     );
-
     const sockets = this.onlineUsers.get(ortherUserInChat.id);
     const openedChat = this.currentChat.get(ortherUserInChat.id);
+    const unreadMessages = await this.messageService.getUnreadMessagesInChat(
+      body.query.chatId,
+    );
 
     if (sockets) {
       sockets.forEach((sid) => {
@@ -148,6 +134,8 @@ export class SocketGateway implements OnGatewayConnection {
         } else {
           this.server.to(sid).emit('chatNotification', {
             chatId: body.query.chatId,
+            unreadMessages: unreadMessages,
+            unreadCount: unreadMessages.length,
           });
         }
       });
@@ -159,20 +147,15 @@ export class SocketGateway implements OnGatewayConnection {
     body: { query: EditMessageDto; chatId: string; creatorId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    console.log('📩 Received message from client:', body);
-    // gọi service để lưu DB và emit cho users khác
     const message = await this.messageService.editContentMessage(
       body.query,
       body.creatorId,
     );
-
-    client.emit('sendMessageSuccess', message);
-    const ortherUserInChat = await this.userRepository.findReceiver(
+    const receiver = await this.userRepository.findReceiver(
       body.chatId,
       body.creatorId,
     );
-
-    const sockets = this.onlineUsers.get(ortherUserInChat.id);
+    const sockets = this.onlineUsers.get(receiver.id);
     if (sockets) {
       sockets.forEach((sid) => {
         this.server.to(sid).emit('responseMessage', {
@@ -189,8 +172,6 @@ export class SocketGateway implements OnGatewayConnection {
     body: { messageId: string; chatId: string; creatorId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    console.log('📩 Received Request from client:', body);
-
     const ortherUserInChat = await this.userRepository.findReceiver(
       body.chatId,
       body.creatorId,
