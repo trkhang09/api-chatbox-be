@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Query } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  Query,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, In, Repository } from 'typeorm';
 import { Permission } from '../permissions/entities/permission.entity';
@@ -10,6 +15,8 @@ import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { plainToInstance } from 'class-transformer';
 import { RoleFilterResponseDto } from './dto/role-filter-response.dto';
 
+import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
+import { RoleType } from 'src/common/constants/role-constants';
 @Injectable()
 export class RolesService {
   constructor(
@@ -80,6 +87,14 @@ export class RolesService {
     userId: string,
   ): Promise<RoleFilterResponseDto> {
     try {
+      const existingRole = await this.roleRepo.findOne({
+        where: { code: dto.code },
+      });
+
+      if (existingRole) {
+        throw new Error('Role already exists');
+      }
+
       const permissions = dto.permissions
         ? await this.permRepo.find({ where: { id: In(dto.permissions) } })
         : [];
@@ -105,11 +120,14 @@ export class RolesService {
       const role = await this.roleRepo.findOne({ where: { id } });
 
       if (!role) throw new NotFoundException('Role not found');
+      if (role.code === RoleType.SUPER_ADMIN)
+        throw new ForbiddenException('You cannot modify Super Admin role');
 
       if (dto.permissions) {
         const permissions = await this.permRepo.find({
           where: { id: In(dto.permissions) },
         });
+
         role.permissions = permissions;
       }
       role.status = dto.status ?? role.status;
@@ -127,10 +145,15 @@ export class RolesService {
     }
   }
 
-  async remove(id: string): Promise<boolean> {
+  async remove(id: string, user: AuthUserDto): Promise<boolean> {
     try {
       const role = await this.findOne(id);
+
       if (!role) throw new NotFoundException('Role not found');
+
+      if (user.roleId === role.id) {
+        throw new ForbiddenException('You cannot delete your own role');
+      }
 
       await this.roleRepo.softDelete(role.id);
       return true;

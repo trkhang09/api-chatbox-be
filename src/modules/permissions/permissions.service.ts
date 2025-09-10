@@ -44,18 +44,18 @@ export class PermissionsService {
       throw new Error('Failed to retrieve permissions: ' + error.message);
     }
   }
-  async findPermissionsByRoleCode(
-    query: PermissionFilterRequestDto,
+  async findPermissionsByRoleId(
+    param: PermissionFilterRequestDto,
   ): Promise<PermissionFilterResponseDto[]> {
-    const { roleCode } = query;
+    const { roleId } = param;
 
-    if (!roleCode) {
-      throw new NotFoundException('Not Found Role Code!');
+    if (!roleId) {
+      throw new NotFoundException('Not Found Role ID!');
     }
 
     try {
       const permissions = await this.permRepo.find({
-        where: { roles: { code: roleCode } },
+        where: { roles: { id: roleId } },
       });
 
       return plainToInstance(PermissionFilterResponseDto, permissions, {

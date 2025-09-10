@@ -7,5 +7,5 @@ export class PermissionFilterRequestDto extends PaginateDto {
     description: 'Role Code to filter permissions',
   })
   @IsString()
-  roleCode: string;
+  roleId: string;
 }
