@@ -13,8 +13,14 @@ export class AuthUserDto {
   })
   email: string;
 
-  @ApiProperty({ example: 'user', description: 'Role of the user' })
-  role: string;
+  @ApiProperty({ example: 'John Doe', description: 'Full name of the user' })
+  fullname: string;
+
+  @ApiProperty({ example: 'id user', description: 'Id of the Role' })
+  roleId: string;
+
+  @ApiProperty({ example: 'Admin', description: 'Name of the Role' })
+  roleName: string;
 
   @ApiProperty({
     example: 173463534,
