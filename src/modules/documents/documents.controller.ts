@@ -18,7 +18,7 @@ import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-
 import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-request-response.decorator';
 import { GetPaginatedDocumentsDto } from './dtos/get-paginated-documents.dto';
 import { CreateDocumentDto } from './dtos/create-document.dto';
-import { ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiSecurity } from '@nestjs/swagger';
 import { ResponseCreatedDocumentDto } from './dtos/response-created-document.dto';
 import { UpdateDocumentDto } from './dtos/update-document.dto';
 import { ResponseUpdatedDocumentDto } from './dtos/response-updated-document.dto';
@@ -30,8 +30,12 @@ import { AuthGuard } from '../auth/jwt/jwt-auth.guard';
 import { PermissionGuard } from 'src/common/guards/permission.guard';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
+import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
 
 @Controller('documents')
+@ApiSecurity('bare-token')
+@ApiSecurity('x-client-id')
+@ApiForbiddenResponseCustom()
 @UseGuards(PermissionGuard)
 export class DocumentsController {
   constructor(private readonly docService: DocumentsService) {}
@@ -103,19 +107,5 @@ export class DocumentsController {
   })
   async removeDocument(@Param('id') id: string) {
     return this.docService.removeDocument(id);
-  }
-
-  @ApiOperation({
-    summary: 'request for get progress document',
-  })
-  @ApiParam({
-    name: 'documentId',
-    description: 'The ID of the document',
-    example: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
-    type: 'string',
-  })
-  @Get(':id/progress')
-  async getProgressDocument(@Param('id') id: string) {
-    return await this.docService.getProgressDocument(id);
   }
 }

@@ -11,18 +11,28 @@ import {
 } from '@nestjs/common';
 import { FileService } from './file.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+  ApiSecurity,
+} from '@nestjs/swagger';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
 import { FileSecurityKey } from 'src/common/decorators/file-security-key.decorator';
 import { AllowedFileTypes } from 'src/common/enums/allowed-file-type.enum';
+import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
 import { PermissionGuard } from 'src/common/guards/permission.guard';
 import { PermissionType } from 'src/common/constants/permission-constants';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 @ApiTags('Upload Files')
 @Controller('files')
 @UseGuards(PermissionGuard)
+@ApiSecurity('bare-token')
+@ApiSecurity('x-client-id')
+@ApiForbiddenResponseCustom()
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 

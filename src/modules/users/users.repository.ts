@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Not, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { UserDto } from './dtos/user.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class UsersRepository extends Repository<User> {
@@ -23,5 +25,20 @@ export class UsersRepository extends Repository<User> {
       ])
       .where('user.email = :email', { email })
       .getOne();
+  }
+
+  async findReceiver(chatId: string, senderId: string): Promise<UserDto> {
+    const user = await this.findOne({
+      relations: ['chats'],
+      where: {
+        chats: { id: chatId },
+        id: Not(senderId), // loại bỏ sender
+      },
+    });
+    const userDto: UserDto = plainToInstance(UserDto, user, {
+      excludeExtraneousValues: true,
+    });
+
+    return userDto;
   }
 }

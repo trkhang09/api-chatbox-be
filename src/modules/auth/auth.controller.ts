@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 import { AuthInterceptor } from './auth.interceptor';
@@ -16,9 +9,11 @@ import { LoginResponseDto } from './dtos/login-response.dto';
 import { MeDto } from './dtos/me.dto';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 
+@ApiSecurity('bare-token')
+@ApiSecurity('x-client-id')
 @ApiTags('Authentication and Authorization')
 @Controller('auth')
 export class AuthController {

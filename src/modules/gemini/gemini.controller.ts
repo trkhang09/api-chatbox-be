@@ -8,12 +8,20 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GeminiService } from './gemini.service';
-import { ApiOperation, ApiTags, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiTags,
+  ApiConsumes,
+  ApiBody,
+  ApiSecurity,
+} from '@nestjs/swagger';
 import { UserRequestDto } from './dto/user-request.dto';
 import { AiResponseDto } from './dto/ai-response.dto';
 import { EmbeddingResponseDto } from './dto/create-embedding-response.dto';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 
+@ApiSecurity('bare-token')
+@ApiSecurity('x-client-id')
 @ApiTags('Gemini')
 @Controller('gemini')
 export class GeminiController {

@@ -16,6 +16,7 @@ import {
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOperation,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { ApiPaginatedResponseCustom } from 'src/common/decorators/api-paginated-response.decorator';
 import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-request-response.decorator';
@@ -25,6 +26,8 @@ import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-respon
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 
+@ApiSecurity('bare-token')
+@ApiSecurity('x-client-id')
 @Controller('messages')
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}

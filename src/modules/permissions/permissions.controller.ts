@@ -1,24 +1,21 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  HttpStatus,
   UseInterceptors,
   ClassSerializerInterceptor,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
-import { ApiResponse } from '@nestjs/swagger';
 import { PermissionFilterResponseDto } from './dto/permission-filter-response.dto';
 import { PermissionFilterRequestDto } from './dto/permission-filter-request.dto';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
+import { ApiSecurity } from '@nestjs/swagger';
+import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
 
 @Controller('permissions')
+@ApiSecurity('bare-token')
+@ApiSecurity('x-client-id')
+@ApiForbiddenResponseCustom()
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
   @ApiCommonResponseCustom(PermissionFilterResponseDto)
