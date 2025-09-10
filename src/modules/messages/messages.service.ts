@@ -7,7 +7,6 @@ import { User } from '../users/entities/user.entity';
 import { RespondCreatedFirstMessageDto } from './dtos/respond-created-first-message.dto';
 import { EntityManager } from 'typeorm';
 import { Message } from './entities/messages.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Chat } from '../chats/entities/chat.entity';
 import { GeminiService } from '../gemini/gemini.service';
 import { AiRespondWithoutLoginDto } from './dtos/ai-respond-without-login.dto';
@@ -86,7 +85,7 @@ export class MessagesService {
 
   async createMessage(
     query: createMessageDto,
-    creator: User,
+    creatorId: string,
   ): Promise<RespondMessageDto> {
     const chat = await this.chatRepository.findChat(query.chatId);
 
@@ -94,7 +93,7 @@ export class MessagesService {
       return await this.messageRepository.saveAndReturnDto({
         chat: chat,
         content: query.content,
-        createdByUserId: creator.id,
+        createdByUserId: creatorId,
       });
     } catch (error) {
       throw new InternalServerErrorException('Failed to store message.');

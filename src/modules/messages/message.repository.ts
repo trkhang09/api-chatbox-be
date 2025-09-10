@@ -21,6 +21,9 @@ export class MessageRepository extends Repository<Message> {
         where: {
           chat: { id: query.chatId },
         },
+        order: {
+          createdAt: 'DESC',
+        },
         skip: (query.page - 1) * query.size,
         take: query.size,
       });
@@ -48,9 +51,7 @@ export class MessageRepository extends Repository<Message> {
     message: Partial<Message>,
   ): Promise<RespondMessageDto> {
     const saved = await super.save(message);
-    const respond = plainToInstance(RespondMessageDto, saved, {
-      excludeExtraneousValues: true,
-    });
+    const respond = plainToInstance(RespondMessageDto, saved);
     return respond;
   }
 }

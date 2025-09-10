@@ -56,8 +56,8 @@ export class MessagesController {
   @ApiCommonResponseCustom(RespondMessageDto)
   @ApiBadRequestResponseCustom()
   @ApiInternalServerErrorResponse()
-  async createMessage(@Body() body: createMessageDto, creator: User) {
-    return this.messagesService.createMessage(body, creator);
+  async createMessage(@Body() body: createMessageDto, creatorId: string) {
+    return this.messagesService.createMessage(body, creatorId);
   }
 
   @Put('/')
