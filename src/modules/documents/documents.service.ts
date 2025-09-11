@@ -20,6 +20,7 @@ import { FileService } from '../files/file.service';
 import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
+import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
 
 export const DashboardForDocumentRequestDto =
   createDashboardRequestDto(DocumentStatus);
@@ -40,15 +41,13 @@ export class DocumentsService {
     query: InstanceType<typeof DashboardForDocumentRequestDto>,
   ) {
     try {
+      const payload = validateDashboardRequest(query, DocumentStatus);
       let where: any = {};
-      if (query?.status) {
-        where.status = query.status;
-      }
-      if (query?.days) {
-        const fromDate = new Date();
-        fromDate.setDate(fromDate.getDate() - query.days);
-        where.createdAt = MoreThanOrEqual(fromDate);
-      }
+      where.status = payload.status;
+
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - payload.days);
+      where.createdAt = MoreThanOrEqual(fromDate);
 
       const quantity = await this.docRepo.count({ where });
       return quantity;

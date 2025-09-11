@@ -19,7 +19,7 @@ import { plainToInstance } from 'class-transformer';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { UserStatus } from 'src/common/enums/user-status.enum';
-
+import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
 export const DashboardForUserRequestDto = createDashboardRequestDto(UserStatus);
 
 @Injectable()
@@ -38,15 +38,14 @@ export class UsersService {
     query: InstanceType<typeof DashboardForUserRequestDto>,
   ): Promise<number> {
     try {
+      const payload = validateDashboardRequest(query, UserStatus);
       let where: any = {};
-      if (query?.status) {
-        where.status = query.status;
-      }
-      if (query?.days) {
-        const fromDate = new Date();
-        fromDate.setDate(fromDate.getDate() - query.days);
-        where.createdAt = MoreThanOrEqual(fromDate);
-      }
+      where.status = payload.status;
+      console.log(payload);
+
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - payload.days);
+      where.createdAt = MoreThanOrEqual(fromDate);
 
       const quantity = await this.usersRepository.count({ where });
       return quantity;

@@ -18,7 +18,7 @@ import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 import { RoleType } from 'src/common/constants/role-constants';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { RoleStatus } from 'src/common/enums/role-status.enum';
-import { validate } from 'class-validator';
+import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
 
 export const DashboardForRoleRequestDto = createDashboardRequestDto(RoleStatus);
 
@@ -37,15 +37,13 @@ export class RolesService {
     query: InstanceType<typeof DashboardForRoleRequestDto>,
   ): Promise<number> {
     try {
+      const payload = validateDashboardRequest(query, RoleStatus);
       let where: any = {};
-      if (query?.status) {
-        where.status = query.status;
-      }
-      if (query?.days) {
-        const fromDate = new Date();
-        fromDate.setDate(fromDate.getDate() - query.days);
-        where.createdAt = MoreThanOrEqual(fromDate);
-      }
+      where.status = payload.status;
+
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - payload.days);
+      where.createdAt = MoreThanOrEqual(fromDate);
 
       const quantity = await this.roleRepo.count({ where });
       return quantity;
