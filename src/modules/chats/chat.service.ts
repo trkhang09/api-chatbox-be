@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Chat } from './entities/chat.entity';
-import { DataSource } from 'typeorm';
+import { DataSource, MoreThanOrEqual } from 'typeorm';
 import { Message } from '../messages/entities/messages.entity';
 import { RespondCreatedNewChatDto } from './dtos/respond-created-new-chat.dto';
 import { User } from '../users/entities/user.entity';
@@ -41,7 +41,24 @@ export class ChatService {
    */
   async getQuantity(
     query: InstanceType<typeof DashboardForConversationRequestDto>,
-  ) {}
+  ) {
+    try {
+      let where: any = {};
+      if (query?.status) {
+        where.status = query.status;
+      }
+      if (query?.days) {
+        const fromDate = new Date();
+        fromDate.setDate(fromDate.getDate() - query.days);
+        where.createdAt = MoreThanOrEqual(fromDate);
+      }
+
+      const quantity = await this.chatRepository.count({ where });
+      return quantity;
+    } catch (error) {
+      throw new Error('Failed to get quantity: ' + error.message);
+    }
+  }
 
   /**
    * Find a list of 1 conversations based on a keyword or get all if no keyword is found.

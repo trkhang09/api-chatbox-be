@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, In, Repository } from 'typeorm';
+import { ILike, In, MoreThanOrEqual, Repository } from 'typeorm';
 import { Permission } from '../permissions/entities/permission.entity';
 import { Role } from './entities/role.entity';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
@@ -18,6 +18,7 @@ import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 import { RoleType } from 'src/common/constants/role-constants';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { RoleStatus } from 'src/common/enums/role-status.enum';
+import { validate } from 'class-validator';
 
 export const DashboardForRoleRequestDto = createDashboardRequestDto(RoleStatus);
 
@@ -32,7 +33,26 @@ export class RolesService {
   /**
    * get quantity with a specific status/type within a number of days
    */
-  async getQuantity(query: InstanceType<typeof DashboardForRoleRequestDto>) {}
+  async getQuantity(
+    query: InstanceType<typeof DashboardForRoleRequestDto>,
+  ): Promise<number> {
+    try {
+      let where: any = {};
+      if (query?.status) {
+        where.status = query.status;
+      }
+      if (query?.days) {
+        const fromDate = new Date();
+        fromDate.setDate(fromDate.getDate() - query.days);
+        where.createdAt = MoreThanOrEqual(fromDate);
+      }
+
+      const quantity = await this.roleRepo.count({ where });
+      return quantity;
+    } catch (error) {
+      throw new Error('Failed to get quantity: ' + error.message);
+    }
+  }
 
   async findAll(
     query: RoleFilterRequestDto,
@@ -86,7 +106,6 @@ export class RolesService {
         excludeExtraneousValues: true,
       });
     } catch (error) {
-      console.error(error);
       throw new NotFoundException('Role not found');
     }
   }

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Like, Repository } from 'typeorm';
+import { FindOptionsWhere, Like, MoreThanOrEqual, Repository } from 'typeorm';
 import { Document } from './entities/document.entity';
 import { ResponseDocumentDto } from './dtos/response-document.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
@@ -38,7 +38,24 @@ export class DocumentsService {
    */
   async getQuantity(
     query: InstanceType<typeof DashboardForDocumentRequestDto>,
-  ) {}
+  ) {
+    try {
+      let where: any = {};
+      if (query?.status) {
+        where.status = query.status;
+      }
+      if (query?.days) {
+        const fromDate = new Date();
+        fromDate.setDate(fromDate.getDate() - query.days);
+        where.createdAt = MoreThanOrEqual(fromDate);
+      }
+
+      const quantity = await this.docRepo.count({ where });
+      return quantity;
+    } catch (error) {
+      throw new Error('Failed to get quantity: ' + error.message);
+    }
+  }
 
   /**
    * get paginated list of documents

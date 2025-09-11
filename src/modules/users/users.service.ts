@@ -9,7 +9,7 @@ import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dtos/create-user.dto';
 import bcrypt from 'bcrypt';
-import { ILike } from 'typeorm';
+import { ILike, MoreThanOrEqual } from 'typeorm';
 import { Role } from '../roles/entities/role.entity';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
@@ -34,7 +34,26 @@ export class UsersService {
   /**
    * get quantity with a specific status/type within a number of days
    */
-  async getQuantity(query: InstanceType<typeof DashboardForUserRequestDto>) {}
+  async getQuantity(
+    query: InstanceType<typeof DashboardForUserRequestDto>,
+  ): Promise<number> {
+    try {
+      let where: any = {};
+      if (query?.status) {
+        where.status = query.status;
+      }
+      if (query?.days) {
+        const fromDate = new Date();
+        fromDate.setDate(fromDate.getDate() - query.days);
+        where.createdAt = MoreThanOrEqual(fromDate);
+      }
+
+      const quantity = await this.usersRepository.count({ where });
+      return quantity;
+    } catch (error) {
+      throw new Error('Failed to get quantity: ' + error.message);
+    }
+  }
 
   /**
    * create new user
