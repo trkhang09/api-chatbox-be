@@ -7,6 +7,8 @@ import {
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from '../decorators/permission.decorator';
 import { PermissionsService } from 'src/modules/permissions/permissions.service';
+import { IS_FILE_SECURITY_KEY } from '../decorators/file-security-key.decorator';
+import { headerConstants } from '../constants/header-constants';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -16,17 +18,30 @@ export class PermissionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
     const requiredPermissions = this.reflector.getAllAndOverride<[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
     );
+    const isFileSecurityKey = this.reflector.getAllAndOverride<boolean>(
+      IS_FILE_SECURITY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (isFileSecurityKey) {
+      const fileKey = request.headers[headerConstants.xFileSecurityKey];
+      const fileSystemKey = process.env.FILE_SECURITY_KEY;
+      if (fileKey && fileKey === fileSystemKey) {
+        return true;
+      }
+    }
     if (!requiredPermissions) return true;
 
     const { user } = context.switchToHttp().getRequest();
 
     const userPermissions =
-      await this.permissionsService.findPermissionsByRoleCode({
-        roleCode: user.role,
+      await this.permissionsService.findPermissionsByRoleId({
+        roleId: user.roleId,
         page: 0,
         size: 0,
       });

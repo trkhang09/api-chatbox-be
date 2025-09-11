@@ -4,6 +4,7 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   Query,
+  Param,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
 import { PermissionFilterResponseDto } from './dto/permission-filter-response.dto';
@@ -26,8 +27,8 @@ export class PermissionsController {
   }
 
   @ApiCommonResponseCustom(PermissionFilterResponseDto)
-  @Get('by-role-code')
-  async findPermissionByRoleCode(@Query() query: PermissionFilterRequestDto) {
-    return this.permissionsService.findPermissionsByRoleCode(query);
+  @Get('by-role/:roleId')
+  async findPermissionByRoleId(@Param() param: PermissionFilterRequestDto) {
+    return this.permissionsService.findPermissionsByRoleId(param);
   }
 }

@@ -1,0 +1,142 @@
+[
+  {
+    "email": "alice.smith@example.com",
+    "password": "hashed_password",
+    "fullname": "Alice Smith",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "bob.johnson@example.com",
+    "password": "hashed_password",
+    "fullname": "Bob Johnson",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "charlie.nguyen@example.com",
+    "password": "hashed_password",
+    "fullname": "Charlie Nguyen",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "diana.lee@example.com",
+    "password": "hashed_password",
+    "fullname": "Diana Lee",
+    "role": "USER",
+    "status": 0
+  },
+  {
+    "email": "ethan.kim@example.com",
+    "password": "hashed_password",
+    "fullname": "Ethan Kim",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "fiona.williams@example.com",
+    "password": "hashed_password",
+    "fullname": "Fiona Williams",
+    "role": "USER",
+    "status": 2
+  },
+  {
+    "email": "george.brown@example.com",
+    "password": "hashed_password",
+    "fullname": "George Brown",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "hannah.miller@example.com",
+    "password": "hashed_password",
+    "fullname": "Hannah Miller",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "ian.chen@example.com",
+    "password": "hashed_password",
+    "fullname": "Ian Chen",
+    "role": "USER",
+    "status": 0
+  },
+  {
+    "email": "julia.martinez@example.com",
+    "password": "hashed_password",
+    "fullname": "Julia Martinez",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "kevin.wilson@example.com",
+    "password": "hashed_password",
+    "fullname": "Kevin Wilson",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "linda.garcia@example.com",
+    "password": "hashed_password",
+    "fullname": "Linda Garcia",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "michael.davis@example.com",
+    "password": "hashed_password",
+    "fullname": "Michael Davis",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "nina.hernandez@example.com",
+    "password": "hashed_password",
+    "fullname": "Nina Hernandez",
+    "role": "USER",
+    "status": 2
+  },
+  {
+    "email": "oscar.lopez@example.com",
+    "password": "hashed_password",
+    "fullname": "Oscar Lopez",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "paula.jones@example.com",
+    "password": "hashed_password",
+    "fullname": "Paula Jones",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "quentin.white@example.com",
+    "password": "hashed_password",
+    "fullname": "Quentin White",
+    "role": "USER",
+    "status": 0
+  },
+  {
+    "email": "rachel.moore@example.com",
+    "password": "hashed_password",
+    "fullname": "Rachel Moore",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "steven.taylor@example.com",
+    "password": "hashed_password",
+    "fullname": "Steven Taylor",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "tina.anderson@example.com",
+    "password": "hashed_password",
+    "fullname": "Tina Anderson",
+    "role": "USER",
+    "status": 1
+  }
+]

@@ -1,0 +1,102 @@
+[
+  {
+    "title": "Employee Handbook",
+    "description": "Company policies and guidelines.",
+    "status": 2
+  },
+  {
+    "title": "Project Alpha Plan",
+    "description": "Detailed roadmap for Project Alpha.",
+    "status": 1
+  },
+  {
+    "title": "Meeting Notes Q1",
+    "description": "Summarized meeting notes for Q1.",
+    "status": 2
+  },
+  {
+    "title": "Technical Specification",
+    "description": "Specs for the new API system.",
+    "status": 1
+  },
+  {
+    "title": "Marketing Strategy",
+    "description": "Marketing plan for product launch.",
+    "status": 0
+  },
+  {
+    "title": "Research Paper AI",
+    "description": "Academic research paper on AI trends.",
+    "status": 2
+  },
+  {
+    "title": "Budget Report 2025",
+    "description": "Annual budget report with forecasts.",
+    "status": 2
+  },
+  {
+    "title": "Training Module",
+    "description": "Internal training material.",
+    "status": 1
+  },
+  {
+    "title": "Contract Draft",
+    "description": "Draft version of client contract.",
+    "status": 1
+  },
+  {
+    "title": "Architecture Diagram",
+    "description": "System architecture diagram PNG.",
+    "status": 2
+  },
+  {
+    "title": "Onboarding Guide",
+    "description": "Step-by-step onboarding for new hires.",
+    "status": 2
+  },
+  {
+    "title": "Data Migration Plan",
+    "description": "Checklist and steps for data migration.",
+    "status": 1
+  },
+  {
+    "title": "Security Policies",
+    "description": "Policies for system security compliance.",
+    "status": 2
+  },
+  {
+    "title": "Team Roster",
+    "description": "List of team members and roles.",
+    "status": 1
+  },
+  {
+    "title": "Release Notes v1.0",
+    "description": "Changelog for version 1.0 release.",
+    "status": 2
+  },
+  {
+    "title": "Customer Feedback",
+    "description": "Collected survey results.",
+    "status": 1
+  },
+  {
+    "title": "Invoice Template",
+    "description": "Template for client invoices.",
+    "status": 2
+  },
+  {
+    "title": "User Manual",
+    "description": "Product user manual in PDF.",
+    "status": 2
+  },
+  {
+    "title": "Workshop Agenda",
+    "description": "Agenda for upcoming workshop.",
+    "status": 1
+  },
+  {
+    "title": "Performance Review",
+    "description": "Annual performance review template.",
+    "status": 0
+  }
+]

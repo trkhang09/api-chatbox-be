@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
+  Put,
   Res,
   UploadedFile,
   UseGuards,
@@ -24,9 +26,13 @@ import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-
 import { FileSecurityKey } from 'src/common/decorators/file-security-key.decorator';
 import { AllowedFileTypes } from 'src/common/enums/allowed-file-type.enum';
 import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
-
+import { PermissionGuard } from 'src/common/guards/permission.guard';
+import { PermissionType } from 'src/common/constants/permission-constants';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { RequestFileDto } from './dtos/request-file.dto';
 @ApiTags('Upload Files')
 @Controller('files')
+@UseGuards(PermissionGuard)
 @ApiSecurity('bare-token')
 @ApiSecurity('x-client-id')
 @ApiForbiddenResponseCustom()
@@ -34,6 +40,7 @@ export class FileController {
   constructor(private readonly fileService: FileService) {}
 
   @Get('/')
+  @Permissions(PermissionType.FILE_GET)
   @ApiOperation({ summary: 'Get all files uploaded to server' })
   @ApiOkResponseCustom(Array<String>, [
     'Cover-2025-09-05T07-45-32.753Z.docx',
@@ -46,6 +53,7 @@ export class FileController {
 
   @FileSecurityKey()
   @Get('/:filePath')
+  @Permissions(PermissionType.FILE_GET)
   @ApiOperation({ summary: 'Get buffer of a specific file' })
   @ApiCommonResponseCustom(
     Buffer<ArrayBufferLike>,
@@ -60,10 +68,11 @@ export class FileController {
   }
 
   @Post('/')
+  @Permissions(PermissionType.FILE_CREATE)
   @ApiOperation({ summary: 'upload a file' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'Upload a Swagger JSON file',
+    description: 'Upload a file',
     required: true,
     schema: {
       type: 'object',
@@ -80,8 +89,37 @@ export class FileController {
   @ApiCommonResponseCustom(String, '/uploaded/files/Test_Doc.docx')
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
-    @Body('fileName') fileName?: string,
+    @Body() body: RequestFileDto,
   ) {
-    return await this.fileService.upload(file, fileName ?? file.originalname);
+    return await this.fileService.upload(file, body.fileName);
+  }
+
+  @Put('/:filePath')
+  @ApiOperation({ summary: 'Rename a specific unused file in server' })
+  @ApiBody({
+    required: true,
+    schema: {
+      type: 'object',
+      properties: {
+        fileName: {
+          type: 'string',
+          description: 'New name that you want to apply for this file',
+        },
+      },
+    },
+  })
+  @ApiCommonResponseCustom(String, '/uploaded/files/Test_Doc.docx')
+  async renameFile(
+    @Param('filePath') filePath: string,
+    @Body() body: RequestFileDto,
+  ) {
+    return this.fileService.rename(filePath, body.fileName ?? '');
+  }
+
+  @Delete('/:filePath')
+  @ApiOperation({ summary: 'remove a specific unused file in server' })
+  @ApiCommonResponseCustom(Boolean, true)
+  async removeFile(@Param('filePath') filePath: string) {
+    return this.fileService.remove(filePath);
   }
 }
