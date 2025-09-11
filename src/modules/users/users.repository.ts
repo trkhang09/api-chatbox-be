@@ -44,14 +44,14 @@ export class UsersRepository extends Repository<User> {
         },
       });
       if (!user) {
-        return null; // không throw để tránh ngắt flow
+        throw new NotFoundException('User Not Found!');
       }
       const userDto: UserDto = plainToInstance(UserDto, user, {
         excludeExtraneousValues: true,
       });
       return userDto;
     } catch (error) {
-      throw new NotFoundException(
+      throw new InternalServerErrorException(
         'Can not get User in this conversation',
         error.message,
       );
