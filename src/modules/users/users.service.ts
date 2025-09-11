@@ -9,7 +9,7 @@ import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dtos/create-user.dto';
 import bcrypt from 'bcrypt';
-import { ILike } from 'typeorm';
+import { ILike, MoreThanOrEqual } from 'typeorm';
 import { Role } from '../roles/entities/role.entity';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
@@ -19,7 +19,7 @@ import { plainToInstance } from 'class-transformer';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { UserStatus } from 'src/common/enums/user-status.enum';
-
+import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
 export const DashboardForUserRequestDto = createDashboardRequestDto(UserStatus);
 
 @Injectable()
@@ -34,7 +34,25 @@ export class UsersService {
   /**
    * get quantity with a specific status/type within a number of days
    */
-  async getQuantity(query: InstanceType<typeof DashboardForUserRequestDto>) {}
+  async getQuantity(
+    query: InstanceType<typeof DashboardForUserRequestDto>,
+  ): Promise<number> {
+    try {
+      const payload = validateDashboardRequest(query, UserStatus);
+      let where: any = {};
+      where.status = payload.status;
+      console.log(payload);
+
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - payload.days);
+      where.createdAt = MoreThanOrEqual(fromDate);
+
+      const quantity = await this.usersRepository.count({ where });
+      return quantity;
+    } catch (error) {
+      throw new Error('Failed to get quantity: ' + error.message);
+    }
+  }
 
   /**
    * create new user

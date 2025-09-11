@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Like, Repository } from 'typeorm';
+import { FindOptionsWhere, Like, MoreThanOrEqual, Repository } from 'typeorm';
 import { Document } from './entities/document.entity';
 import { ResponseDocumentDto } from './dtos/response-document.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
@@ -20,6 +20,7 @@ import { FileService } from '../files/file.service';
 import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
+import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
 
 export const DashboardForDocumentRequestDto =
   createDashboardRequestDto(DocumentStatus);
@@ -38,7 +39,22 @@ export class DocumentsService {
    */
   async getQuantity(
     query: InstanceType<typeof DashboardForDocumentRequestDto>,
-  ) {}
+  ) {
+    try {
+      const payload = validateDashboardRequest(query, DocumentStatus);
+      let where: any = {};
+      where.status = payload.status;
+
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - payload.days);
+      where.createdAt = MoreThanOrEqual(fromDate);
+
+      const quantity = await this.docRepo.count({ where });
+      return quantity;
+    } catch (error) {
+      throw new Error('Failed to get quantity: ' + error.message);
+    }
+  }
 
   /**
    * get paginated list of documents

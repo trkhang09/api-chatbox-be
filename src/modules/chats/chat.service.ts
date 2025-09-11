@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Chat } from './entities/chat.entity';
-import { DataSource } from 'typeorm';
+import { DataSource, MoreThanOrEqual } from 'typeorm';
 import { Message } from '../messages/entities/messages.entity';
 import { RespondCreatedNewChatDto } from './dtos/respond-created-new-chat.dto';
 import { User } from '../users/entities/user.entity';
@@ -23,6 +23,7 @@ import { Observable } from 'rxjs';
 import { RespondChatDto } from './dtos/respond-chat.dto';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
+import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
 
 export const DashboardForConversationRequestDto =
   createDashboardRequestDto(ChatTypes);
@@ -41,7 +42,22 @@ export class ChatService {
    */
   async getQuantity(
     query: InstanceType<typeof DashboardForConversationRequestDto>,
-  ) {}
+  ) {
+    try {
+      const payload = validateDashboardRequest(query, ChatTypes);
+      let where: any = {};
+      where.status = payload.status;
+
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - payload.days);
+      where.createdAt = MoreThanOrEqual(fromDate);
+
+      const quantity = await this.chatRepository.count({ where });
+      return quantity;
+    } catch (error) {
+      throw new Error('Failed to get quantity: ' + error.message);
+    }
+  }
 
   /**
    * Find a list of 1 conversations based on a keyword or get all if no keyword is found.
