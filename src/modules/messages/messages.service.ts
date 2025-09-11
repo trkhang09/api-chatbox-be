@@ -1,13 +1,7 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import { User } from '../users/entities/user.entity';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { RespondCreatedFirstMessageDto } from './dtos/respond-created-first-message.dto';
-import { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { Message } from './entities/messages.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Chat } from '../chats/entities/chat.entity';
 import { GeminiService } from '../gemini/gemini.service';
 import { AiRespondWithoutLoginDto } from './dtos/ai-respond-without-login.dto';
@@ -18,6 +12,7 @@ import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { createMessageDto } from './dtos/create-message.dto';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class MessagesService {
@@ -56,7 +51,6 @@ export class MessagesService {
   async createAiMessageWithoutLogin(
     question: string,
   ): Promise<AiRespondWithoutLoginDto> {
-    //call API gemini in geminiService
     const aiResponse = await this.geminiService.generateResponse(question);
 
     const response = new AiRespondWithoutLoginDto(aiResponse);
@@ -86,7 +80,7 @@ export class MessagesService {
 
   async createMessage(
     query: createMessageDto,
-    creator: User,
+    creatorId: string,
   ): Promise<RespondMessageDto> {
     const chat = await this.chatRepository.findChat(query.chatId);
 
@@ -94,7 +88,7 @@ export class MessagesService {
       return await this.messageRepository.saveAndReturnDto({
         chat: chat,
         content: query.content,
-        createdByUserId: creator.id,
+        createdByUserId: creatorId,
       });
     } catch (error) {
       throw new InternalServerErrorException('Failed to store message.');
@@ -103,29 +97,31 @@ export class MessagesService {
 
   async editContentMessage(
     query: EditMessageDto,
-    user: User,
+    userId: string,
   ): Promise<RespondMessageDto> {
-    //validate user ownership of message
-    const message = await this.validateMessageOwnership(query.id, user.id);
-    message.content = query.content;
     try {
-      const saved = await this.messageRepository.save(message);
+      await this.messageRepository.update(
+        { id: query.id },
+        {
+          content: query.content,
+          createdByUserId: userId,
+        },
+      );
 
-      const response = new RespondMessageDto({
-        content: saved.content,
-        createdAt: saved.createdAt,
-        createdByUserId: saved.createdByUserId,
+      const editedMessage = await this.messageRepository.findOneBy({
+        id: query.id,
       });
+      if (!editedMessage)
+        throw new InternalServerErrorException('Message not found');
+      const response = plainToInstance(RespondMessageDto, editedMessage);
       return response;
     } catch (error) {
       throw error;
     }
   }
 
-  async softRemoveMessage(id: string, user: User): Promise<boolean> {
+  async softRemoveMessage(id: string): Promise<boolean> {
     try {
-      // Verify user ownership of message
-      await this.validateMessageOwnership(id, user.id);
       await this.messageRepository.softDelete(id);
       return true;
     } catch (error) {
@@ -150,28 +146,14 @@ export class MessagesService {
     }
   }
 
-  private async validateMessageOwnership(
-    messageId: string,
-    userId: string,
-  ): Promise<Message> {
-    try {
-      const message = await this.messageRepository.findOne({
-        where: {
-          id: messageId,
-          createdByUserId: userId,
-        },
-      });
-      if (!message) {
-        throw new NotFoundException(
-          `this User does not have permission to edit this message`,
-        );
-      }
-      return message;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'fail to validate Message Ownership!',
-        error.message,
-      );
-    }
+  async getUnreadMessagesInChat(chatId: string): Promise<RespondMessageDto[]> {
+    return this.messageRepository.findUnreadMessageInChat(chatId);
+  }
+
+  async readMessages(messageIds: string[]) {
+    await this.messageRepository.update(
+      { id: In(messageIds) },
+      { isRead: true },
+    );
   }
 }

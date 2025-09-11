@@ -1,9 +1,12 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { SocketService } from './socket.service';
 import { SocketGateway } from './socket.gateway';
+import { MessagesModule } from '../messages/messages.module';
+import { UsersRepository } from '../users/users.repository';
 
 @Module({
-  providers: [SocketGateway, SocketService],
+  imports: [forwardRef(() => MessagesModule)],
+  providers: [SocketGateway, SocketService, UsersRepository],
   exports: [SocketGateway, SocketService],
 })
 export class SocketModule {}
