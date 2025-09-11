@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { DashboardForUserRequestDto, UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import {
@@ -30,6 +30,8 @@ import { PermissionGuard } from 'src/common/guards/permission.guard';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
 import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
+import { UserStatus } from 'src/common/enums/user-status.enum';
+import { ApiDashboardQuantity } from 'src/common/decorators/api-dashboard-quantity.decorator';
 
 @Controller('users')
 @ApiSecurity('bare-token')
@@ -38,6 +40,13 @@ import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-
 @UseGuards(PermissionGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @ApiDashboardQuantity(UserStatus)
+  async getQuantity(
+    @Query() query: InstanceType<typeof DashboardForUserRequestDto>,
+  ) {
+    return this.usersService.getQuantity(query);
+  }
 
   @Post('create')
   @Permissions(PermissionType.USER_CREATE)

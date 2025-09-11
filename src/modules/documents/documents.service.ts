@@ -18,6 +18,11 @@ import { ResponseUpdatedDocumentDto } from './dtos/response-updated-document.dto
 import { ClientProxy } from '@nestjs/microservices';
 import { FileService } from '../files/file.service';
 import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
+import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
+import { DocumentStatus } from 'src/common/enums/document-status.enum';
+
+export const DashboardForDocumentRequestDto =
+  createDashboardRequestDto(DocumentStatus);
 
 @Injectable()
 export class DocumentsService {
@@ -26,6 +31,13 @@ export class DocumentsService {
     @InjectRepository(Document)
     private readonly docRepo: Repository<Document>,
     private readonly fileService: FileService,
+  ) {}
+
+  /**
+   * get quantity with a specific status/type within a number of days
+   */
+  async getQuantity(
+    query: InstanceType<typeof DashboardForDocumentRequestDto>,
   ) {}
 
   /**

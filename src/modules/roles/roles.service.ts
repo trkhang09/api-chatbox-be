@@ -3,7 +3,6 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
-  Query,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, In, Repository } from 'typeorm';
@@ -17,6 +16,10 @@ import { plainToInstance } from 'class-transformer';
 import { RoleFilterResponseDto } from './dto/role-filter-response.dto';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 import { RoleType } from 'src/common/constants/role-constants';
+import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
+import { RoleStatus } from 'src/common/enums/role-status.enum';
+
+export const DashboardForRoleRequestDto = createDashboardRequestDto(RoleStatus);
 
 @Injectable()
 export class RolesService {
@@ -25,6 +28,11 @@ export class RolesService {
     @InjectRepository(Permission)
     private readonly permRepo: Repository<Permission>,
   ) {}
+
+  /**
+   * get quantity with a specific status/type within a number of days
+   */
+  async getQuantity(query: InstanceType<typeof DashboardForRoleRequestDto>) {}
 
   async findAll(
     query: RoleFilterRequestDto,

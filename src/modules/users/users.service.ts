@@ -17,6 +17,10 @@ import { GetUsersDto } from './dtos/get-users.dto';
 import { RoleRepository } from '../roles/role.repository';
 import { plainToInstance } from 'class-transformer';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
+import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
+import { UserStatus } from 'src/common/enums/user-status.enum';
+
+export const DashboardForUserRequestDto = createDashboardRequestDto(UserStatus);
 
 @Injectable()
 export class UsersService {
@@ -28,9 +32,13 @@ export class UsersService {
   ) {}
 
   /**
+   * get quantity with a specific status/type within a number of days
+   */
+  async getQuantity(query: InstanceType<typeof DashboardForUserRequestDto>) {}
+
+  /**
    * create new user
    */
-
   async createNewUser(
     createUserDto: CreateUserDto,
     createdBy: string,
@@ -74,7 +82,6 @@ export class UsersService {
   /**
    * update user
    */
-
   async updateUser(updateUserDto: UpdateUserDto) {
     const user = await this.usersRepository.findOne({
       where: { id: updateUserDto.userId },
