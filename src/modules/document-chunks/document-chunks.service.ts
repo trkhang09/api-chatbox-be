@@ -9,6 +9,8 @@ import { Repository } from 'typeorm';
 import { ResponseChunkDto } from './dtos/response-chunk.dto';
 import { ChunkConstants } from 'src/common/constants/chunk.constants';
 import { substringAtNearestSpace } from 'src/common/utils/substring-at-nearest-space';
+import { PaginateDto } from 'src/common/dtos/paginate.dto';
+import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 
 @Injectable()
 export class DocumentChunksService {
@@ -23,14 +25,19 @@ export class DocumentChunksService {
    * @returns Promise<ResponseChunkDto[]>
    * @throws InternalServerErrorException
    */
-  async getListChunksOfDocument(docId: string): Promise<ResponseChunkDto[]> {
+  async getListChunksOfDocument(
+    docId: string,
+    query: PaginateDto,
+  ): Promise<ResponsePaginateDto<ResponseChunkDto>> {
     try {
-      const foundChunks = await this.docChunkRepo.find({
+      const [foundChunks, total] = await this.docChunkRepo.findAndCount({
         where: { document: { id: docId } },
         order: { createdAt: { direction: 'ASC' } },
+        skip: (query.page - 1) * query.size,
+        take: query.size,
       });
 
-      const responseChunks: ResponseChunkDto[] = [];
+      const data: ResponseChunkDto[] = [];
 
       foundChunks.forEach((chunk) => {
         const dto = new ResponseChunkDto();
@@ -39,16 +46,24 @@ export class DocumentChunksService {
           dto[k] = chunk[k];
         });
 
-        const cutConetnt = substringAtNearestSpace(
+        const cutContent = substringAtNearestSpace(
           chunk.content,
           ChunkConstants.MAX_CHAR_CONTENT,
         );
-        dto.content = cutConetnt;
+        dto.content = cutContent;
 
-        responseChunks.push(dto);
+        data.push(dto);
       });
 
-      return responseChunks;
+      const dto = new ResponsePaginateDto<ResponseChunkDto>({
+        ...query,
+        data,
+        total,
+        totalInPage: data.length,
+        totalPage: Math.ceil(total / query.size),
+      });
+
+      return dto;
     } catch (error) {
       throw new InternalServerErrorException(
         `Cannot get list chunks of document with id = \`${docId}\`, ${error.message}`,

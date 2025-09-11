@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { DocumentChunksService } from './document-chunks.service';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
@@ -7,6 +7,9 @@ import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-
 import { PermissionGuard } from 'src/common/guards/permission.guard';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
+import { PaginateDto } from 'src/common/dtos/paginate.dto';
+import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
+import { ApiPaginatedResponseCustom } from 'src/common/decorators/api-paginated-response.decorator';
 
 @ApiTags('Document Chunks')
 @ApiSecurity('bare-token')
@@ -20,15 +23,12 @@ export class DocumentChunksController {
   @Get('/:docId/chunks')
   @Permissions(PermissionType.DOCUMENT_GET)
   @ApiOperation({ summary: 'Get list of chunks of a specific document' })
-  @ApiCommonResponseCustom(Array<ResponseChunkDto>, [
-    {
-      id: '550e8400-e29b-41d4-a716-446655440000',
-      content: 'This is a response message chunk.',
-      createdAt: '2025-09-08T12:34:56.000Z',
-    },
-  ])
-  async getListChunksOfDocument(@Param('docId') docId: string) {
-    return this.docChunkService.getListChunksOfDocument(docId);
+  @ApiPaginatedResponseCustom(ResponsePaginateDto, ResponseChunkDto)
+  async getListChunksOfDocument(
+    @Param('docId') docId: string,
+    @Query() query: PaginateDto,
+  ) {
+    return this.docChunkService.getListChunksOfDocument(docId, query);
   }
 
   @Get('/:id')
