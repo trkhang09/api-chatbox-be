@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { Message } from './entities/messages.entity';
 import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
@@ -53,5 +53,43 @@ export class MessageRepository extends Repository<Message> {
     const saved = await super.save(message);
     const respond = plainToInstance(RespondMessageDto, saved);
     return respond;
+  }
+
+  async findUnreadMessageInChat(chatId: string): Promise<RespondMessageDto[]> {
+    let messages: Message[];
+    let total: number;
+    try {
+      [messages, total] = await this.findAndCount({
+        where: {
+          chat: { id: chatId },
+          isRead: false,
+        },
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Can not get messages in Conversation, ',
+        error.message,
+      );
+    }
+    return messages.map((message) =>
+      plainToInstance(RespondMessageDto, message),
+    );
+  }
+
+  async findMessages(messageIds: string[]): Promise<RespondMessageDto[]> {
+    const messages = await this.find({
+      where: {
+        id: In(messageIds),
+      },
+    });
+    const respondMessages = messages.map((message) =>
+      plainToInstance(RespondMessageDto, message, {
+        excludeExtraneousValues: true,
+      }),
+    );
+    return respondMessages;
   }
 }
