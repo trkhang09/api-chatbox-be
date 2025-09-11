@@ -8,13 +8,16 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { SocketService } from './socket.service';
-import { ConfigService } from '@nestjs/config';
-import { UseFilters } from '@nestjs/common';
+import { HttpStatus, UseFilters } from '@nestjs/common';
 import { WsExceptionFilter } from 'src/common/filters';
 import { MessagesService } from '../messages/messages.service';
 import { createMessageDto } from '../messages/dtos/create-message.dto';
 import { UsersRepository } from '../users/users.repository';
 import { EditMessageDto } from '../messages/dtos/edit-message.dto';
+import { RespondMessageDto } from '../messages/dtos/respond-message.dto';
+import { UserDto } from '../users/dtos/user.dto';
+import { SocketType } from 'src/common/constants/socket.constaints';
+import { ResponseSocketDto } from './dtos/response-socket.dto';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -29,7 +32,6 @@ export class SocketGateway implements OnGatewayConnection {
 
   constructor(
     private readonly socketService: SocketService,
-    private readonly configService: ConfigService,
     private readonly messageService: MessagesService,
     private readonly userRepository: UsersRepository,
   ) {}
@@ -38,25 +40,7 @@ export class SocketGateway implements OnGatewayConnection {
     this.socketService.handleConnection(socket);
   }
 
-  @SubscribeMessage('message')
-  handleEvent(@MessageBody() data: string, @ConnectedSocket() socket: Socket) {
-    if (!data) {
-      socket.emit('responseMessage', {
-        code: 500,
-        message: 'Data is required!',
-        data: null,
-      });
-    }
-
-    const response = {
-      code: 200,
-      message: 'success',
-      data: { text: `Hello ${data}` },
-    };
-    socket.emit('responseMessage', response);
-  }
-
-  @SubscribeMessage('register')
+  @SubscribeMessage(SocketType.REGISTER)
   handleRegister(
     @MessageBody() data: { userId: string },
     @ConnectedSocket() client: Socket,
@@ -70,7 +54,8 @@ export class SocketGateway implements OnGatewayConnection {
       sockets.push(client.id);
     }
   }
-  @SubscribeMessage('signOut')
+
+  @SubscribeMessage(SocketType.SIGNOUT)
   handleSignOut(
     @MessageBody() data: { userId: string },
     @ConnectedSocket() client: Socket,
@@ -86,21 +71,24 @@ export class SocketGateway implements OnGatewayConnection {
       }
     }
   }
-  @SubscribeMessage('joinChat')
+
+  @SubscribeMessage(SocketType.JOINCHAT)
   handleJoinChat(
     @MessageBody() body: { userId: string; chatId: string },
     @ConnectedSocket() client: Socket,
   ) {
     this.currentChat.set(body.userId, body.chatId);
   }
-  @SubscribeMessage('leaveChat')
+
+  @SubscribeMessage(SocketType.LEAVECHAT)
   handleLeaveChat(
     @MessageBody() body: { userId: string },
     @ConnectedSocket() client: Socket,
   ) {
     this.currentChat.set(body.userId, null);
   }
-  @SubscribeMessage('sendMessage')
+
+  @SubscribeMessage(SocketType.SENDMESSAGE)
   async handleSendMessage(
     @MessageBody() body: { query: createMessageDto; creatorId: string },
     @ConnectedSocket() client: Socket,
@@ -109,37 +97,14 @@ export class SocketGateway implements OnGatewayConnection {
       body.query,
       body.creatorId,
     );
-    client.emit('sendMessageSuccess', message);
-
-    const ortherUserInChat = await this.userRepository.findReceiver(
+    const receiver = await this.userRepository.findReceiver(
       body.query.chatId,
       body.creatorId,
     );
-    const sockets = this.onlineUsers.get(ortherUserInChat.id);
-    const openedChat = this.currentChat.get(ortherUserInChat.id);
-    const unreadMessages = await this.messageService.getUnreadMessagesInChat(
-      body.query.chatId,
-    );
-
-    if (sockets) {
-      sockets.forEach((sid) => {
-        if (openedChat === body.query.chatId) {
-          this.server.to(sid).emit('responseMessage', {
-            code: 200,
-            message: 'success',
-            body: message,
-          });
-        } else {
-          this.server.to(sid).emit('chatNotification', {
-            chatId: body.query.chatId,
-            unreadMessages: unreadMessages,
-            unreadCount: unreadMessages.length,
-          });
-        }
-      });
-    }
+    this.notifyReceiver(receiver, body.query.chatId, message);
   }
-  @SubscribeMessage('editMessage')
+
+  @SubscribeMessage(SocketType.EDITMESSAGE)
   async handleEditMessage(
     @MessageBody()
     body: { query: EditMessageDto; chatId: string; creatorId: string },
@@ -153,24 +118,16 @@ export class SocketGateway implements OnGatewayConnection {
       body.chatId,
       body.creatorId,
     );
-    const sockets = this.onlineUsers.get(receiver.id);
-    if (sockets) {
-      sockets.forEach((sid) => {
-        this.server.to(sid).emit('responseMessage', {
-          code: 200,
-          message: 'success',
-          body: message,
-        });
-      });
-    }
+    this.notifyReceiver(receiver, body.chatId, message);
   }
-  @SubscribeMessage('retrieveMessage')
+
+  @SubscribeMessage(SocketType.RETRIEVEMESSAGE)
   async handleSoftRemoveMessage(
     @MessageBody()
     body: { messageId: string; chatId: string; creatorId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const ortherUserInChat = await this.userRepository.findReceiver(
+    const receiver = await this.userRepository.findReceiver(
       body.chatId,
       body.creatorId,
     );
@@ -178,28 +135,45 @@ export class SocketGateway implements OnGatewayConnection {
     try {
       const deletedResult = await this.messageService.softRemoveMessage(
         body.messageId,
-        body.creatorId,
       );
       if (!deletedResult) {
-        client.emit('error', {
+        const errorResponse = new ResponseSocketDto({
+          code: HttpStatus.NOT_FOUND,
           message: 'Message not found or cannot be deleted',
         });
+        client.emit(SocketType.ERROR, errorResponse);
         return;
       }
-      const sockets = this.onlineUsers.get(ortherUserInChat.id);
-      if (sockets) {
-        sockets.forEach((sid) => {
-          this.server.to(sid).emit('responseMessage', {
-            code: 200,
-            message: 'success',
+      if (receiver) {
+        const sockets = this.onlineUsers.get(receiver.id);
+        const openedChat = this.currentChat.get(receiver.id);
+        if (sockets) {
+          sockets.forEach((sid) => {
+            if (openedChat === body.chatId) {
+              const response = new ResponseSocketDto({
+                code: HttpStatus.OK,
+                message: 'success',
+                data: {
+                  id: body.messageId,
+                  deletedResult: deletedResult,
+                },
+              });
+              this.server
+                .to(sid)
+                .emit(SocketType.RESPONSERETRIEVEMESSAGE, response);
+            }
           });
-        });
+        }
       }
     } catch (error) {
-      client.emit('error', {
+      const errorResponse = new ResponseSocketDto({
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
         message: 'Failed to delete message',
-        details: error.message,
+        data: {
+          details: error.message,
+        },
       });
+      client.emit(SocketType.ERROR, errorResponse);
     }
   }
 
@@ -212,6 +186,43 @@ export class SocketGateway implements OnGatewayConnection {
 
       if (this.onlineUsers.get(userId)?.length === 0) {
         this.onlineUsers.delete(userId);
+      }
+    }
+  }
+
+  private async notifyReceiver(
+    receiver: UserDto | null,
+    chatId: string,
+    message: RespondMessageDto,
+  ) {
+    if (receiver) {
+      const sockets = this.onlineUsers.get(receiver.id);
+      const openedChat = this.currentChat.get(receiver.id);
+      const unreadMessages =
+        await this.messageService.getUnreadMessagesInChat(chatId);
+
+      if (sockets) {
+        sockets.forEach((sid) => {
+          if (openedChat === chatId) {
+            const response = new ResponseSocketDto({
+              code: HttpStatus.OK,
+              message: 'success',
+              data: message,
+            });
+            this.server.to(sid).emit(SocketType.RESPONSEMESSAGE, response);
+          } else {
+            const notification = new ResponseSocketDto({
+              code: HttpStatus.OK,
+              message: 'success',
+              data: {
+                chatId: chatId,
+                unreadMessages: unreadMessages,
+                unreadCount: unreadMessages.length,
+              },
+            });
+            this.server.to(sid).emit(SocketType.CHATNOTIFICATION, notification);
+          }
+        });
       }
     }
   }

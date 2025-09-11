@@ -12,6 +12,7 @@ import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { createMessageDto } from './dtos/create-message.dto';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class MessagesService {
@@ -112,18 +113,14 @@ export class MessagesService {
       });
       if (!editedMessage)
         throw new InternalServerErrorException('Message not found');
-      const response = new RespondMessageDto({
-        content: editedMessage.content,
-        createdAt: editedMessage.createdAt,
-        createdByUserId: editedMessage.createdByUserId,
-      });
+      const response = plainToInstance(RespondMessageDto, editedMessage);
       return response;
     } catch (error) {
       throw error;
     }
   }
 
-  async softRemoveMessage(id: string, userId: string): Promise<boolean> {
+  async softRemoveMessage(id: string): Promise<boolean> {
     try {
       await this.messageRepository.softDelete(id);
       return true;

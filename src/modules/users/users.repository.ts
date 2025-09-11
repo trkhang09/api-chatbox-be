@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, Not, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UserDto } from './dtos/user.dto';
@@ -27,7 +31,10 @@ export class UsersRepository extends Repository<User> {
       .getOne();
   }
 
-  async findReceiver(chatId: string, senderId: string): Promise<UserDto> {
+  async findReceiver(
+    chatId: string,
+    senderId: string,
+  ): Promise<UserDto | null> {
     try {
       const user = await this.findOne({
         relations: ['chats'],
@@ -36,14 +43,15 @@ export class UsersRepository extends Repository<User> {
           id: Not(senderId),
         },
       });
-      if (!user) throw new InternalServerErrorException('User not found');
+      if (!user) {
+        return null; // không throw để tránh ngắt flow
+      }
       const userDto: UserDto = plainToInstance(UserDto, user, {
         excludeExtraneousValues: true,
       });
-
       return userDto;
     } catch (error) {
-      throw new InternalServerErrorException(
+      throw new NotFoundException(
         'Can not get User in this conversation',
         error.message,
       );

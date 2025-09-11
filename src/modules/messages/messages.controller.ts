@@ -21,7 +21,6 @@ import {
 import { ApiPaginatedResponseCustom } from 'src/common/decorators/api-paginated-response.decorator';
 import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-request-response.decorator';
 import { createMessageDto } from './dtos/create-message.dto';
-import { User } from '../users/entities/user.entity';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
@@ -57,7 +56,10 @@ export class MessagesController {
   @ApiCommonResponseCustom(RespondMessageDto)
   @ApiBadRequestResponseCustom()
   @ApiInternalServerErrorResponse()
-  async createMessage(@Body() body: createMessageDto, creatorId: string) {
+  async createMessage(
+    @Body() body: createMessageDto,
+    @AuthUser('sub') creatorId: string,
+  ) {
     return this.messagesService.createMessage(body, creatorId);
   }
 
@@ -71,9 +73,9 @@ export class MessagesController {
   @ApiNotFoundResponse()
   async editMessage(
     @Body() body: EditMessageDto,
-    @AuthUser('sub') user: string,
+    @AuthUser('sub') userId: string,
   ) {
-    return this.messagesService.editContentMessage(body, user);
+    return this.messagesService.editContentMessage(body, userId);
   }
 
   @Delete('/:id')
@@ -83,10 +85,7 @@ export class MessagesController {
   @ApiOkResponseCustom(Boolean, true)
   @ApiNotFoundResponse()
   @ApiInternalServerErrorResponse()
-  async removeMessage(
-    @Param('id') id: string,
-    @AuthUser('sub') userId: string,
-  ) {
-    return this.messagesService.softRemoveMessage(id, userId);
+  async removeMessage(@Param('id') id: string) {
+    return this.messagesService.softRemoveMessage(id);
   }
 }

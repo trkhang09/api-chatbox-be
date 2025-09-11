@@ -41,6 +41,18 @@ export class RespondMessageDto {
   })
   isRead: boolean;
 
+  @Expose()
+  @ApiProperty({
+    description: 'Indicate whether the message has been edited',
+  })
+  updatedAt?: Date;
+
+  @Expose()
+  @ApiProperty({
+    description: 'Indicate whether the messages has been deleted',
+  })
+  deletedAt?: Date;
+
   constructor(partial: Partial<RespondMessageDto>) {
     Object.assign(this, partial);
   }
