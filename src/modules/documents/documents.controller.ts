@@ -9,7 +9,10 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { DocumentsService } from './documents.service';
+import {
+  DashboardForDocumentRequestDto,
+  DocumentsService,
+} from './documents.service';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ApiPaginatedResponseCustom } from 'src/common/decorators/api-paginated-response.decorator';
@@ -26,11 +29,12 @@ import { User } from '../users/entities/user.entity';
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
-import { AuthGuard } from '../auth/jwt/jwt-auth.guard';
 import { PermissionGuard } from 'src/common/guards/permission.guard';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
 import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
+import { ApiDashboardQuantity } from 'src/common/decorators/api-dashboard-quantity.decorator';
+import { DocumentStatus } from 'src/common/enums/document-status.enum';
 
 @Controller('documents')
 @ApiSecurity('bare-token')
@@ -39,6 +43,13 @@ import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-
 @UseGuards(PermissionGuard)
 export class DocumentsController {
   constructor(private readonly docService: DocumentsService) {}
+
+  @ApiDashboardQuantity(DocumentStatus)
+  async getQuantity(
+    @Query() query: InstanceType<typeof DashboardForDocumentRequestDto>,
+  ) {
+    return this.docService.getQuantity(query);
+  }
 
   @Get('/')
   @Permissions(PermissionType.DOCUMENT_GET)

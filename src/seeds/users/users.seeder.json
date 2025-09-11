@@ -1,140 +1,140 @@
 [
   {
     "email": "alice.smith@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Alice Smith",
     "role": "USER",
     "status": 1
   },
   {
     "email": "bob.johnson@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Bob Johnson",
     "role": "USER",
     "status": 1
   },
   {
     "email": "charlie.nguyen@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Charlie Nguyen",
     "role": "USER",
     "status": 1
   },
   {
     "email": "diana.lee@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Diana Lee",
     "role": "USER",
     "status": 0
   },
   {
     "email": "ethan.kim@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Ethan Kim",
     "role": "USER",
     "status": 1
   },
   {
     "email": "fiona.williams@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Fiona Williams",
     "role": "USER",
     "status": 2
   },
   {
     "email": "george.brown@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "George Brown",
     "role": "USER",
     "status": 1
   },
   {
     "email": "hannah.miller@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Hannah Miller",
     "role": "USER",
     "status": 1
   },
   {
     "email": "ian.chen@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Ian Chen",
     "role": "USER",
     "status": 0
   },
   {
     "email": "julia.martinez@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Julia Martinez",
     "role": "USER",
     "status": 1
   },
   {
     "email": "kevin.wilson@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Kevin Wilson",
     "role": "USER",
     "status": 1
   },
   {
     "email": "linda.garcia@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Linda Garcia",
     "role": "USER",
     "status": 1
   },
   {
     "email": "michael.davis@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Michael Davis",
     "role": "USER",
     "status": 1
   },
   {
     "email": "nina.hernandez@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Nina Hernandez",
     "role": "USER",
     "status": 2
   },
   {
     "email": "oscar.lopez@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Oscar Lopez",
     "role": "USER",
     "status": 1
   },
   {
     "email": "paula.jones@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Paula Jones",
     "role": "USER",
     "status": 1
   },
   {
     "email": "quentin.white@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Quentin White",
     "role": "USER",
     "status": 0
   },
   {
     "email": "rachel.moore@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Rachel Moore",
     "role": "USER",
     "status": 1
   },
   {
     "email": "steven.taylor@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Steven Taylor",
     "role": "USER",
     "status": 1
   },
   {
     "email": "tina.anderson@example.com",
-    "password": "hashed_password",
+    "password": "12345678",
     "fullname": "Tina Anderson",
     "role": "USER",
     "status": 1

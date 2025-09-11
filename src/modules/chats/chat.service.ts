@@ -22,6 +22,10 @@ import type { AiService } from '../ai/ai.service';
 import { Observable } from 'rxjs';
 import { RespondChatDto } from './dtos/respond-chat.dto';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
+import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
+
+export const DashboardForConversationRequestDto =
+  createDashboardRequestDto(ChatTypes);
 
 @Injectable()
 export class ChatService {
@@ -30,6 +34,13 @@ export class ChatService {
     private readonly dataSource: DataSource,
     private readonly messagesService: MessagesService,
     @Inject('AI_SERVICE') private readonly aiService: AiService,
+  ) {}
+
+  /**
+   * get quantity with a specific status/type within a number of days
+   */
+  async getQuantity(
+    query: InstanceType<typeof DashboardForConversationRequestDto>,
   ) {}
 
   /**
