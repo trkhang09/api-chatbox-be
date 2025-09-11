@@ -4,6 +4,8 @@ import seededDocs from './documents.seeder.json';
 import { Document } from 'src/modules/documents/entities/document.entity';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
 import { FileService } from 'src/modules/files/file.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 export class DocumentSeeder {
   public async run(): Promise<void> {
@@ -36,7 +38,7 @@ export class DocumentSeeder {
 
         return {
           ...doc,
-          ...(await this.getRandomFileInfo()),
+          ...(await this.getRandomFileInfo(repo)),
           status,
           progress,
         };
@@ -46,11 +48,11 @@ export class DocumentSeeder {
     await repo.insert(documents);
   }
 
-  private async getRandomFileInfo(): Promise<{
+  private async getRandomFileInfo(docRepo: Repository<Document>): Promise<{
     filePath: string;
     size: number;
   }> {
-    const fileService = new FileService();
+    const fileService = new FileService(docRepo);
     const files = await fileService.getAllFiles();
 
     if (files.length === 0) {
