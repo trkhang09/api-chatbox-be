@@ -15,6 +15,8 @@ const formatName = (code: string): string => {
     .join(' ');
 };
 
+const mappingCode = (role: { code: string } & any) => role.code;
+
 export class RoleSeeder implements ISeeder {
   public async run(): Promise<void> {
     const roleRepo = appDataSource.getRepository(Role);
@@ -27,44 +29,59 @@ export class RoleSeeder implements ISeeder {
       );
     }
 
-    const superAdminRole = roleRepo.create({
-      name: formatName(RoleType.SUPER_ADMIN),
-      code: RoleType.SUPER_ADMIN,
-      permissions: allPermissions,
+    let superAdminRole = await roleRepo.findOne({
+      where: { code: RoleType.SUPER_ADMIN },
     });
+
+    if (!superAdminRole) {
+      superAdminRole = roleRepo.create({
+        name: formatName(RoleType.SUPER_ADMIN),
+        code: RoleType.SUPER_ADMIN,
+        permissions: allPermissions,
+      });
+    } else {
+      superAdminRole.permissions = allPermissions;
+    }
 
     const userRole = roleRepo.create({
       name: formatName(RoleType.USER),
       code: RoleType.USER,
     });
 
-    const foundRoleCodes = (
-      await roleRepo.find({
-        where: { code: In(seededRoles.map((r) => r.code)) },
-        select: ['code'],
-      })
-    ).map((r) => r.code);
+    const foundRoles = await roleRepo.find({
+      where: { code: In(seededRoles.map(mappingCode)) },
+      relations: ['permissions'],
+    });
 
-    const newRoles = seededRoles.filter((c) => foundRoleCodes.includes(c.code));
+    const roles: Partial<Role>[] = [];
 
-    const roles = newRoles.map((role) => ({
-      ...role,
-      name: formatName(role.code),
-      status: Object.values(RoleStatus).includes(role.status)
-        ? role.status
-        : RoleStatus.ACTIVED,
-      permissions: allPermissions.filter((p) =>
+    seededRoles.forEach((role) => {
+      const foundRole = foundRoles.find((r) => r.code === role.code);
+      const thisPermissions = allPermissions.filter((p) =>
         role.permissions.includes(p.code),
-      ),
-    }));
+      );
 
-    if (!(await roleRepo.exists({ where: { code: RoleType.SUPER_ADMIN } }))) {
-      roles.push(superAdminRole);
-    }
+      if (foundRole && foundRole.permissions.length < role.permissions.length) {
+        foundRole.permissions = thisPermissions;
+
+        roles.push(foundRole);
+      } else {
+        roles.push({
+          ...role,
+          name: formatName(role.code),
+          status: Object.values(RoleStatus).includes(role.status)
+            ? role.status
+            : RoleStatus.ACTIVED,
+          permissions: thisPermissions,
+        });
+      }
+    });
 
     if (!(await roleRepo.exists({ where: { code: RoleType.USER } }))) {
       roles.push(userRole);
     }
+
+    roles.push(superAdminRole);
 
     await roleRepo.save(roles);
   }

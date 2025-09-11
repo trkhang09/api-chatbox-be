@@ -6,6 +6,8 @@ export enum PermissionType {
 
   FILE_GET = 'FILE_GET',
   FILE_CREATE = 'FILE_CREATE',
+  FILE_UPDATE = 'FILE_UPDATE',
+  FILE_DELETE = 'FILE_DELETE',
 
   USER_GET = 'USER_GET',
   USER_CREATE = 'USER_CREATE',

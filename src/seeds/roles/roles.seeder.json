@@ -26,6 +26,18 @@
     "permissions": ["ROLE_GET", "ROLE_CREATE", "ROLE_UPDATE", "ROLE_DELETE"]
   },
   {
+    "code": "FILE_MANAGER",
+    "status": 1,
+    "permissions": [
+      "DOCUMENT_GET",
+      "DOCUMENT_CREATE",
+      "FILE_GET",
+      "FILE_CREATE",
+      "FILE_UPDATE",
+      "FILE_DELETE"
+    ]
+  },
+  {
     "code": "VIEWER",
     "status": 1,
     "permissions": ["DOCUMENT_GET", "USER_GET", "ROLE_GET"]
