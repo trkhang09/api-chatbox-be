@@ -4,9 +4,12 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 import { AllowedFileTypes } from 'src/common/enums/allowed-file-type.enum';
+import { Document } from '../documents/entities/document.entity';
+import { Repository } from 'typeorm';
 
 const UPLOAD_DIR_NAME = 'uploads';
 const INVLAID_FILE_NAME_REGEX = /[\/\\:*?<>]/;
@@ -21,7 +24,10 @@ export class FileService {
     UPLOAD_DIR_NAME,
   );
 
-  constructor() {
+  constructor(
+    @InjectRepository(Document)
+    private readonly docRepo: Repository<Document>,
+  ) {
     fs.promises.mkdir(this.uploadDir, { recursive: true });
   }
 
@@ -64,6 +70,10 @@ export class FileService {
    */
   async remove(fileName: string): Promise<boolean> {
     try {
+      if (await this.docRepo.exists({ where: { filePath: fileName } })) {
+        throw new InternalServerErrorException('File is already used');
+      }
+
       const targetPath = path.join(this.uploadDir, fileName);
 
       await fs.promises.unlink(targetPath);
@@ -121,6 +131,10 @@ export class FileService {
    */
   async rename(oldFileName: string, newFileName: string): Promise<string> {
     try {
+      if (await this.docRepo.exists({ where: { filePath: oldFileName } })) {
+        throw new InternalServerErrorException('File is already used');
+      }
+
       const targetPath = path.join(this.uploadDir, oldFileName);
       const ext = path.extname(oldFileName);
 
@@ -202,9 +216,15 @@ export class FileService {
    * @returns
    */
   private createFileName(fileName: string, extension: string): string {
-    extension = extension.replace('.', '');
+    const allowedExtensions = Object.keys(AllowedFileTypes);
 
-    if (!Object.keys(AllowedFileTypes).includes(extension)) {
+    extension = extension.replaceAll('.', '');
+    allowedExtensions.forEach((ext) => {
+      fileName = fileName.replaceAll(ext, '');
+    });
+    fileName.replaceAll(' ', '_');
+
+    if (!allowedExtensions.includes(extension)) {
       throw new BadRequestException(
         'Only PDF and DOCX files are allowed for upload',
       );
