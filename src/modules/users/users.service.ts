@@ -134,7 +134,7 @@ export class UsersService {
 
       if (user.role.code === RoleType.SUPER_ADMIN) {
         throw new BadRequestException(
-          'Cannot create user with role SUPER ADMIN',
+          'Cannot update user with role SUPER ADMIN',
         );
       }
 
@@ -214,7 +214,7 @@ export class UsersService {
 
       if (userFound.role.code === RoleType.SUPER_ADMIN) {
         throw new BadRequestException(
-          'Cannot create user with role SUPER ADMIN',
+          'Cannot delete user with role SUPER ADMIN',
         );
       }
 
