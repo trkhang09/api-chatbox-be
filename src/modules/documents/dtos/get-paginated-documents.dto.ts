@@ -3,18 +3,12 @@ import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginateDto } from 'src/common/dtos/paginate.dto';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
+import { getEnumJoin } from 'src/common/utils/get-enum-join';
 
 export class GetPaginatedDocumentsDto extends PaginateDto {
   @ApiPropertyOptional({
     description:
-      'Filter documents by their status. ' +
-      Object.keys(DocumentStatus)
-        .filter((key) => isNaN(Number(key)))
-        .map(
-          (key) =>
-            `${key} = ${DocumentStatus[key as keyof typeof DocumentStatus]}`,
-        )
-        .join(', '),
+      'Filter documents by their status. ' + getEnumJoin(DocumentStatus),
     enum: DocumentStatus,
     example: DocumentStatus.PENDING,
   })
