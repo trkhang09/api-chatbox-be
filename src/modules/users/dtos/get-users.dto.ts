@@ -23,26 +23,4 @@ export class GetUsersDto extends PaginateDto {
   @IsOptional()
   @IsEnum(UserStatus)
   status?: UserStatus;
-
-  @ApiPropertyOptional({
-    description: 'Field to sort by',
-    enum: ['fullname', 'email', 'createdAt', 'updatedAt'],
-    default: 'createdAt',
-    example: 'fullname',
-  })
-  @IsOptional()
-  @IsString()
-  @IsIn(['fullname', 'email', 'createdAt', 'updatedAt'])
-  sortBy: string = 'createdAt';
-
-  @ApiProperty({
-    description: 'Sorting order',
-    enum: ['ASC', 'DESC'],
-    default: 'DESC',
-    example: 'ASC',
-  })
-  @IsOptional()
-  @IsString()
-  @IsIn(['ASC', 'DESC'])
-  sortOrder: 'ASC' | 'DESC' = 'DESC';
 }

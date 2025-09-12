@@ -4,14 +4,12 @@ import { ChatController } from './chat.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Chat } from './entities/chat.entity';
 import { MessagesModule } from '../messages/messages.module';
-import { ConfigService } from '@nestjs/config';
-import { GeminiService } from '../gemini/gemini.service';
-import { OpenaiService } from '../openai/openai.service';
 import { GeminiModule } from '../gemini/gemini.module';
 import { OpenaiModule } from '../openai/openai.module';
 import { AiProvider } from '../ai/ai.provider';
 import { ChatRepository } from './chat.repository';
 import { DataSource } from 'typeorm';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -19,6 +17,7 @@ import { DataSource } from 'typeorm';
     forwardRef(() => MessagesModule),
     GeminiModule,
     OpenaiModule,
+    UsersModule,
   ],
   providers: [
     {

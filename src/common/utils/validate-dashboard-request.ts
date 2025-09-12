@@ -4,9 +4,10 @@ import { isNumber } from 'class-validator';
 export function validateDashboardRequest(
   payload: { status?: string | number; days?: string | number },
   EnumType: Record<string, number | string>,
+  canGetAllStatus: boolean = false,
 ) {
   let { status, days } = payload;
-  if (status === undefined) {
+  if (!canGetAllStatus && status === undefined) {
     throw new BadRequestException('Status is required');
   }
   if (days === undefined) {
@@ -14,7 +15,7 @@ export function validateDashboardRequest(
   }
 
   status = parseInt(status + '');
-  if (isNaN(status)) {
+  if (!canGetAllStatus && isNaN(status)) {
     throw new BadRequestException('Status is not a number');
   }
 
@@ -24,10 +25,13 @@ export function validateDashboardRequest(
   }
 
   const values = Object.values(EnumType).filter((v) => isNumber(v));
-  if (typeof status !== 'number' || !values.includes(status)) {
-    throw new BadRequestException(
-      `Invalid status. Must be one of: ${values.join(', ')}`,
-    );
+
+  if (!canGetAllStatus) {
+    if (typeof status !== 'number' || !values.includes(status)) {
+      throw new BadRequestException(
+        `Invalid status. Must be one of: ${values.join(', ')}`,
+      );
+    }
   }
 
   if (typeof days !== 'number' || days <= 0 || days > 90) {
