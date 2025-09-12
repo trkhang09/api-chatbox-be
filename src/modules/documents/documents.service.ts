@@ -79,7 +79,6 @@ export class DocumentsService {
         take: query.size,
         skip: (query.page - 1) * query.size,
         order: {
-          createdAt: { direction: 'DESC' },
           updatedAt: { direction: 'DESC', nulls: 'FIRST' },
         },
       });
