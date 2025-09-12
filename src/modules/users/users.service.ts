@@ -67,7 +67,7 @@ export class UsersService {
   ): Promise<UserDto> {
     try {
       const [userFound, roleFound, hashPassword] = await Promise.all([
-        this.usersRepository.findOne({
+        this.usersRepository.exists({
           where: { email: createUserDto.email },
         }),
         this.roleRepository.findOne({
@@ -77,11 +77,11 @@ export class UsersService {
       ]);
 
       if (userFound) {
-        throw new BadRequestException('email is used');
+        throw new BadRequestException('Email is already used');
       }
 
       if (!roleFound) {
-        throw new NotFoundException('role not found');
+        throw new NotFoundException('Role not found');
       }
 
       const userStore = await this.usersRepository.save({
@@ -121,16 +121,18 @@ export class UsersService {
       });
 
       if (!user) {
-        throw new NotFoundException('user not found');
+        throw new NotFoundException('User not found');
       }
 
       if (updateUserDto.email && updateUserDto.email !== user.email) {
-        const emailExisted = await this.usersRepository.findOne({
+        const emailExisted = await this.usersRepository.exists({
           where: { email: updateUserDto.email },
         });
+
         if (emailExisted) {
-          throw new BadRequestException('email is already in use');
+          throw new BadRequestException('Email is already used');
         }
+
         user.email = updateUserDto.email;
       }
 
@@ -138,9 +140,11 @@ export class UsersService {
         const roleFound = await this.roleRepository.findOne({
           where: { id: updateUserDto.roleId },
         });
+
         if (!roleFound) {
-          throw new NotFoundException('role not found');
+          throw new NotFoundException('Role not found');
         }
+
         user.role = roleFound;
       }
 
