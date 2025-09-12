@@ -62,6 +62,13 @@ export class ChatService {
     }
   }
 
+  /**
+   * get list of latest conversations with or without status within a specific number of days
+   * @param query
+   * @returns Promise<Array<RespondLatestChatDto>>
+   * @throws BadRequestException
+   * @throws InternalServerErrorException
+   */
   async getLatestConversations(
     query: InstanceType<typeof DashboardForConversationRequestDto>,
   ): Promise<Array<RespondLatestChatDto>> {
