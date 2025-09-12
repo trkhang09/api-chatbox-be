@@ -20,6 +20,7 @@ import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { UserStatus } from 'src/common/enums/user-status.enum';
 import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
+import { RoleType } from 'src/common/constants/role-constants';
 export const DashboardForUserRequestDto = createDashboardRequestDto(UserStatus);
 
 @Injectable()
@@ -84,6 +85,12 @@ export class UsersService {
         throw new NotFoundException('Role not found');
       }
 
+      if (roleFound.code === RoleType.SUPER_ADMIN) {
+        throw new BadRequestException(
+          'Cannot create user with role SUPER ADMIN',
+        );
+      }
+
       const userStore = await this.usersRepository.save({
         fullname: createUserDto.fullname,
         email: createUserDto.email,
@@ -118,10 +125,17 @@ export class UsersService {
     try {
       const user = await this.usersRepository.findOne({
         where: { id: updateUserDto.userId },
+        relations: ['role'],
       });
 
       if (!user) {
         throw new NotFoundException('User not found');
+      }
+
+      if (user.role.code === RoleType.SUPER_ADMIN) {
+        throw new BadRequestException(
+          'Cannot create user with role SUPER ADMIN',
+        );
       }
 
       if (updateUserDto.email && updateUserDto.email !== user.email) {
@@ -189,6 +203,7 @@ export class UsersService {
     try {
       const userFound = await this.usersRepository.findOne({
         where: { id },
+        relations: ['role'],
       });
 
       if (!userFound) {
@@ -196,6 +211,13 @@ export class UsersService {
           'user is deleted or not found, try again later',
         );
       }
+
+      if (userFound.role.code === RoleType.SUPER_ADMIN) {
+        throw new BadRequestException(
+          'Cannot create user with role SUPER ADMIN',
+        );
+      }
+
       await this.usersRepository.softDelete(userFound.id);
       return true;
     } catch (error) {
