@@ -21,6 +21,7 @@ import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-req
 import { UserStatus } from 'src/common/enums/user-status.enum';
 import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
 import { RoleType } from 'src/common/constants/role-constants';
+import { RoleFilterResponseDto } from '../roles/dto/role-filter-response.dto';
 export const DashboardForUserRequestDto = createDashboardRequestDto(UserStatus);
 
 @Injectable()
@@ -267,7 +268,18 @@ export class UsersService {
         dto[k] = user[k];
       });
 
-      dto.role = user.role?.id;
+      if (user.role) {
+        dto.role = new RoleFilterResponseDto();
+
+        Object.keys(dto.role).forEach((k) => {
+          if (dto.role) {
+            dto.role[k] = user.role[k];
+          }
+        });
+      } else {
+        dto.role = undefined;
+      }
+
       data.push(dto);
     });
 
