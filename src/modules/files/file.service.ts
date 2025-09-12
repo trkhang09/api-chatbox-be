@@ -10,6 +10,8 @@ import * as path from 'path';
 import { AllowedFileTypes } from 'src/common/enums/allowed-file-type.enum';
 import { Document } from '../documents/entities/document.entity';
 import { Repository } from 'typeorm';
+import { PaginateDto } from 'src/common/dtos/paginate.dto';
+import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 
 const UPLOAD_DIR_NAME = 'uploads';
 const INVLAID_FILE_NAME_REGEX = /[\/\\:*?<>]/;
@@ -104,10 +106,10 @@ export class FileService {
 
   /**
    * Get all files in the uploads folder
-   * @returns Promise<string[]>
+   * @returns Promise<Array<String>>
    * @throws InternalServerErrorException
    */
-  async getAllFiles(): Promise<string[]> {
+  async getAllFiles(): Promise<Array<string>> {
     try {
       if (!fs.existsSync(this.uploadDir)) {
         await fs.promises.mkdir(this.uploadDir, { recursive: true });
@@ -121,6 +123,28 @@ export class FileService {
         'Error reading upload folder: ' + error.message,
       );
     }
+  }
+
+  /**
+   * Get paginated list of files in the uploads folder
+   * @returns Promise<ResponsePaginateDto<String>>
+   * @throws InternalServerErrorException
+   */
+  async getFiles(query: PaginateDto): Promise<ResponsePaginateDto<String>> {
+    const files = await this.getAllFiles();
+    const skip = (query.page - 1) * query.size;
+    const take = query.size;
+    const data = files.slice(skip, skip + take);
+
+    const dto = new ResponsePaginateDto<String>({
+      ...query,
+      data,
+      total: files.length,
+      totalInPage: data.length,
+      totalPage: Math.ceil(files.length / take),
+    });
+
+    return dto;
   }
 
   /**
