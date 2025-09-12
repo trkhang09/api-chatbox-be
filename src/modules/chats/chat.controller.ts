@@ -35,6 +35,7 @@ import { ChatTypes } from 'src/common/enums/chat-type.enum';
 import { ApiDashboardQuantity } from 'src/common/decorators/api-dashboard-quantity.decorator';
 import { isNumber } from 'class-validator';
 import { getEnumJoin } from 'src/common/utils/get-enum-join';
+import { ChatGenerateAiDto } from './dtos/chat-generate-ai.dto';
 
 @ApiTags('Conversation History')
 @ApiSecurity('bare-token')
@@ -159,9 +160,11 @@ export class ChatController {
   })
   @Public()
   @ApiOkResponseCustom(Observable<MessageEvent>, true)
-  @Sse('generate')
-  generate(@Query('question') question: string): Observable<MessageEvent> {
-    return this.chatService.generate(question);
+  @Sse('conversation')
+  generate(
+    @Query() chatGenerateAiDto: ChatGenerateAiDto,
+  ): Observable<MessageEvent> {
+    return this.chatService.generate(chatGenerateAiDto);
   }
 
   @Get('/:id')
