@@ -27,6 +27,7 @@ import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-re
 import { isNumber } from 'class-validator';
 import { RespondLatestChatDto } from './dtos/respond-latest-chat.dto';
 import { UserDto } from '../users/dtos/user.dto';
+import { UsersRepository } from '../users/users.repository';
 
 export const DashboardForConversationRequestDto =
   createDashboardRequestDto(ChatTypes);
@@ -35,6 +36,7 @@ export const DashboardForConversationRequestDto =
 export class ChatService {
   constructor(
     private readonly chatRepository: ChatRepository,
+    private readonly userRepository: UsersRepository,
     private readonly dataSource: DataSource,
     private readonly messagesService: MessagesService,
     @Inject('AI_SERVICE') private readonly aiService: AiService,
@@ -173,9 +175,6 @@ export class ChatService {
     body: CreateNewChatDto,
     creator: AuthUserDto,
   ): Promise<RespondCreatedNewChatDto> {
-    const receiver: User = {
-      id: body.receiverId,
-    } as User;
     let newMsg: Message;
     let title: string;
 
@@ -196,9 +195,43 @@ export class ChatService {
     const participants: User[] = [];
     let type: ChatTypes = ChatTypes.BOT;
 
-    participants.push({ id: creator.sub } as User);
+    let foundCreator: User | null;
+    try {
+      foundCreator = await this.userRepository.findOne({
+        where: { id: creator.sub },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Cannot found creator with id = \`${creator.sub}\`, ${error.message}`,
+      );
+    }
 
-    if (receiver) {
+    if (!foundCreator) {
+      throw new NotFoundException(
+        `Cannot found creator with id = \`${creator.sub}\``,
+      );
+    }
+
+    participants.push(foundCreator);
+
+    if (body.receiverId) {
+      let receiver: User | null;
+      try {
+        receiver = await this.userRepository.findOne({
+          where: { id: body.receiverId },
+        });
+      } catch (error) {
+        throw new InternalServerErrorException(
+          `Cannot found creator with id = \`${body.receiverId}\`, ${error.message}`,
+        );
+      }
+
+      if (!receiver) {
+        throw new NotFoundException(
+          `Cannot found creator with id = \`${body.receiverId}\``,
+        );
+      }
+
       participants.push(receiver);
       type = ChatTypes.USER;
     }

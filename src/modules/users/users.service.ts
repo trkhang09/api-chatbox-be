@@ -9,7 +9,7 @@ import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dtos/create-user.dto';
 import bcrypt from 'bcrypt';
-import { ILike, MoreThanOrEqual } from 'typeorm';
+import { FindOptionsWhere, ILike, MoreThanOrEqual, Not } from 'typeorm';
 import { Role } from '../roles/entities/role.entity';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
@@ -235,29 +235,26 @@ export class UsersService {
   async getListUsers(
     getUsersDto: GetUsersDto,
   ): Promise<ResponsePaginateDto<UserDto>> {
-    let where: any = {};
+    const qb = this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'role')
+      .where('role.code != :superAdmin', { superAdmin: RoleType.SUPER_ADMIN });
+
     if (getUsersDto?.search) {
-      where = [
-        {
-          fullname: ILike(`%${getUsersDto.search}%`),
-        },
-        {
-          email: ILike(`%${getUsersDto.search}%`),
-        },
-      ];
+      qb.andWhere('(user.fullname ILIKE :search OR user.email ILIKE :search)', {
+        search: `%${getUsersDto.search}%`,
+      });
     }
 
     if (getUsersDto?.status !== undefined && getUsersDto?.status !== null) {
-      where.status = getUsersDto.status;
+      qb.andWhere('user.status = :status', { status: getUsersDto.status });
     }
 
-    const [users, total] = await this.usersRepository.findAndCount({
-      where,
-      relations: ['role'],
-      order: { [getUsersDto.sortBy]: getUsersDto.sortOrder },
-      skip: (getUsersDto.page - 1) * getUsersDto.size,
-      take: getUsersDto.size,
-    });
+    qb.orderBy('user.updatedAt', 'DESC')
+      .skip((getUsersDto.page - 1) * getUsersDto.size)
+      .take(getUsersDto.size);
+
+    const [users, total] = await qb.getManyAndCount();
 
     const data: UserDto[] = [];
 
