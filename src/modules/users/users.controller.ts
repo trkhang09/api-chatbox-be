@@ -86,7 +86,7 @@ export class UsersController {
   @ApiCommonResponseCustom(Boolean, true)
   @ApiNotFoundResponseCustom()
   async deleteSoftUser(@Param('userId') userId: string) {
-    return await this.usersService.deleteSoftSUser(userId);
+    return await this.usersService.softDeleteUser(userId);
   }
 
   @Put(':userId/restore')
