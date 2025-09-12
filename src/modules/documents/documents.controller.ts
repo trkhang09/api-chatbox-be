@@ -21,7 +21,7 @@ import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-
 import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-request-response.decorator';
 import { GetPaginatedDocumentsDto } from './dtos/get-paginated-documents.dto';
 import { CreateDocumentDto } from './dtos/create-document.dto';
-import { ApiOperation, ApiParam, ApiSecurity } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiSecurity } from '@nestjs/swagger';
 import { ResponseCreatedDocumentDto } from './dtos/response-created-document.dto';
 import { UpdateDocumentDto } from './dtos/update-document.dto';
 import { ResponseUpdatedDocumentDto } from './dtos/response-updated-document.dto';
@@ -35,6 +35,8 @@ import { PermissionType } from 'src/common/constants/permission-constants';
 import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
 import { ApiDashboardQuantity } from 'src/common/decorators/api-dashboard-quantity.decorator';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
+import { getEnumJoin } from 'src/common/utils/get-enum-join';
+import { isNumber } from 'class-validator';
 
 @Controller('documents')
 @ApiSecurity('bare-token')
@@ -49,6 +51,44 @@ export class DocumentsController {
     @Query() query: InstanceType<typeof DashboardForDocumentRequestDto>,
   ) {
     return this.docService.getQuantity(query);
+  }
+
+  @Get('/latest')
+  @ApiOperation({
+    summary:
+      'Get list of documents with or without status within a specific number of days',
+  })
+  @ApiQuery({
+    name: 'status',
+    enum: Object.values(DocumentStatus).filter((v) => isNumber(v)),
+    description: 'Status value, must be one of: ' + getEnumJoin(DocumentStatus),
+    example: Object.values(DocumentStatus)[0],
+    required: false,
+  })
+  @ApiQuery({
+    name: 'days',
+    type: Number,
+    description: 'Number of days (max 90)',
+    minimum: 1,
+    maximum: 90,
+    example: 30,
+  })
+  @ApiCommonResponseCustom(Array<ResponseDocumentDto>, [
+    {
+      id: '6b7b09a3-6f59-421b-909c-4907a51011e8',
+      title: 'Project Plan',
+      description: 'This document contains the detailed project plan for Q1.',
+      status: DocumentStatus.PENDING,
+      size: 23,
+      createdAt: '2025-08-27T14:30:00.000Z',
+      updatedAt: '2025-08-27T14:30:00.000Z',
+      createdByUserId: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
+    },
+  ])
+  async getLatestDocuments(
+    @Query() query: InstanceType<typeof DashboardForDocumentRequestDto>,
+  ) {
+    return this.docService.getLatestDocuments(query);
   }
 
   @Get('/')

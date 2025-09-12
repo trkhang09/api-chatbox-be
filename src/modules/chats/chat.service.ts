@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Chat } from './entities/chat.entity';
-import { DataSource, MoreThanOrEqual } from 'typeorm';
+import { DataSource, FindOptionsWhere, MoreThanOrEqual } from 'typeorm';
 import { Message } from '../messages/entities/messages.entity';
 import { RespondCreatedNewChatDto } from './dtos/respond-created-new-chat.dto';
 import { User } from '../users/entities/user.entity';
@@ -24,6 +24,9 @@ import { RespondChatDto } from './dtos/respond-chat.dto';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
+import { isNumber } from 'class-validator';
+import { RespondLatestChatDto } from './dtos/respond-latest-chat.dto';
+import { UserDto } from '../users/dtos/user.dto';
 
 export const DashboardForConversationRequestDto =
   createDashboardRequestDto(ChatTypes);
@@ -57,6 +60,72 @@ export class ChatService {
     } catch (error) {
       throw new Error('Failed to get quantity: ' + error.message);
     }
+  }
+
+  async getLatestConversations(
+    query: InstanceType<typeof DashboardForConversationRequestDto>,
+  ): Promise<Array<RespondLatestChatDto>> {
+    let payload: {
+      status: number;
+      days: number;
+    };
+    try {
+      payload = validateDashboardRequest(query, ChatTypes, true);
+    } catch (error) {
+      throw error;
+    }
+
+    let where: FindOptionsWhere<Chat> = {};
+
+    const statuses = Object.values(ChatTypes).filter((v) => isNumber(v));
+    if (statuses.includes(payload.status)) {
+      where.type = payload.status;
+    }
+
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - payload.days);
+    where.createdAt = MoreThanOrEqual(fromDate);
+
+    let foundConversations: Chat[];
+    try {
+      foundConversations = await this.chatRepository.find({
+        where,
+        relations: ['users', 'messages'],
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Cannot get latest conversations, ${error.message}`,
+      );
+    }
+
+    const responseList: RespondLatestChatDto[] = [];
+
+    foundConversations.forEach((doc) => {
+      const dto = new RespondLatestChatDto();
+
+      Object.keys(dto).forEach((k) => {
+        dto[k] = doc[k];
+      });
+
+      dto.participants = [];
+      doc.users.forEach((user) => {
+        const participantDto = new UserDto({});
+
+        Object.keys(participantDto).forEach((k) => {
+          participantDto[k] = user[k];
+        });
+
+        participantDto.role = undefined;
+
+        dto.participants.push(participantDto);
+      });
+
+      dto.messagesCount = doc.messages.length;
+
+      responseList.push(dto);
+    });
+
+    return responseList;
   }
 
   /**
