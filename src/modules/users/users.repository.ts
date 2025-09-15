@@ -43,13 +43,14 @@ export class UsersRepository extends Repository<User> {
           id: Not(senderId),
         },
       });
-      if (!user) {
+      if (user) {
+        const userDto: UserDto = plainToInstance(UserDto, user, {
+          excludeExtraneousValues: true,
+        });
+        return userDto;
+      } else {
         throw new NotFoundException('User Not Found!');
       }
-      const userDto: UserDto = plainToInstance(UserDto, user, {
-        excludeExtraneousValues: true,
-      });
-      return userDto;
     } catch (error) {
       throw new InternalServerErrorException(
         'Can not get User in this conversation',

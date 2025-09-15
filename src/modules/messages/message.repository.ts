@@ -24,6 +24,7 @@ export class MessageRepository extends Repository<Message> {
         order: {
           createdAt: 'DESC',
         },
+        withDeleted: true,
         skip: (query.page - 1) * query.size,
         take: query.size,
       });
@@ -55,7 +56,7 @@ export class MessageRepository extends Repository<Message> {
     return respond;
   }
 
-  async findUnreadMessageInChat(chatId: string): Promise<RespondMessageDto[]> {
+  async findUnreadMessageInChat(chatId: string): Promise<string[]> {
     let messages: Message[];
     let total: number;
     try {
@@ -74,9 +75,7 @@ export class MessageRepository extends Repository<Message> {
         error.message,
       );
     }
-    return messages.map((message) =>
-      plainToInstance(RespondMessageDto, message),
-    );
+    return messages.map((message) => message.id);
   }
 
   async findMessages(messageIds: string[]): Promise<RespondMessageDto[]> {
@@ -91,5 +90,49 @@ export class MessageRepository extends Repository<Message> {
       }),
     );
     return respondMessages;
+  }
+
+  async findLatestMessageInChat(chatId: string): Promise<RespondMessageDto> {
+    const message = await this.findOne({
+      where: {
+        chat: { id: chatId },
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+      withDeleted: true,
+    });
+    return plainToInstance(RespondMessageDto, message, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async readMessage(ids: string[]): Promise<RespondMessageDto[]> {
+    await this.update({ id: In(ids) }, { isRead: true });
+    const messages = await this.findBy({ id: In(ids) });
+    const respondMessages: RespondMessageDto[] = messages.map((message) => {
+      return plainToInstance(RespondMessageDto, message, {
+        excludeExtraneousValues: true,
+      });
+    });
+    return respondMessages;
+  }
+
+  async softRemoveMessage(id: string): Promise<RespondMessageDto> {
+    try {
+      await this.softDelete(id);
+      const message = await this.findOne({
+        withDeleted: true,
+        where: { id: id },
+        order: { createdAt: 'DESC' },
+      });
+      if (!message)
+        throw new InternalServerErrorException('failed to remove message');
+      return plainToInstance(RespondMessageDto, message, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      throw new InternalServerErrorException('fail to remove message');
+    }
   }
 }

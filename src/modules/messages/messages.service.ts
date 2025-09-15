@@ -107,26 +107,21 @@ export class MessagesService {
           createdByUserId: userId,
         },
       );
-
-      const editedMessage = await this.messageRepository.findOneBy({
-        id: query.id,
+      const editedMessage = await this.messageRepository.findOne({
+        where: { id: query.id },
       });
-      if (!editedMessage)
-        throw new InternalServerErrorException('Message not found');
-      const response = plainToInstance(RespondMessageDto, editedMessage);
-      return response;
+      if (editedMessage) {
+        const response = plainToInstance(RespondMessageDto, editedMessage);
+        return response;
+      }
+      throw new InternalServerErrorException('Message not found');
     } catch (error) {
       throw error;
     }
   }
 
-  async softRemoveMessage(id: string): Promise<boolean> {
-    try {
-      await this.messageRepository.softDelete(id);
-      return true;
-    } catch (error) {
-      throw new InternalServerErrorException('fail to remove message');
-    }
+  async softRemoveMessage(id: string): Promise<RespondMessageDto> {
+    return await this.messageRepository.softRemoveMessage(id);
   }
 
   async removeAllMessagesFromChat(
@@ -146,14 +141,28 @@ export class MessagesService {
     }
   }
 
-  async getUnreadMessagesInChat(chatId: string): Promise<RespondMessageDto[]> {
+  async getUnreadMessageIdsInChat(chatId: string): Promise<string[]> {
     return this.messageRepository.findUnreadMessageInChat(chatId);
   }
 
-  async readMessages(messageIds: string[]) {
+  async readMessages(messageIds: string[]): Promise<RespondMessageDto[]> {
+    if (!messageIds || messageIds.length === 0) {
+      return [];
+    }
     await this.messageRepository.update(
       { id: In(messageIds) },
       { isRead: true },
+    );
+    const messages = await this.messageRepository.find({
+      where: {
+        id: In(messageIds),
+      },
+      order: { createdAt: 'DESC' },
+    });
+    return messages.map((message) =>
+      plainToInstance(RespondMessageDto, message, {
+        excludeExtraneousValues: true,
+      }),
     );
   }
 }
