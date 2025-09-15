@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { RespondCreatedFirstMessageDto } from './dtos/respond-created-first-message.dto';
-import { EntityManager, In } from 'typeorm';
+import { EntityManager, ILike, In } from 'typeorm';
 import { Message } from './entities/messages.entity';
 import { Chat } from '../chats/entities/chat.entity';
 import { GeminiService } from '../gemini/gemini.service';
@@ -13,6 +13,8 @@ import { createMessageDto } from './dtos/create-message.dto';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
+import { GetSearchedMessagesDto } from './dtos/get-searched-messages.dto';
+import { ResponseSearchedMessagesDto } from './dtos/response-searched-messages.dto';
 
 @Injectable()
 export class MessagesService {
@@ -31,6 +33,48 @@ export class MessagesService {
       return messages;
     } catch (error) {
       throw error;
+    }
+  }
+
+  /**
+   * to retrieve messages which have content matches with a specific keyword
+   * @param chatId
+   * @param query
+   * @returns Promise<ResponseSearchedMessagesDto>
+   * @throws NotFoundException
+   * @throws InternalServerErrorException
+   */
+  async searchMessagesInChat(
+    chatId: string,
+    query: GetSearchedMessagesDto,
+  ): Promise<ResponseSearchedMessagesDto> {
+    let foundChat: Chat;
+    try {
+      foundChat = await this.chatRepository.findChat(chatId);
+    } catch (error) {
+      throw error;
+    }
+
+    try {
+      const foundMessages = await this.messageRepository.find({
+        where: {
+          chat: { id: foundChat.id },
+          content: ILike(`%${query.keyword ?? ''}%`),
+        },
+        take: query.size,
+      });
+
+      const responseMessages: Array<RespondMessageDto> = foundMessages.map(
+        (message) => plainToInstance(RespondMessageDto, message),
+      );
+
+      const responseDto = new ResponseSearchedMessagesDto(responseMessages);
+
+      return responseDto;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Cannot search messages in conversation id = \`${chatId}\` with keyword = \`${query.keyword ?? ''}\`, ${error.message}`,
+      );
     }
   }
 
