@@ -13,7 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiSecurity } from '@nestjs/swagger';
-import { RolesService } from './roles.service';
+import { DashboardForRoleRequestDto, RolesService } from './roles.service';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
 import { RoleFilterRequestDto } from './dto/role-filter-request.dto';
@@ -31,10 +31,23 @@ import { PermissionType } from 'src/common/constants/permission-constants';
 import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
+import { ApiDashboardQuantity } from 'src/common/decorators/api-dashboard-quantity.decorator';
+import { RoleStatus } from 'src/common/enums/role-status.enum';
+
 @Controller('roles')
+@ApiSecurity('bare-token')
+@ApiSecurity('x-client-id')
+@ApiForbiddenResponseCustom()
 @UseGuards(PermissionGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
+
+  @ApiDashboardQuantity(RoleStatus)
+  async getQuantity(
+    @Query() query: InstanceType<typeof DashboardForRoleRequestDto>,
+  ) {
+    return this.rolesService.getQuantity(query);
+  }
 
   @Get()
   @Permissions(PermissionType.ROLE_GET)

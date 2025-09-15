@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Like, Repository } from 'typeorm';
+import { FindOptionsWhere, Like, MoreThanOrEqual, Repository } from 'typeorm';
 import { Document } from './entities/document.entity';
 import { ResponseDocumentDto } from './dtos/response-document.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
@@ -18,6 +18,13 @@ import { ResponseUpdatedDocumentDto } from './dtos/response-updated-document.dto
 import { ClientProxy } from '@nestjs/microservices';
 import { FileService } from '../files/file.service';
 import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
+import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
+import { DocumentStatus } from 'src/common/enums/document-status.enum';
+import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
+import { isNumber } from 'class-validator';
+
+export const DashboardForDocumentRequestDto =
+  createDashboardRequestDto(DocumentStatus);
 
 @Injectable()
 export class DocumentsService {
@@ -27,6 +34,83 @@ export class DocumentsService {
     private readonly docRepo: Repository<Document>,
     private readonly fileService: FileService,
   ) {}
+
+  /**
+   * get quantity with a specific status/type within a number of days
+   */
+  async getQuantity(
+    query: InstanceType<typeof DashboardForDocumentRequestDto>,
+  ) {
+    try {
+      const payload = validateDashboardRequest(query, DocumentStatus);
+      let where: any = {};
+      where.status = payload.status;
+
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - payload.days);
+      where.createdAt = MoreThanOrEqual(fromDate);
+
+      const quantity = await this.docRepo.count({ where });
+      return quantity;
+    } catch (error) {
+      throw new Error('Failed to get quantity: ' + error.message);
+    }
+  }
+
+  /**
+   * get list of latest documents with or without status within a specific number of days
+   * @param query
+   * @returns Promise<Array<ResponseDocumentDto>>
+   * @throws BadRequestException
+   * @throws InternalServerErrorException
+   */
+  async getLatestDocuments(
+    query: InstanceType<typeof DashboardForDocumentRequestDto>,
+  ): Promise<Array<ResponseDocumentDto>> {
+    let payload: {
+      status: number;
+      days: number;
+    };
+    try {
+      payload = validateDashboardRequest(query, DocumentStatus, true);
+    } catch (error) {
+      throw error;
+    }
+
+    let where: FindOptionsWhere<Document> = {};
+
+    const statuses = Object.values(DocumentStatus).filter((v) => isNumber(v));
+    if (statuses.includes(payload.status)) {
+      where.status = payload.status;
+    }
+
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - payload.days);
+    where.createdAt = MoreThanOrEqual(fromDate);
+
+    let foundDocs: Document[];
+    try {
+      foundDocs = await this.docRepo.find({ where });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Cannot get latest documents, ${error.message}`,
+      );
+    }
+
+    const responseList: ResponseDocumentDto[] = [];
+
+    foundDocs.forEach((doc) => {
+      const dto = new ResponseDocumentDto();
+
+      Object.keys(dto).forEach((k) => {
+        dto[k] = doc[k];
+      });
+
+      responseList.push(dto);
+    });
+
+    return responseList;
+  }
 
   /**
    * get paginated list of documents
@@ -51,7 +135,6 @@ export class DocumentsService {
         take: query.size,
         skip: (query.page - 1) * query.size,
         order: {
-          createdAt: { direction: 'DESC' },
           updatedAt: { direction: 'DESC', nulls: 'FIRST' },
         },
       });

@@ -4,7 +4,6 @@ import seededDocs from './documents.seeder.json';
 import { Document } from 'src/modules/documents/entities/document.entity';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
 import { FileService } from 'src/modules/files/file.service';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 export class DocumentSeeder {

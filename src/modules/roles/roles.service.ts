@@ -3,10 +3,9 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
-  Query,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, In, Repository } from 'typeorm';
+import { ILike, In, MoreThanOrEqual, Repository } from 'typeorm';
 import { Permission } from '../permissions/entities/permission.entity';
 import { Role } from './entities/role.entity';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
@@ -17,6 +16,11 @@ import { plainToInstance } from 'class-transformer';
 import { RoleFilterResponseDto } from './dto/role-filter-response.dto';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 import { RoleType } from 'src/common/constants/role-constants';
+import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
+import { RoleStatus } from 'src/common/enums/role-status.enum';
+import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
+
+export const DashboardForRoleRequestDto = createDashboardRequestDto(RoleStatus);
 
 @Injectable()
 export class RolesService {
@@ -25,6 +29,28 @@ export class RolesService {
     @InjectRepository(Permission)
     private readonly permRepo: Repository<Permission>,
   ) {}
+
+  /**
+   * get quantity with a specific status/type within a number of days
+   */
+  async getQuantity(
+    query: InstanceType<typeof DashboardForRoleRequestDto>,
+  ): Promise<number> {
+    try {
+      const payload = validateDashboardRequest(query, RoleStatus);
+      let where: any = {};
+      where.status = payload.status;
+
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - payload.days);
+      where.createdAt = MoreThanOrEqual(fromDate);
+
+      const quantity = await this.roleRepo.count({ where });
+      return quantity;
+    } catch (error) {
+      throw new Error('Failed to get quantity: ' + error.message);
+    }
+  }
 
   async findAll(
     query: RoleFilterRequestDto,
@@ -78,7 +104,6 @@ export class RolesService {
         excludeExtraneousValues: true,
       });
     } catch (error) {
-      console.error(error);
       throw new NotFoundException('Role not found');
     }
   }
