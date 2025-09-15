@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Res,
   UploadedFile,
   UseGuards,
@@ -30,6 +31,9 @@ import { PermissionGuard } from 'src/common/guards/permission.guard';
 import { PermissionType } from 'src/common/constants/permission-constants';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { RequestFileDto } from './dtos/request-file.dto';
+import { PaginateDto } from 'src/common/dtos/paginate.dto';
+import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
+import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-request-response.decorator';
 @ApiTags('Upload Files')
 @Controller('files')
 @UseGuards(PermissionGuard)
@@ -41,14 +45,22 @@ export class FileController {
 
   @Get('/')
   @Permissions(PermissionType.FILE_GET)
-  @ApiOperation({ summary: 'Get all files uploaded to server' })
-  @ApiOkResponseCustom(Array<String>, [
-    'Cover-2025-09-05T07-45-32.753Z.docx',
-    'CV-2025-09-05T07-45-44.096Z.pdf',
-  ])
+  @ApiOperation({ summary: 'Get paginated list of files uploaded to server' })
+  @ApiOkResponseCustom(ResponsePaginateDto<String>, {
+    data: [
+      'Cover-2025-09-05T07-45-32.753Z.docx',
+      'CV-2025-09-05T07-45-44.096Z.pdf',
+    ],
+    size: 20,
+    page: 1,
+    total: 135,
+    totalPage: 7,
+    totalInPage: 20,
+  })
+  @ApiBadRequestResponseCustom()
   @ApiInternalServerErrorResponseCustom()
-  async getAllFiles() {
-    return this.fileService.getAllFiles();
+  async getAllFiles(@Query() query: PaginateDto) {
+    return this.fileService.getFiles(query);
   }
 
   @FileSecurityKey()
@@ -95,6 +107,7 @@ export class FileController {
   }
 
   @Put('/:filePath')
+  @Permissions(PermissionType.FILE_UPDATE)
   @ApiOperation({ summary: 'Rename a specific unused file in server' })
   @ApiBody({
     required: true,
@@ -117,6 +130,7 @@ export class FileController {
   }
 
   @Delete('/:filePath')
+  @Permissions(PermissionType.FILE_DELETE)
   @ApiOperation({ summary: 'remove a specific unused file in server' })
   @ApiCommonResponseCustom(Boolean, true)
   async removeFile(@Param('filePath') filePath: string) {

@@ -21,6 +21,7 @@ import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.d
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
 import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
+import { isNumber } from 'class-validator';
 
 export const DashboardForDocumentRequestDto =
   createDashboardRequestDto(DocumentStatus);
@@ -57,6 +58,61 @@ export class DocumentsService {
   }
 
   /**
+   * get list of latest documents with or without status within a specific number of days
+   * @param query
+   * @returns Promise<Array<ResponseDocumentDto>>
+   * @throws BadRequestException
+   * @throws InternalServerErrorException
+   */
+  async getLatestDocuments(
+    query: InstanceType<typeof DashboardForDocumentRequestDto>,
+  ): Promise<Array<ResponseDocumentDto>> {
+    let payload: {
+      status: number;
+      days: number;
+    };
+    try {
+      payload = validateDashboardRequest(query, DocumentStatus, true);
+    } catch (error) {
+      throw error;
+    }
+
+    let where: FindOptionsWhere<Document> = {};
+
+    const statuses = Object.values(DocumentStatus).filter((v) => isNumber(v));
+    if (statuses.includes(payload.status)) {
+      where.status = payload.status;
+    }
+
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - payload.days);
+    where.createdAt = MoreThanOrEqual(fromDate);
+
+    let foundDocs: Document[];
+    try {
+      foundDocs = await this.docRepo.find({ where });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Cannot get latest documents, ${error.message}`,
+      );
+    }
+
+    const responseList: ResponseDocumentDto[] = [];
+
+    foundDocs.forEach((doc) => {
+      const dto = new ResponseDocumentDto();
+
+      Object.keys(dto).forEach((k) => {
+        dto[k] = doc[k];
+      });
+
+      responseList.push(dto);
+    });
+
+    return responseList;
+  }
+
+  /**
    * get paginated list of documents
    * @param query
    * @returns Promise<ResponsePaginateDto<ResponseDocumentDto>>
@@ -79,7 +135,6 @@ export class DocumentsService {
         take: query.size,
         skip: (query.page - 1) * query.size,
         order: {
-          createdAt: { direction: 'DESC' },
           updatedAt: { direction: 'DESC', nulls: 'FIRST' },
         },
       });

@@ -9,7 +9,7 @@ import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dtos/create-user.dto';
 import bcrypt from 'bcrypt';
-import { ILike, MoreThanOrEqual } from 'typeorm';
+import { FindOptionsWhere, ILike, MoreThanOrEqual, Not } from 'typeorm';
 import { Role } from '../roles/entities/role.entity';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
@@ -20,6 +20,8 @@ import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { UserStatus } from 'src/common/enums/user-status.enum';
 import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
+import { RoleType } from 'src/common/constants/role-constants';
+import { RoleFilterResponseDto } from '../roles/dto/role-filter-response.dto';
 export const DashboardForUserRequestDto = createDashboardRequestDto(UserStatus);
 
 @Injectable()
@@ -56,150 +58,226 @@ export class UsersService {
 
   /**
    * create new user
+   * @returns Promise<UserDto>
+   * @throws NotFoundException
+   * @throws BadRequestException
+   * @throws InternalServerErrorException
    */
   async createNewUser(
     createUserDto: CreateUserDto,
     createdBy: string,
   ): Promise<UserDto> {
-    const [userFound, roleFound, hashPassword] = await Promise.all([
-      this.usersRepository.findOne({
-        where: { email: createUserDto.email },
-      }),
-      this.roleRepository.findOne({
-        where: { id: createUserDto.roleId },
-      }),
-      UsersService.generateHashPassword(createUserDto.password),
-    ]);
+    try {
+      const [userFound, roleFound, hashPassword] = await Promise.all([
+        this.usersRepository.exists({
+          where: { email: createUserDto.email },
+        }),
+        this.roleRepository.findOne({
+          where: { id: createUserDto.roleId },
+        }),
+        UsersService.generateHashPassword(createUserDto.password),
+      ]);
 
-    if (userFound) {
-      throw new BadRequestException('email is used');
-    }
-
-    if (!roleFound) {
-      throw new NotFoundException('role not found');
-    }
-
-    const userStore = await this.usersRepository.save({
-      fullname: createUserDto.fullname,
-      email: createUserDto.email,
-      password: hashPassword,
-      role: roleFound,
-      createdByUserId: createdBy,
-    });
-
-    return plainToInstance(
-      UserDto,
-      {
-        ...userStore,
-        role: roleFound.code,
-      },
-      { excludeExtraneousValues: true },
-    );
-  }
-
-  /**
-   * update user
-   */
-  async updateUser(updateUserDto: UpdateUserDto) {
-    const user = await this.usersRepository.findOne({
-      where: { id: updateUserDto.userId },
-    });
-
-    if (!user) {
-      throw new NotFoundException('user not found');
-    }
-
-    if (updateUserDto.email && updateUserDto.email !== user.email) {
-      const emailExisted = await this.usersRepository.findOne({
-        where: { email: updateUserDto.email },
-      });
-      if (emailExisted) {
-        throw new BadRequestException('email is already in use');
+      if (userFound) {
+        throw new BadRequestException('Email is already used');
       }
-      user.email = updateUserDto.email;
-    }
 
-    if (updateUserDto.roleId && updateUserDto.roleId !== user.role.id) {
-      const roleFound = await this.roleRepository.findOne({
-        where: { id: updateUserDto.roleId },
-      });
       if (!roleFound) {
-        throw new NotFoundException('role not found');
+        throw new NotFoundException('Role not found');
       }
-      user.role = roleFound;
-    }
 
-    if (updateUserDto.password) {
-      user.password = await UsersService.generateHashPassword(
-        updateUserDto.password,
+      if (roleFound.code === RoleType.SUPER_ADMIN) {
+        throw new BadRequestException(
+          'Cannot create user with role SUPER ADMIN',
+        );
+      }
+
+      const userStore = await this.usersRepository.save({
+        fullname: createUserDto.fullname,
+        email: createUserDto.email,
+        password: hashPassword,
+        role: roleFound,
+        createdByUserId: createdBy,
+      });
+
+      return plainToInstance(
+        UserDto,
+        {
+          ...userStore,
+          role: roleFound.code,
+        },
+        { excludeExtraneousValues: true },
+      );
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Cannot create a new user with email = \`${createUserDto.email}\`, ${error.message}`,
       );
     }
-
-    if (updateUserDto.fullname) {
-      user.fullname = updateUserDto.fullname;
-    }
-
-    if (updateUserDto.status != undefined) {
-      user.status = updateUserDto.status;
-    }
-
-    const userUpdated = await this.usersRepository.save(user);
-
-    return plainToInstance(
-      UserDto,
-      {
-        ...userUpdated,
-        role: userUpdated.role.code,
-      },
-      { excludeExtraneousValues: true },
-    );
   }
 
   /**
-   * delete soft user
+   * update a user
+   * @returns Promise<UserDto>
+   * @throws NotFoundException
+   * @throws BadRequestException
+   * @throws InternalServerErrorException
    */
-  async deleteSoftSUser(userId: string): Promise<boolean> {
-    const userFound = await this.usersRepository.findOne({
-      where: {
-        id: userId,
-      },
-    });
-    if (!userFound) {
-      throw new NotFoundException(
-        'user is deleted or not found, try again later',
+  async updateUser(updateUserDto: UpdateUserDto): Promise<UserDto> {
+    try {
+      const user = await this.usersRepository.findOne({
+        where: { id: updateUserDto.userId },
+        relations: ['role'],
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (user.role.code === RoleType.SUPER_ADMIN) {
+        throw new BadRequestException(
+          'Cannot update user with role SUPER ADMIN',
+        );
+      }
+
+      if (updateUserDto.email && updateUserDto.email !== user.email) {
+        const emailExisted = await this.usersRepository.exists({
+          where: { email: updateUserDto.email },
+        });
+
+        if (emailExisted) {
+          throw new BadRequestException('Email is already used');
+        }
+
+        user.email = updateUserDto.email;
+      }
+
+      if (updateUserDto.roleId && updateUserDto.roleId !== user.role.id) {
+        const roleFound = await this.roleRepository.findOne({
+          where: { id: updateUserDto.roleId },
+        });
+
+        if (!roleFound) {
+          throw new NotFoundException('Role not found');
+        }
+
+        user.role = roleFound;
+      }
+
+      if (updateUserDto.password) {
+        user.password = await UsersService.generateHashPassword(
+          updateUserDto.password,
+        );
+      }
+
+      if (updateUserDto.fullname) {
+        user.fullname = updateUserDto.fullname;
+      }
+
+      if (updateUserDto.status != undefined) {
+        user.status = updateUserDto.status;
+      }
+
+      const userUpdated = await this.usersRepository.save(user);
+
+      return plainToInstance(
+        UserDto,
+        {
+          ...userUpdated,
+          role: userUpdated.role.code,
+        },
+        { excludeExtraneousValues: true },
+      );
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Cannot update a user with id = \`${updateUserDto.userId}\`, ${error.message}`,
       );
     }
-    await this.usersRepository.softDelete(userFound.id);
-    return true;
   }
 
   /**
-   * get list user
+   * softly delete a user
+   * @return Promise<boolean>
+   * @throws NotFoundException
+   * @throws InternalServerErrorException
+   */
+  async softDeleteUser(id: string): Promise<boolean> {
+    try {
+      const userFound = await this.usersRepository.findOne({
+        where: { id },
+        relations: ['role'],
+      });
+
+      if (!userFound) {
+        throw new NotFoundException(
+          'user is deleted or not found, try again later',
+        );
+      }
+
+      if (userFound.role.code === RoleType.SUPER_ADMIN) {
+        throw new BadRequestException(
+          'Cannot delete user with role SUPER ADMIN',
+        );
+      }
+
+      await this.usersRepository.softDelete(userFound.id);
+      return true;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Cannot softly delete a user with id = \`${id}\`, ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * get list of users
+   * @returns Promise<ResponsePaginateDto<UserDto>>
    */
   async getListUsers(
     getUsersDto: GetUsersDto,
-  ): Promise<ResponsePaginateDto<User>> {
-    let where: any = {};
+  ): Promise<ResponsePaginateDto<UserDto>> {
+    const qb = this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'role')
+      .where('role.code != :superAdmin', { superAdmin: RoleType.SUPER_ADMIN });
+
     if (getUsersDto?.search) {
-      where = [
-        {
-          fullname: ILike(`%${getUsersDto.search}%`),
-        },
-        {
-          email: ILike(`%${getUsersDto.search}%`),
-        },
-      ];
+      qb.andWhere('(user.fullname ILIKE :search OR user.email ILIKE :search)', {
+        search: `%${getUsersDto.search}%`,
+      });
     }
 
     if (getUsersDto?.status !== undefined && getUsersDto?.status !== null) {
-      where.status = getUsersDto.status;
+      qb.andWhere('user.status = :status', { status: getUsersDto.status });
     }
 
-    const [data, total] = await this.usersRepository.findAndCount({
-      where,
-      order: { [getUsersDto.sortBy]: getUsersDto.sortOrder },
-      skip: (getUsersDto.page - 1) * getUsersDto.size,
-      take: getUsersDto.size,
+    qb.orderBy('user.updatedAt', 'DESC')
+      .skip((getUsersDto.page - 1) * getUsersDto.size)
+      .take(getUsersDto.size);
+
+    const [users, total] = await qb.getManyAndCount();
+
+    const data: UserDto[] = [];
+
+    users.forEach((user) => {
+      const dto = new UserDto({});
+
+      Object.keys(dto).forEach((k) => {
+        dto[k] = user[k];
+      });
+
+      if (user.role) {
+        dto.role = new RoleFilterResponseDto();
+
+        Object.keys(dto.role).forEach((k) => {
+          if (dto.role) {
+            dto.role[k] = user.role[k];
+          }
+        });
+      } else {
+        dto.role = undefined;
+      }
+
+      data.push(dto);
     });
 
     return {
@@ -214,45 +292,69 @@ export class UsersService {
 
   /**
    * get user by id
+   * @returns Promise<UserDto>
+   * @throws NotFoundException
+   * @throws InternalServerErrorException
    */
+  async getUserById(id: string): Promise<UserDto> {
+    let foundUser: User | null;
+    try {
+      foundUser = await this.usersRepository.findOne({
+        where: { id },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Cannot get user with id = \`${id}\`, ${error.message}`,
+      );
+    }
 
-  async getUserById(userId: string) {
-    const userFound = await this.usersRepository.findOne({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!userFound) {
+    if (!foundUser) {
       throw new NotFoundException('user not found');
     }
 
-    return userFound;
+    const dto = new UserDto({});
+
+    Object.keys(dto).forEach((k) => {
+      dto[k] = foundUser[k];
+    });
+
+    return dto;
   }
 
   /**
-   * restore user
+   * restore user by id
+   * @returns Promise<boolean>
+   * @throws NotFoundException
+   * @throws InternalServerErrorException
    */
-  async restoreUser(userId: string): Promise<boolean> {
-    const userFound = await this.usersRepository.findOne({
-      where: {
-        id: userId,
-      },
-      withDeleted: true,
-    });
-    if (!userFound) {
-      throw new NotFoundException('account not found');
+  async restoreUser(id: string): Promise<boolean> {
+    let foundUser: User | null;
+    try {
+      foundUser = await this.usersRepository.findOne({
+        where: { id },
+        withDeleted: true,
+      });
+
+      if (!foundUser) {
+        throw new NotFoundException('Account not found');
+      }
+
+      await this.usersRepository.restore(foundUser.id);
+      return true;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Cannot restore user with id = \`${id}\`, ${error.message}`,
+      );
     }
-    await this.usersRepository.restore(userFound.id);
-    return true;
   }
 
   /**
    * generate hash password
    * @param password
-   * @returns
+   * @returns Promise<string>
+   * @throws InternalServerErrorException
    */
-  static async generateHashPassword(password: string) {
+  static async generateHashPassword(password: string): Promise<string> {
     const saltRounds = Number(process.env.SALT_ROUNDS);
     const hashPassword = await bcrypt.hash(password, saltRounds);
     if (!hashPassword) {
