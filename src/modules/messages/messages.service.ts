@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { RespondCreatedFirstMessageDto } from './dtos/respond-created-first-message.dto';
 import { EntityManager, In } from 'typeorm';
 import { Message } from './entities/messages.entity';
@@ -111,10 +115,9 @@ export class MessagesService {
         where: { id: query.id },
       });
       if (editedMessage) {
-        const response = plainToInstance(RespondMessageDto, editedMessage);
-        return response;
+        return plainToInstance(RespondMessageDto, editedMessage);
       }
-      throw new InternalServerErrorException('Message not found');
+      throw new NotFoundException('Message not found');
     } catch (error) {
       throw error;
     }
