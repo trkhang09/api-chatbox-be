@@ -22,8 +22,10 @@ import { createMessageDto } from './dtos/create-message.dto';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
+import { ChatTypes } from 'src/common/enums/chat-type.enum';
 import { GetSearchedMessagesDto } from './dtos/get-searched-messages.dto';
 import { ResponseSearchedMessagesDto } from './dtos/response-searched-messages.dto';
+
 
 @Injectable()
 export class MessagesService {
@@ -109,15 +111,15 @@ export class MessagesService {
   }
 
   async createAiMessage(query: createMessageDto): Promise<Message> {
-    const aiResponse = await this.geminiService.generateResponse(query.content);
-    const chat = await this.chatRepository.findChat(query.chatId);
-
     try {
       return await this.messageRepository.save({
-        content: aiResponse.content,
-        chat: chat,
+        content: query.content,
+        chat: {
+          id: query.chatId,
+        },
       });
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(`failed to store Message`);
     }
   }

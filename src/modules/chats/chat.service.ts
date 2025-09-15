@@ -24,6 +24,7 @@ import { RespondChatDto } from './dtos/respond-chat.dto';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
+import { ChatGenerateAiDto } from './dtos/chat-generate-ai.dto';
 import { isNumber } from 'class-validator';
 import { RespondLatestChatDto } from './dtos/respond-latest-chat.dto';
 import { UserDto } from '../users/dtos/user.dto';
@@ -355,15 +356,41 @@ export class ChatService {
   /**
    * generate
    */
-  generate(question: string): Observable<MessageEvent> {
+  generate(chatGenerateAiDto: ChatGenerateAiDto): Observable<MessageEvent> {
     return new Observable<MessageEvent>((subscriber) => {
       (async () => {
         try {
+          // save question to db
+          let chat;
+          if (chatGenerateAiDto.chatId) {
+            chat = await this.chatRepository.findOne({
+              where: { id: chatGenerateAiDto.chatId },
+            });
+            if (!chat) throw new NotFoundException('Chat not found');
+          } else {
+            chat = await this.chatRepository.save({
+              title: chatGenerateAiDto.question.slice(0, 50),
+              type: ChatTypes.BOT,
+            });
+          }
+
+          let chunksString = '';
           for await (const chunk of this.aiService.generateStreamResponse(
-            question,
+            chatGenerateAiDto.question,
           )) {
+            chunksString += chunk;
             subscriber.next({ data: chunk } as MessageEvent);
           }
+
+          await this.messagesService.createAiMessage({
+            chatId: chat.id,
+            content: chatGenerateAiDto.question,
+          });
+
+          await this.messagesService.createAiMessage({
+            chatId: chat.id,
+            content: chunksString,
+          });
           subscriber.complete();
         } catch (err) {
           subscriber.error(err);

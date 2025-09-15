@@ -6,6 +6,8 @@ import { AiResponseDto } from './dto/ai-response.dto';
 import { EmbeddingResponseDto } from './dto/create-embedding-response.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DocumentChunks } from '../document-chunks/entities/document-chunks.entity';
+import { promptTemplate } from 'src/common/utils/template';
+import { replacePlaceHolder } from 'src/common/utils';
 
 dotenv.config();
 
@@ -15,11 +17,8 @@ export class GeminiService {
   private readonly googleGenAI: GoogleGenAI;
   private readonly embeddingModel: string = 'gemini-embedding-001';
   private readonly completionModel: string = 'gemini-2.5-flash';
-  private readonly LIMIT_CONTENTS: number = 1;
-  // private readonly completionModel: string = 'gemini-1.5-pro';
-  //gemini-2.5-flash
-  private readonly modelKnowledge: string =
-    'Bạn là nữ trợ lý gen Z, lúc nào cũng dạ thưa';
+  private readonly LIMIT_CONTENTS: number = 2;
+  private readonly promptTemplate = promptTemplate;
 
   constructor(
     private readonly documentChunksRepository: DocumentChunksRepository,
@@ -29,11 +28,8 @@ export class GeminiService {
   }
 
   private generateContext(content: string, prompt: string): string {
-    if (content) {
-      return `Dưới đây là một số thông tin nội bộ được lấy từ tài liệu: ${content}. \nCâu hỏi của người dùng: ${prompt}.\nHãy dựa vào thông tin trên để trả lời tự nhiên, dễ hiểu.\nNếu thông tin không có trong dữ liệu, hãy trả lời rằng bạn không có thông tin.\nTuyệt đối không bịa ra câu trả lời.Gợi ý câu hỏi tiếp theo cho người dùng một cách tự nhiên`;
-    } else {
-      return `Câu hỏi của người dùng: ${prompt}.\nHãy trả lời dựa trên kiến thức của bạn một cách tự nhiên, dễ hiểu.\nTuyệt đối không bịa ra câu trả lời.`;
-    }
+    const { user } = promptTemplate;
+    return replacePlaceHolder(user, { content: content, prompt: prompt });
   }
 
   async generateEmbedding(input: string): Promise<EmbeddingResponseDto[]> {
@@ -77,7 +73,7 @@ export class GeminiService {
           {
             parts: [
               {
-                text: this.modelKnowledge,
+                text: this.promptTemplate.system,
               },
             ],
             role: 'model',
@@ -119,7 +115,7 @@ export class GeminiService {
           {
             parts: [
               {
-                text: this.modelKnowledge,
+                text: this.promptTemplate.system,
               },
             ],
             role: 'model',
