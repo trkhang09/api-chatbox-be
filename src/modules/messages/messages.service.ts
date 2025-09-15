@@ -1,6 +1,15 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { RespondCreatedFirstMessageDto } from './dtos/respond-created-first-message.dto';
-import { EntityManager, ILike, In } from 'typeorm';
+import {
+  Between,
+  EntityManager,
+  FindOptionsWhere,
+  ILike,
+  In,
+  LessThan,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+} from 'typeorm';
 import { Message } from './entities/messages.entity';
 import { Chat } from '../chats/entities/chat.entity';
 import { GeminiService } from '../gemini/gemini.service';
@@ -55,12 +64,33 @@ export class MessagesService {
       throw error;
     }
 
+    const where: FindOptionsWhere<Message> = {
+      chat: { id: foundChat.id },
+      content: ILike(`%${query.keyword ?? ''}%`),
+    };
+
+    let endedDate: Date;
+    if (query.endedDate) {
+      endedDate = new Date(query.endedDate);
+      endedDate.setDate(endedDate.getDate() + 1);
+    } else {
+      endedDate = new Date();
+    }
+
+    if (query.startedDate) {
+      const startedDate = new Date(query.startedDate);
+      where.createdAt = Between(startedDate, endedDate);
+    } else {
+      where.createdAt = LessThan(endedDate);
+    }
+
+    if (query.senderId) {
+      where.createdByUserId = query.senderId;
+    }
+
     try {
       const foundMessages = await this.messageRepository.find({
-        where: {
-          chat: { id: foundChat.id },
-          content: ILike(`%${query.keyword ?? ''}%`),
-        },
+        where,
         take: query.size,
       });
 
