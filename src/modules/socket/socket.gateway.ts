@@ -109,7 +109,6 @@ export class SocketGateway implements OnGatewayConnection {
         this.server.to(sid).emit(SocketType.RESPONSE_READ_MESSAGE, response);
       });
     }
-    console.log('join_chat', this.currentChat);
   }
 
   @SubscribeMessage(SocketType.LEAVE_CHAT)
@@ -261,7 +260,7 @@ export class SocketGateway implements OnGatewayConnection {
     const openedChat = this.currentChat.get(receiverId);
 
     const unreadMessages =
-      await this.messageService.getUnreadMessageIdsInChat(chatId);
+      await this.messageService.getUnreadMessagesInChat(chatId);
 
     const response = new ResponseSocketDto({
       code: HttpStatus.OK,

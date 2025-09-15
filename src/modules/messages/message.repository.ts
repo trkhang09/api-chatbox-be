@@ -62,7 +62,7 @@ export class MessageRepository extends Repository<Message> {
 
   /** find unread messages in a conversation
    * @param chatId
-   * @returns Promise<String[]> an array of message ids
+   * @returns Promise<RespondMessageDto[]> an array of message
    */
   async findUnreadMessagesInChat(chatId: string): Promise<RespondMessageDto[]> {
     let messages: Message[];

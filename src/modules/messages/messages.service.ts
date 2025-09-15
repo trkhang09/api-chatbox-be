@@ -144,9 +144,7 @@ export class MessagesService {
     }
   }
 
-  async getUnreadMessageIdsInChat(
-    chatId: string,
-  ): Promise<RespondMessageDto[]> {
+  async getUnreadMessagesInChat(chatId: string): Promise<RespondMessageDto[]> {
     return this.messageRepository.findUnreadMessagesInChat(chatId);
   }
 
