@@ -56,11 +56,11 @@ export class MessageRepository extends Repository<Message> {
     return respond;
   }
 
-  /** find unread messageId in a conversation
+  /** find unread messages in a conversation
    * @param chatId
    * @returns Promise<String[]> an array of message ids
    */
-  async findUnreadMessageInChat(chatId: string): Promise<string[]> {
+  async findUnreadMessagesInChat(chatId: string): Promise<RespondMessageDto[]> {
     let messages: Message[];
     let total: number;
     try {
@@ -79,7 +79,11 @@ export class MessageRepository extends Repository<Message> {
         error.message,
       );
     }
-    return messages.map((message) => message.id);
+    return messages.map((message) =>
+      plainToInstance(RespondMessageDto, message, {
+        excludeExtraneousValues: true,
+      }),
+    );
   }
 
   async findMessages(messageIds: string[]): Promise<RespondMessageDto[]> {
