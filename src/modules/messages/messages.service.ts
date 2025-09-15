@@ -149,20 +149,6 @@ export class MessagesService {
     if (!messageIds || messageIds.length === 0) {
       return [];
     }
-    await this.messageRepository.update(
-      { id: In(messageIds) },
-      { isRead: true },
-    );
-    const messages = await this.messageRepository.find({
-      where: {
-        id: In(messageIds),
-      },
-      order: { createdAt: 'DESC' },
-    });
-    return messages.map((message) =>
-      plainToInstance(RespondMessageDto, message, {
-        excludeExtraneousValues: true,
-      }),
-    );
+    return await this.messageRepository.readMessages(messageIds);
   }
 }

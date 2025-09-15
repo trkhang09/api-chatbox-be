@@ -109,6 +109,7 @@ export class SocketGateway implements OnGatewayConnection {
         this.server.to(sid).emit(SocketType.RESPONSE_READ_MESSAGE, response);
       });
     }
+    console.log('join_chat', this.currentChat);
   }
 
   @SubscribeMessage(SocketType.LEAVE_CHAT)
@@ -141,7 +142,9 @@ export class SocketGateway implements OnGatewayConnection {
         const readMessages = await this.messageService.readMessages([
           message.id,
         ]);
-        readMessage = readMessages[0];
+        if (readMessages.length > 0) {
+          readMessage = readMessages[0];
+        }
       }
       this.notifyReceiver(receiver.id, body.query.chatId, message);
       this.notifyReceiver(
@@ -150,6 +153,10 @@ export class SocketGateway implements OnGatewayConnection {
         receiverCurrentChat === body.query.chatId ? readMessage : message,
       );
     }
+    client.emit('error', {
+      code: HttpStatus.NOT_FOUND,
+      message: 'Receiver Not Found!',
+    });
   }
 
   @SubscribeMessage(SocketType.EDIT_MESSAGE)

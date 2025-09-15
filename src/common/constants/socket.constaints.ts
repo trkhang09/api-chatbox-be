@@ -1,11 +1,11 @@
 export enum SocketType {
-  CHAT_NOTIFICATION = 'Chatnotification',
+  CHAT_NOTIFICATION = 'chatNotification',
   EDIT_MESSAGE = 'editMessage',
   ERROR = 'error',
   JOIN_CHAT = 'joinChat',
   LEAVE_CHAT = 'leaveChat',
   SEND_MESSAGE = 'sendMessage',
-  SIGN_OUT = 'singOut',
+  SIGN_OUT = 'signOut',
   REGISTER = 'register',
   RETRIEVE_MESSAGE = 'retrieveMessage',
   RESPONSE_MESSAGE = 'responseMessage',

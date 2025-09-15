@@ -56,6 +56,10 @@ export class MessageRepository extends Repository<Message> {
     return respond;
   }
 
+  /** find unread messageId in a conversation
+   * @param chatId
+   * @returns Promise<String[]> an array of message ids
+   */
   async findUnreadMessageInChat(chatId: string): Promise<string[]> {
     let messages: Message[];
     let total: number;
@@ -107,7 +111,7 @@ export class MessageRepository extends Repository<Message> {
     });
   }
 
-  async readMessage(ids: string[]): Promise<RespondMessageDto[]> {
+  async readMessages(ids: string[]): Promise<RespondMessageDto[]> {
     await this.update({ id: In(ids) }, { isRead: true });
     const messages = await this.findBy({ id: In(ids) });
     const respondMessages: RespondMessageDto[] = messages.map((message) => {
