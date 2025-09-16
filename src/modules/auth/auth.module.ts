@@ -11,6 +11,7 @@ import { Otp } from '../otp/entities/otp.entity';
 import { OtpModule } from '../otp/otp.module';
 import { EmailModule } from '../email/email.module';
 import { jwtConstants } from 'src/common/constants/jwt-constants';
+import { SettingsModule } from '../settings/settings.module';
 @Module({
   imports: [
     UsersModule,
@@ -22,6 +23,7 @@ import { jwtConstants } from 'src/common/constants/jwt-constants';
     }),
     OtpModule,
     EmailModule,
+    SettingsModule,
   ],
   providers: [
     AuthService,

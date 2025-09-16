@@ -8,6 +8,7 @@ import {
   Put,
   Query,
   Sse,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ChatService,
@@ -37,6 +38,8 @@ import { isNumber } from 'class-validator';
 import { getEnumJoin } from 'src/common/utils/get-enum-join';
 import { ChatGenerateAiDto } from './dtos/chat-generate-ai.dto';
 import { RespondLatestChatDto } from './dtos/respond-latest-chat.dto';
+import { Setting } from 'src/common/decorators/setting.decorator';
+import { SettingConstants } from 'src/common/constants/setting-constrants';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
 
@@ -186,7 +189,7 @@ export class ChatController {
   @ApiOperation({
     summary: 'chats generate answer with ai',
   })
-  @Public()
+  @Setting(SettingConstants.ALLOW_CHATBOX_NO_LOGIN)
   @ApiOkResponseCustom(Observable<MessageEvent>, true)
   @Sse('conversation')
   generate(
