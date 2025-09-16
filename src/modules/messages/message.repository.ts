@@ -21,11 +21,12 @@ export class MessageRepository extends Repository<Message> {
     const query = this.createQueryBuilder('messages')
       .where('messages.chat_id = :chatId', { chatId })
       .orderBy('messages.createdAt', 'DESC')
-      .limit(param.size);
+      .limit(param.size)
+      .withDeleted();
 
     if (param.cursor) {
       const cursor = new Date(param.cursor);
-      query.andWhere('messages.createdAt < :cursor', { cursor });
+      query.andWhere('messages.createdAt <= :cursor', { cursor });
     }
 
     try {
