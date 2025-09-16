@@ -98,18 +98,6 @@ export class SettingsService {
       throw new NotFoundException('setting not found');
     }
 
-    if (updateSettingDto.key && updateSettingDto.key !== settingFound.key) {
-      const settingFoundWithKey = await this.settingRepository.findOneBy({
-        key: updateSettingDto.key,
-      });
-
-      if (settingFoundWithKey) {
-        throw new BadRequestException('setting key exits');
-      }
-
-      settingFound.key = updateSettingDto.key;
-    }
-
     if (
       updateSettingDto.description &&
       updateSettingDto.description !== settingFound.description

@@ -3,11 +3,6 @@ import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { TypeSettings } from 'src/common/enums/type-settings.enum';
 
 export class UpdateSettingDto {
-  @ApiProperty({ example: 'site_name', description: 'The key of the setting' })
-  @IsString()
-  @IsNotEmpty()
-  key: string;
-
   @ApiProperty({
     example: 'My Awesome Site',
     description: 'The value of the setting',
