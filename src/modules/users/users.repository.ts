@@ -31,6 +31,19 @@ export class UsersRepository extends Repository<User> {
       .getOne();
   }
 
+  async findByEmail(email: string): Promise<User | null> {
+    return this.createQueryBuilder('user')
+      .select([
+        'user.id',
+        'user.email',
+        'user.fullname',
+        'user.password',
+        'user.createdByUserId',
+      ])
+      .where('user.email = :email', { email })
+      .getOne();
+  }
+
   async findReceiver(
     chatId: string,
     senderId: string,
