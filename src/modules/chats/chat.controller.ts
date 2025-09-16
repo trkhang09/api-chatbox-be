@@ -194,8 +194,9 @@ export class ChatController {
   @Sse('conversation')
   generate(
     @Query() chatGenerateAiDto: ChatGenerateAiDto,
+    @AuthUser() user: AuthUserDto,
   ): Observable<MessageEvent> {
-    return this.chatService.generate(chatGenerateAiDto);
+    return this.chatService.generate(chatGenerateAiDto, user);
   }
 
   @Get('/:id')

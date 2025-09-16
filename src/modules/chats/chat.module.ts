@@ -11,6 +11,7 @@ import { ChatRepository } from './chat.repository';
 import { DataSource } from 'typeorm';
 import { UsersModule } from '../users/users.module';
 import { MessageRepository } from '../messages/message.repository';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MessageRepository } from '../messages/message.repository';
     GeminiModule,
     OpenaiModule,
     UsersModule,
+    SettingsModule,
   ],
   providers: [
     {
