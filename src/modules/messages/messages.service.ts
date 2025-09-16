@@ -30,6 +30,8 @@ import { ChatTypes } from 'src/common/enums/chat-type.enum';
 import { GetSearchedMessagesDto } from './dtos/get-searched-messages.dto';
 import { ResponseSearchedMessagesDto } from './dtos/response-searched-messages.dto';
 
+import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
+import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
 
 @Injectable()
 export class MessagesService {
@@ -38,18 +40,6 @@ export class MessagesService {
     private readonly chatRepository: ChatRepository,
     private readonly geminiService: GeminiService,
   ) {}
-  async getMessagesInChat(
-    query: GetMessagesInChatDto,
-  ): Promise<ResponsePaginateDto<RespondMessageDto>> {
-    await this.chatRepository.findChat(query.chatId);
-
-    try {
-      const messages = await this.messageRepository.findWithPaginate(query);
-      return messages;
-    } catch (error) {
-      throw error;
-    }
-  }
 
   /**
    * to retrieve messages which have content matches with a specific keyword
@@ -229,5 +219,11 @@ export class MessagesService {
       return [];
     }
     return await this.messageRepository.readMessages(messageIds);
+  }
+
+  async getMessagesWithCursorPagination(
+    param: GetMessagesInChatCursorPaginationDto,
+  ): Promise<ResponseGetMessageInChatDto> {
+    return await this.messageRepository.findWithCursorPagination(param);
   }
 }

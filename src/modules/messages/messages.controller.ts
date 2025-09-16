@@ -24,6 +24,8 @@ import { GetSearchedMessagesDto } from './dtos/get-searched-messages.dto';
 import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
 import { ResponseSearchedMessagesDto } from './dtos/response-searched-messages.dto';
+import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
+import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
 
 @ApiSecurity('bare-token')
 @ApiSecurity('x-client-id')
@@ -33,20 +35,15 @@ export class MessagesController {
 
   @Get('/')
   @ApiOperation({
-    summary: 'Get list of messages in a specific conversation',
+    summary: 'get list of messages in a specific conversation',
   })
-  @ApiPaginatedResponseCustom(ResponsePaginateDto, RespondMessageDto)
-  @ApiBadRequestResponseCustom()
+  @ApiCommonResponseCustom(ResponseGetMessageInChatDto)
   @ApiInternalServerErrorResponseCustom()
-  async getMessagesInConversation(
-    @Query() query: GetMessagesInChatDto,
-  ): Promise<ResponsePaginateDto<RespondMessageDto>> {
-    try {
-      const respond = await this.messagesService.getMessagesInChat(query);
-      return respond;
-    } catch (error) {
-      throw error;
-    }
+  @ApiBadRequestResponseCustom()
+  async getMessagesWithCursorPagination(
+    @Query() query: GetMessagesInChatCursorPaginationDto,
+  ) {
+    return this.messagesService.getMessagesWithCursorPagination(query);
   }
 
   @Get('/:chatId/search')

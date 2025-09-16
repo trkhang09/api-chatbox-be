@@ -5,51 +5,46 @@ import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
+import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
+import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
 
 @Injectable()
 export class MessageRepository extends Repository<Message> {
   constructor(private dataSource: DataSource) {
     super(Message, dataSource.createEntityManager());
   }
-  async findWithPaginate(
-    query: GetMessagesInChatDto,
-  ): Promise<ResponsePaginateDto<RespondMessageDto>> {
-    let messages: Message[];
-    let total: number;
-    try {
-      [messages, total] = await this.findAndCount({
-        where: {
-          chat: { id: query.chatId },
-        },
-        order: {
-          createdAt: 'DESC',
-        },
-        withDeleted: true,
-        skip: (query.page - 1) * query.size,
-        take: query.size,
-      });
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'Can not get messages in Conversation, ',
-        error.message,
-      );
-    }
-    const respondMessages: RespondMessageDto[] = plainToInstance(
-      RespondMessageDto,
-      messages,
-      {
-        excludeExtraneousValues: true,
-      },
-    );
+  async findWithCursorPagination(
+    param: GetMessagesInChatCursorPaginationDto,
+  ): Promise<ResponseGetMessageInChatDto> {
+    const chatId = param.chatId;
 
-    return new ResponsePaginateDto({
-      data: respondMessages,
-      page: query.page,
-      size: query.size,
-      total: total,
-      totalInPage: respondMessages.length,
-      totalPage: Math.ceil(total / query.size),
-    });
+    const query = this.createQueryBuilder('messages')
+      .where('messages.chat_id = :chatId', { chatId })
+      .orderBy('messages.createdAt', 'DESC')
+      .limit(param.size);
+
+    if (param.cursor) {
+      const cursor = new Date(param.cursor);
+      query.andWhere('messages.createdAt < :cursor', { cursor });
+    }
+
+    try {
+      const messages = await query.getMany();
+
+      const nextCursor =
+        messages.length > 0
+          ? messages[messages.length - 1].createdAt
+          : undefined;
+
+      return {
+        messages: plainToInstance(RespondMessageDto, messages, {
+          excludeExtraneousValues: true,
+        }),
+        cursor: nextCursor,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException('fail to get messages');
+    }
   }
 
   async saveAndReturnDto(
