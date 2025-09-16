@@ -25,6 +25,8 @@ import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-respon
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
+import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
+import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
 
 @ApiSecurity('bare-token')
 @ApiSecurity('x-client-id')
@@ -34,21 +36,17 @@ export class MessagesController {
 
   @Get('/')
   @ApiOperation({
-    summary: 'Get list of messages in a specific conversation',
+    summary: 'get list of messages in a specific conversation',
   })
-  @ApiPaginatedResponseCustom(ResponsePaginateDto, RespondMessageDto)
-  @ApiBadRequestResponseCustom()
+  @ApiCommonResponseCustom(ResponseGetMessageInChatDto)
   @ApiInternalServerErrorResponse()
-  async getMessagesInConversation(
-    @Query() query: GetMessagesInChatDto,
-  ): Promise<ResponsePaginateDto<RespondMessageDto>> {
-    try {
-      const respond = await this.messagesService.getMessagesInChat(query);
-      return respond;
-    } catch (error) {
-      throw error;
-    }
+  @ApiBadRequestResponseCustom()
+  async getMessagesWithCursorPagination(
+    @Query() query: GetMessagesInChatCursorPaginationDto,
+  ) {
+    return this.messagesService.getMessagesWithCursorPagination(query);
   }
+
   @Post('/')
   @ApiOperation({
     summary: 'Create a new message',

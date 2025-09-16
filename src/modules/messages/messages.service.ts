@@ -17,6 +17,8 @@ import { createMessageDto } from './dtos/create-message.dto';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
+import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
+import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
 
 @Injectable()
 export class MessagesService {
@@ -25,18 +27,6 @@ export class MessagesService {
     private readonly chatRepository: ChatRepository,
     private readonly geminiService: GeminiService,
   ) {}
-  async getMessagesInChat(
-    query: GetMessagesInChatDto,
-  ): Promise<ResponsePaginateDto<RespondMessageDto>> {
-    await this.chatRepository.findChat(query.chatId);
-
-    try {
-      const messages = await this.messageRepository.findWithPaginate(query);
-      return messages;
-    } catch (error) {
-      throw error;
-    }
-  }
 
   async createAiMessage(query: createMessageDto): Promise<Message> {
     const aiResponse = await this.geminiService.generateResponse(query.content);
@@ -153,5 +143,11 @@ export class MessagesService {
       return [];
     }
     return await this.messageRepository.readMessages(messageIds);
+  }
+
+  async getMessagesWithCursorPagination(
+    param: GetMessagesInChatCursorPaginationDto,
+  ): Promise<ResponseGetMessageInChatDto> {
+    return await this.messageRepository.findWithCursorPagination(param);
   }
 }
