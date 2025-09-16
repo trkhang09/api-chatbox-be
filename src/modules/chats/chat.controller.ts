@@ -189,7 +189,7 @@ export class ChatController {
   @ApiOperation({
     summary: 'chats generate answer with ai',
   })
-  @Setting(SettingConstants.ALL_CHATBOX_NO_LOGIN)
+  @Setting(SettingConstants.ALLOW_CHATBOX_NO_LOGIN)
   @ApiOkResponseCustom(Observable<MessageEvent>, true)
   @Sse('conversation')
   generate(

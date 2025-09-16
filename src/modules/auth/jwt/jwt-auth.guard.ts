@@ -64,9 +64,9 @@ export class AuthGuard implements CanActivate {
 
     if (setting && !token) {
       const allowNoLogin = await this.settingService.getValueByKey(
-        SettingConstants.ALL_CHATBOX_NO_LOGIN,
+        SettingConstants.ALLOW_CHATBOX_NO_LOGIN,
       );
-      if (setting === SettingConstants.ALL_CHATBOX_NO_LOGIN && allowNoLogin) {
+      if (setting === SettingConstants.ALLOW_CHATBOX_NO_LOGIN && allowNoLogin) {
         return true;
       }
     }
