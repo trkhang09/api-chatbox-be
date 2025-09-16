@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose } from 'class-transformer';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
+import { RespondMessageDto } from 'src/modules/messages/dtos/respond-message.dto';
 import { UserDto } from 'src/modules/users/dtos/user.dto';
 
 @Exclude()
@@ -33,6 +34,13 @@ export class RespondChatDto {
     example: ChatTypes.BOT,
   })
   type: ChatTypes;
+
+  @Expose()
+  @ApiProperty({
+    description: 'latest message in chat',
+    type: RespondMessageDto,
+  })
+  lastMessage?: RespondMessageDto;
 
   @Expose()
   @ApiProperty({

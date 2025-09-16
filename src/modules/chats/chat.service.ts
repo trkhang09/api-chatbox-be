@@ -22,6 +22,7 @@ import type { AiService } from '../ai/ai.service';
 import { Observable } from 'rxjs';
 import { RespondChatDto } from './dtos/respond-chat.dto';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
+import { plainToInstance } from 'class-transformer';
 import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
 import { ChatGenerateAiDto } from './dtos/chat-generate-ai.dto';
@@ -176,6 +177,9 @@ export class ChatService {
     body: CreateNewChatDto,
     creator: AuthUserDto,
   ): Promise<RespondCreatedNewChatDto> {
+    const receiver = await this.userRepository.findOneBy({
+      id: body.receiverId,
+    });
     let newMsg: Message;
     let title: string;
 
@@ -258,6 +262,9 @@ export class ChatService {
         'Failed to save new chat entity. ' + error.message,
       );
     }
+    const receiverDto = plainToInstance(UserDto, receiver, {
+      excludeExtraneousValues: true,
+    });
 
     const chatDto = new RespondCreatedNewChatDto({
       id: savedChat.id,
@@ -265,6 +272,7 @@ export class ChatService {
       type: savedChat.type,
       messages: savedChat.messages,
       createdAt: savedChat.createdAt,
+      receiver: receiverDto,
     });
     return chatDto;
   }
