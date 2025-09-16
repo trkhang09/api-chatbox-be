@@ -9,7 +9,7 @@ import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dtos/create-user.dto';
 import bcrypt from 'bcrypt';
-import { FindOptionsWhere, ILike, MoreThanOrEqual, Not } from 'typeorm';
+import { MoreThanOrEqual } from 'typeorm';
 import { Role } from '../roles/entities/role.entity';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
@@ -189,7 +189,7 @@ export class UsersService {
       );
     } catch (error) {
       throw new InternalServerErrorException(
-        `Cannot update a user with id = \`${updateUserDto.userId}\`, ${error.message}`,
+        `Cannot update a user, ${error.message}`,
       );
     }
   }
@@ -223,7 +223,7 @@ export class UsersService {
       return true;
     } catch (error) {
       throw new InternalServerErrorException(
-        `Cannot softly delete a user with id = \`${id}\`, ${error.message}`,
+        `Cannot softly delete a user, ${error.message}`,
       );
     }
   }
@@ -304,7 +304,7 @@ export class UsersService {
       });
     } catch (error) {
       throw new InternalServerErrorException(
-        `Cannot get user with id = \`${id}\`, ${error.message}`,
+        `Cannot get user, ${error.message}`,
       );
     }
 
@@ -343,7 +343,7 @@ export class UsersService {
       return true;
     } catch (error) {
       throw new InternalServerErrorException(
-        `Cannot restore user with id = \`${id}\`, ${error.message}`,
+        `Cannot restore user, ${error.message}`,
       );
     }
   }

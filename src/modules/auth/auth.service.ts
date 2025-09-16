@@ -22,6 +22,7 @@ import { replacePlaceHolder } from 'src/common/utils';
 import { newOtpTemplate } from 'src/common/utils/template';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 import { UsersService } from '../users/users.service';
+import { UserStatus } from 'src/common/enums/user-status.enum';
 @Injectable()
 export class AuthService {
   constructor(
@@ -43,6 +44,10 @@ export class AuthService {
 
     if (!userFound) {
       throw new UnauthorizedException('email or passsword incorrect');
+    }
+
+    if (userFound.status === UserStatus.BLOCKED) {
+      throw new UnauthorizedException('This user is blocked');
     }
 
     const isMatch = await bcrypt.compare(loginDto.password, userFound.password);

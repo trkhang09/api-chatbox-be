@@ -26,7 +26,6 @@ import { createMessageDto } from './dtos/create-message.dto';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
-import { ChatTypes } from 'src/common/enums/chat-type.enum';
 import { GetSearchedMessagesDto } from './dtos/get-searched-messages.dto';
 import { ResponseSearchedMessagesDto } from './dtos/response-searched-messages.dto';
 
@@ -88,6 +87,7 @@ export class MessagesService {
       const foundMessages = await this.messageRepository.find({
         where,
         take: query.size,
+        order: { updatedAt: { direction: 'DESC' } },
       });
 
       const responseMessages: Array<RespondMessageDto> = foundMessages.map(
@@ -99,7 +99,7 @@ export class MessagesService {
       return responseDto;
     } catch (error) {
       throw new InternalServerErrorException(
-        `Cannot search messages in conversation id = \`${chatId}\` with keyword = \`${query.keyword ?? ''}\`, ${error.message}`,
+        `Cannot search messages in conversation with keyword = \`${query.keyword ?? ''}\`, ${error.message}`,
       );
     }
   }
