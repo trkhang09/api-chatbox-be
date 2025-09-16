@@ -20,6 +20,7 @@ import { GeminiModule } from './modules/gemini/gemini.module';
 import { AiModule } from './modules/ai/ai.module';
 import { FileModule } from './modules/files/files.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { SettingsModule } from './modules/settings/settings.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
     AiModule,
     FileModule,
     DocumentsModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
