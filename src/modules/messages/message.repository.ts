@@ -5,46 +5,46 @@ import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
+import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
+import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
 
 @Injectable()
 export class MessageRepository extends Repository<Message> {
   constructor(private dataSource: DataSource) {
     super(Message, dataSource.createEntityManager());
   }
-  async findWithPaginate(
-    query: GetMessagesInChatDto,
-  ): Promise<ResponsePaginateDto<RespondMessageDto>> {
-    let messages: Message[];
-    let total: number;
-    try {
-      [messages, total] = await this.findAndCount({
-        where: {
-          chat: { id: query.chatId },
-        },
-        order: {
-          createdAt: 'DESC',
-        },
-        skip: (query.page - 1) * query.size,
-        take: query.size,
-      });
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'Can not get messages in Conversation, ',
-        error.message,
-      );
-    }
-    const respondMessages: RespondMessageDto[] = messages.map((message) =>
-      plainToInstance(RespondMessageDto, message),
-    );
+  async findWithCursorPagination(
+    param: GetMessagesInChatCursorPaginationDto,
+  ): Promise<ResponseGetMessageInChatDto> {
+    const chatId = param.chatId;
 
-    return new ResponsePaginateDto({
-      data: respondMessages,
-      page: query.page,
-      size: query.size,
-      total: total,
-      totalInPage: respondMessages.length,
-      totalPage: Math.ceil(total / query.size),
-    });
+    const query = this.createQueryBuilder('messages')
+      .where('messages.chat_id = :chatId', { chatId })
+      .orderBy('messages.createdAt', 'DESC')
+      .limit(param.size);
+
+    if (param.cursor) {
+      const cursor = new Date(param.cursor);
+      query.andWhere('messages.createdAt < :cursor', { cursor });
+    }
+
+    try {
+      const messages = await query.getMany();
+
+      const nextCursor =
+        messages.length > 0
+          ? messages[messages.length - 1].createdAt
+          : undefined;
+
+      return {
+        messages: plainToInstance(RespondMessageDto, messages, {
+          excludeExtraneousValues: true,
+        }),
+        cursor: nextCursor,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException('fail to get messages');
+    }
   }
 
   async saveAndReturnDto(
@@ -55,7 +55,11 @@ export class MessageRepository extends Repository<Message> {
     return respond;
   }
 
-  async findUnreadMessageInChat(chatId: string): Promise<RespondMessageDto[]> {
+  /** find unread messages in a conversation
+   * @param chatId
+   * @returns Promise<RespondMessageDto[]> an array of message
+   */
+  async findUnreadMessagesInChat(chatId: string): Promise<RespondMessageDto[]> {
     let messages: Message[];
     let total: number;
     try {
@@ -67,6 +71,15 @@ export class MessageRepository extends Repository<Message> {
         order: {
           createdAt: 'DESC',
         },
+        select: [
+          'id',
+          'content',
+          'createdByUserId',
+          'createdAt',
+          'isRead',
+          'updatedAt',
+          'deletedAt',
+        ],
       });
     } catch (error) {
       throw new InternalServerErrorException(
@@ -74,9 +87,9 @@ export class MessageRepository extends Repository<Message> {
         error.message,
       );
     }
-    return messages.map((message) =>
-      plainToInstance(RespondMessageDto, message),
-    );
+    return plainToInstance(RespondMessageDto, messages, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findMessages(messageIds: string[]): Promise<RespondMessageDto[]> {
@@ -85,11 +98,79 @@ export class MessageRepository extends Repository<Message> {
         id: In(messageIds),
       },
     });
-    const respondMessages = messages.map((message) =>
-      plainToInstance(RespondMessageDto, message, {
+    return plainToInstance(RespondMessageDto, messages, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async findLatestMessageInChat(chatId: string): Promise<RespondMessageDto> {
+    const message = await this.findOne({
+      where: {
+        chat: { id: chatId },
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+      withDeleted: true,
+      select: [
+        'id',
+        'content',
+        'createdByUserId',
+        'createdAt',
+        'isRead',
+        'updatedAt',
+        'deletedAt',
+      ],
+    });
+    return plainToInstance(RespondMessageDto, message, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async readMessages(ids: string[]): Promise<RespondMessageDto[]> {
+    await this.update({ id: In(ids) }, { isRead: true });
+    const messages = await this.find({
+      where: { id: In(ids) },
+      select: [
+        'id',
+        'content',
+        'createdByUserId',
+        'createdAt',
+        'isRead',
+        'updatedAt',
+        'deletedAt',
+      ],
+    });
+    return plainToInstance(RespondMessageDto, messages, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async softRemoveMessage(id: string): Promise<RespondMessageDto> {
+    try {
+      await this.softDelete(id);
+      const message = await this.findOne({
+        withDeleted: true,
+        where: { id: id },
+        order: { createdAt: 'DESC' },
+        select: [
+          'id',
+          'content',
+          'createdByUserId',
+          'createdAt',
+          'isRead',
+          'updatedAt',
+          'deletedAt',
+        ],
+      });
+      if (!message) {
+        throw new InternalServerErrorException('failed to remove message');
+      }
+      return plainToInstance(RespondMessageDto, message, {
         excludeExtraneousValues: true,
-      }),
-    );
-    return respondMessages;
+      });
+    } catch (error) {
+      throw new InternalServerErrorException('fail to remove message');
+    }
   }
 }

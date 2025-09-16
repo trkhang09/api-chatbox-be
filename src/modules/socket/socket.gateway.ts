@@ -55,7 +55,7 @@ export class SocketGateway implements OnGatewayConnection {
     }
   }
 
-  @SubscribeMessage(SocketType.SIGNOUT)
+  @SubscribeMessage(SocketType.SIGN_OUT)
   handleSignOut(
     @MessageBody() data: { userId: string },
     @ConnectedSocket() client: Socket,
@@ -72,15 +72,46 @@ export class SocketGateway implements OnGatewayConnection {
     }
   }
 
-  @SubscribeMessage(SocketType.JOINCHAT)
-  handleJoinChat(
-    @MessageBody() body: { userId: string; chatId: string },
+  @SubscribeMessage(SocketType.JOIN_CHAT)
+  async handleJoinChat(
+    @MessageBody()
+    body: { userId: string; chatId: string; messageIds: string[] },
     @ConnectedSocket() client: Socket,
   ) {
     this.currentChat.set(body.userId, body.chatId);
+
+    const messages = await this.messageService.readMessages(body.messageIds);
+    const receiver = await this.userRepository.findReceiver(
+      body.chatId,
+      body.userId,
+    );
+    const response = new ResponseSocketDto({
+      code: HttpStatus.OK,
+      message: 'success',
+      data: messages,
+    });
+    if (receiver) {
+      const receiverSockets = this.onlineUsers.get(receiver.id);
+      const openedChat = this.currentChat.get(receiver.id);
+      if (receiverSockets) {
+        receiverSockets.forEach((sid) => {
+          if (openedChat === body.chatId) {
+            this.server
+              .to(sid)
+              .emit(SocketType.RESPONSE_READ_MESSAGE, response);
+          }
+        });
+      }
+    }
+    const userSockets = this.onlineUsers.get(body.userId);
+    if (userSockets) {
+      userSockets.forEach((sid) => {
+        this.server.to(sid).emit(SocketType.RESPONSE_READ_MESSAGE, response);
+      });
+    }
   }
 
-  @SubscribeMessage(SocketType.LEAVECHAT)
+  @SubscribeMessage(SocketType.LEAVE_CHAT)
   handleLeaveChat(
     @MessageBody() body: { userId: string },
     @ConnectedSocket() client: Socket,
@@ -88,11 +119,12 @@ export class SocketGateway implements OnGatewayConnection {
     this.currentChat.set(body.userId, null);
   }
 
-  @SubscribeMessage(SocketType.SENDMESSAGE)
+  @SubscribeMessage(SocketType.SEND_MESSAGE)
   async handleSendMessage(
     @MessageBody() body: { query: createMessageDto; creatorId: string },
     @ConnectedSocket() client: Socket,
   ) {
+    let readMessage: RespondMessageDto = new RespondMessageDto({});
     const message = await this.messageService.createMessage(
       body.query,
       body.creatorId,
@@ -101,10 +133,32 @@ export class SocketGateway implements OnGatewayConnection {
       body.query.chatId,
       body.creatorId,
     );
-    this.notifyReceiver(receiver, body.query.chatId, message);
+
+    if (receiver) {
+      const receiverCurrentChat = this.currentChat.get(receiver.id);
+
+      if (receiverCurrentChat === body.query.chatId) {
+        const readMessages = await this.messageService.readMessages([
+          message.id,
+        ]);
+        if (readMessages.length > 0) {
+          readMessage = readMessages[0];
+        }
+      }
+      this.notifyReceiver(receiver.id, body.query.chatId, message);
+      this.notifyReceiver(
+        body.creatorId,
+        body.query.chatId,
+        receiverCurrentChat === body.query.chatId ? readMessage : message,
+      );
+    }
+    client.emit('error', {
+      code: HttpStatus.NOT_FOUND,
+      message: 'Receiver Not Found!',
+    });
   }
 
-  @SubscribeMessage(SocketType.EDITMESSAGE)
+  @SubscribeMessage(SocketType.EDIT_MESSAGE)
   async handleEditMessage(
     @MessageBody()
     body: { query: EditMessageDto; chatId: string; creatorId: string },
@@ -118,10 +172,13 @@ export class SocketGateway implements OnGatewayConnection {
       body.chatId,
       body.creatorId,
     );
-    this.notifyReceiver(receiver, body.chatId, message);
+    if (receiver) {
+      this.notifyReceiver(receiver.id, body.chatId, message);
+      this.notifyReceiver(body.creatorId, body.chatId, message);
+    }
   }
 
-  @SubscribeMessage(SocketType.RETRIEVEMESSAGE)
+  @SubscribeMessage(SocketType.RETRIEVE_MESSAGE)
   async handleSoftRemoveMessage(
     @MessageBody()
     body: { messageId: string; chatId: string; creatorId: string },
@@ -131,12 +188,11 @@ export class SocketGateway implements OnGatewayConnection {
       body.chatId,
       body.creatorId,
     );
-
     try {
-      const deletedResult = await this.messageService.softRemoveMessage(
+      const message = await this.messageService.softRemoveMessage(
         body.messageId,
       );
-      if (!deletedResult) {
+      if (!message) {
         const errorResponse = new ResponseSocketDto({
           code: HttpStatus.NOT_FOUND,
           message: 'Message not found or cannot be deleted',
@@ -145,23 +201,28 @@ export class SocketGateway implements OnGatewayConnection {
         return;
       }
       if (receiver) {
-        const sockets = this.onlineUsers.get(receiver.id);
+        const receiverSockets = this.onlineUsers.get(receiver.id);
+        const senderSockets = this.onlineUsers.get(body.creatorId);
         const openedChat = this.currentChat.get(receiver.id);
-        if (sockets) {
-          sockets.forEach((sid) => {
+        const response = new ResponseSocketDto({
+          code: HttpStatus.OK,
+          message: 'success',
+          data: message,
+        });
+        if (receiverSockets) {
+          receiverSockets.forEach((sid) => {
             if (openedChat === body.chatId) {
-              const response = new ResponseSocketDto({
-                code: HttpStatus.OK,
-                message: 'success',
-                data: {
-                  id: body.messageId,
-                  deletedResult: deletedResult,
-                },
-              });
               this.server
                 .to(sid)
-                .emit(SocketType.RESPONSERETRIEVEMESSAGE, response);
+                .emit(SocketType.RESPONSE_RETRIEVE_MESSAGE, response);
             }
+          });
+        }
+        if (senderSockets) {
+          senderSockets.forEach((sid) => {
+            this.server
+              .to(sid)
+              .emit(SocketType.RESPONSE_RETRIEVE_MESSAGE, response);
           });
         }
       }
@@ -191,39 +252,39 @@ export class SocketGateway implements OnGatewayConnection {
   }
 
   private async notifyReceiver(
-    receiver: UserDto | null,
+    receiverId: string,
     chatId: string,
     message: RespondMessageDto,
   ) {
-    if (receiver) {
-      const sockets = this.onlineUsers.get(receiver.id);
-      const openedChat = this.currentChat.get(receiver.id);
-      const unreadMessages =
-        await this.messageService.getUnreadMessagesInChat(chatId);
+    const receiverSockets = this.onlineUsers.get(receiverId);
+    const openedChat = this.currentChat.get(receiverId);
 
-      if (sockets) {
-        sockets.forEach((sid) => {
-          if (openedChat === chatId) {
-            const response = new ResponseSocketDto({
-              code: HttpStatus.OK,
-              message: 'success',
-              data: message,
-            });
-            this.server.to(sid).emit(SocketType.RESPONSEMESSAGE, response);
-          } else {
-            const notification = new ResponseSocketDto({
-              code: HttpStatus.OK,
-              message: 'success',
-              data: {
-                chatId: chatId,
-                unreadMessages: unreadMessages,
-                unreadCount: unreadMessages.length,
-              },
-            });
-            this.server.to(sid).emit(SocketType.CHATNOTIFICATION, notification);
-          }
-        });
-      }
+    const unreadMessages =
+      await this.messageService.getUnreadMessagesInChat(chatId);
+
+    const response = new ResponseSocketDto({
+      code: HttpStatus.OK,
+      message: 'success',
+      data: message,
+    });
+
+    if (receiverSockets) {
+      receiverSockets.forEach((sid) => {
+        if (openedChat === chatId) {
+          this.server.to(sid).emit(SocketType.RESPONSE_MESSAGE, response);
+        } else {
+          const notification = new ResponseSocketDto({
+            code: HttpStatus.OK,
+            message: 'success',
+            data: {
+              chatId: chatId,
+              unreadMessages: unreadMessages,
+              unreadCount: unreadMessages.length,
+            },
+          });
+          this.server.to(sid).emit(SocketType.CHAT_NOTIFICATION, notification);
+        }
+      });
     }
   }
 }

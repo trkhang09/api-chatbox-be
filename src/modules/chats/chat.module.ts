@@ -10,6 +10,7 @@ import { AiProvider } from '../ai/ai.provider';
 import { ChatRepository } from './chat.repository';
 import { DataSource } from 'typeorm';
 import { UsersModule } from '../users/users.module';
+import { MessageRepository } from '../messages/message.repository';
 
 @Module({
   imports: [
@@ -22,8 +23,11 @@ import { UsersModule } from '../users/users.module';
   providers: [
     {
       provide: ChatRepository,
-      useFactory: (dataSource: DataSource) => new ChatRepository(dataSource),
-      inject: [DataSource],
+      useFactory: (
+        dataSource: DataSource,
+        messageRepository: MessageRepository,
+      ) => new ChatRepository(messageRepository, dataSource),
+      inject: [DataSource, MessageRepository],
     },
     ChatService,
     AiProvider,

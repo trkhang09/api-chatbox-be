@@ -11,6 +11,7 @@ import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
+import { ChangePasswordDto } from './dtos/change-password.dto';
 
 @ApiSecurity('bare-token')
 @ApiSecurity('x-client-id')
@@ -52,5 +53,15 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return await this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @ApiCommonResponseCustom(Boolean, true)
+  @ApiOperation({ summary: 'Change the password of this user' })
+  @Post('change-password')
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @AuthUser() user: AuthUserDto,
+  ) {
+    return await this.authService.changePassword(changePasswordDto, user.email);
   }
 }

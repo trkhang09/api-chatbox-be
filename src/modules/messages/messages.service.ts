@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { RespondCreatedFirstMessageDto } from './dtos/respond-created-first-message.dto';
 import {
   Between,
@@ -22,10 +26,11 @@ import { createMessageDto } from './dtos/create-message.dto';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
-import { ChatTypes } from 'src/common/enums/chat-type.enum';
 import { GetSearchedMessagesDto } from './dtos/get-searched-messages.dto';
 import { ResponseSearchedMessagesDto } from './dtos/response-searched-messages.dto';
 
+import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
+import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
 
 @Injectable()
 export class MessagesService {
@@ -34,18 +39,6 @@ export class MessagesService {
     private readonly chatRepository: ChatRepository,
     private readonly geminiService: GeminiService,
   ) {}
-  async getMessagesInChat(
-    query: GetMessagesInChatDto,
-  ): Promise<ResponsePaginateDto<RespondMessageDto>> {
-    await this.chatRepository.findChat(query.chatId);
-
-    try {
-      const messages = await this.messageRepository.findWithPaginate(query);
-      return messages;
-    } catch (error) {
-      throw error;
-    }
-  }
 
   /**
    * to retrieve messages which have content matches with a specific keyword
@@ -94,6 +87,7 @@ export class MessagesService {
       const foundMessages = await this.messageRepository.find({
         where,
         take: query.size,
+        order: { updatedAt: { direction: 'DESC' } },
       });
 
       const responseMessages: Array<RespondMessageDto> = foundMessages.map(
@@ -105,7 +99,7 @@ export class MessagesService {
       return responseDto;
     } catch (error) {
       throw new InternalServerErrorException(
-        `Cannot search messages in conversation id = \`${chatId}\` with keyword = \`${query.keyword ?? ''}\`, ${error.message}`,
+        `Cannot search messages in conversation with keyword = \`${query.keyword ?? ''}\`, ${error.message}`,
       );
     }
   }
@@ -183,26 +177,20 @@ export class MessagesService {
           createdByUserId: userId,
         },
       );
-
-      const editedMessage = await this.messageRepository.findOneBy({
-        id: query.id,
+      const editedMessage = await this.messageRepository.findOne({
+        where: { id: query.id },
       });
-      if (!editedMessage)
-        throw new InternalServerErrorException('Message not found');
-      const response = plainToInstance(RespondMessageDto, editedMessage);
-      return response;
+      if (editedMessage) {
+        return plainToInstance(RespondMessageDto, editedMessage);
+      }
+      throw new NotFoundException('Message not found');
     } catch (error) {
       throw error;
     }
   }
 
-  async softRemoveMessage(id: string): Promise<boolean> {
-    try {
-      await this.messageRepository.softDelete(id);
-      return true;
-    } catch (error) {
-      throw new InternalServerErrorException('fail to remove message');
-    }
+  async softRemoveMessage(id: string): Promise<RespondMessageDto> {
+    return await this.messageRepository.softRemoveMessage(id);
   }
 
   async removeAllMessagesFromChat(
@@ -223,13 +211,19 @@ export class MessagesService {
   }
 
   async getUnreadMessagesInChat(chatId: string): Promise<RespondMessageDto[]> {
-    return this.messageRepository.findUnreadMessageInChat(chatId);
+    return this.messageRepository.findUnreadMessagesInChat(chatId);
   }
 
-  async readMessages(messageIds: string[]) {
-    await this.messageRepository.update(
-      { id: In(messageIds) },
-      { isRead: true },
-    );
+  async readMessages(messageIds: string[]): Promise<RespondMessageDto[]> {
+    if (!messageIds || messageIds.length === 0) {
+      return [];
+    }
+    return await this.messageRepository.readMessages(messageIds);
+  }
+
+  async getMessagesWithCursorPagination(
+    param: GetMessagesInChatCursorPaginationDto,
+  ): Promise<ResponseGetMessageInChatDto> {
+    return await this.messageRepository.findWithCursorPagination(param);
   }
 }
