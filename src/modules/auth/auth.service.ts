@@ -147,7 +147,9 @@ export class AuthService {
     }
 
     if (changePasswordDto.newPassword === changePasswordDto.oldPassword) {
-      throw new BadRequestException('password required difficult');
+      throw new BadRequestException(
+        'new password cannot be the same as the old password.',
+      );
     }
 
     const isMatch = await bcrypt.compare(
