@@ -4,25 +4,25 @@ export class ResponseSettingDto {
   @ApiProperty({
     description: 'id setting',
   })
-  id: string;
+  readonly id: string;
 
   @ApiProperty({
     description: 'key setting',
   })
-  key: string;
+  readonly key: string;
 
   @ApiProperty({
     description: 'value setting',
   })
-  value: string;
+  readonly value: string;
 
   @ApiProperty({
     description: 'type setting',
   })
-  type: string;
+  readonly type: string;
 
   @ApiProperty({
     description: 'description setting',
   })
-  description: string;
+  readonly description: string;
 }

@@ -24,19 +24,19 @@ export class SettingsService {
     private readonly settingRepository: SettingRepository,
   ) {}
   /**
-   * get all settings
+   * get all settings pagination
    */
   async getAllSettings(
     getSettingsDto: GetSettingsDto,
   ): Promise<ResponseSettingsDto> {
     let where: any = {};
-    if (getSettingsDto?.search) {
+    if (getSettingsDto.search) {
       where = [
         {
           key: ILike(`%${getSettingsDto.search}%`),
         },
         {
-          desciption: ILike(`%${getSettingsDto.search}%`),
+          description: ILike(`%${getSettingsDto.search}%`),
         },
       ];
     }
@@ -66,7 +66,7 @@ export class SettingsService {
   async getValueByKey(key: string): Promise<string | boolean | number> {
     const setting = await this.settingRepository.findOneBy({ key });
     if (!setting) {
-      throw new BadRequestException(`Setting with key ${key} not found`);
+      throw new NotFoundException(`Setting with key ${key} not found`);
     }
 
     switch (setting.type) {
