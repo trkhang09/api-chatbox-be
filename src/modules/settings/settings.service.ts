@@ -118,13 +118,21 @@ export class SettingsService {
     }
 
     if (
-      updateSettingDto.value &&
-      updateSettingDto.value !== settingFound.value
+      updateSettingDto.value !== settingFound.value ||
+      updateSettingDto.type !== settingFound.type
     ) {
+      if (
+        updateSettingDto.type === TypeSettings.BOOLEAN &&
+        !['true', 'false'].includes(updateSettingDto.value)
+      ) {
+        throw new BadRequestException('value invalid with type');
+      } else if (
+        updateSettingDto.type === TypeSettings.NUMBER &&
+        isNaN(Number(updateSettingDto.value))
+      ) {
+        throw new BadRequestException('value invalid with type');
+      }
       settingFound.value = updateSettingDto.value;
-    }
-
-    if (updateSettingDto.type && updateSettingDto.type !== settingFound.type) {
       settingFound.type = updateSettingDto.type;
     }
 
