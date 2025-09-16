@@ -62,8 +62,6 @@ export class AuthController {
     @Body() changePasswordDto: ChangePasswordDto,
     @AuthUser() user: AuthUserDto,
   ) {
-    console.log('auth', user);
-    console.log('change', changePasswordDto);
     return await this.authService.changePassword(changePasswordDto, user.email);
   }
 }
