@@ -377,6 +377,20 @@ export class ChatService {
       (async () => {
         try {
           if (user) {
+            let chat;
+            if (chatGenerateAiDto.chatId) {
+              chat = await this.chatRepository.findOne({
+                where: { id: chatGenerateAiDto.chatId },
+              });
+              if (!chat) throw new NotFoundException('Chat not found');
+            } else {
+              chat = await this.chatRepository.save({
+                title: chatGenerateAiDto.question.slice(0, 50),
+                type: ChatTypes.BOT,
+              });
+            }
+
+            let chunksString = '';
             let isAllowExternal = (await this.settingService.getValueByKey(
               SettingConstants.ALLOW_EXTERNAL_INFO,
             )) as boolean;
@@ -395,6 +409,15 @@ export class ChatService {
             )) {
               subscriber.next({ data: chunk } as MessageEvent);
             }
+            await this.messagesService.createAiMessage({
+              chatId: chat.id,
+              content: chatGenerateAiDto.question,
+            });
+
+            await this.messagesService.createAiMessage({
+              chatId: chat.id,
+              content: chunksString,
+            });
           } else {
             for await (const chunk of this.aiService.generateStreamResponseNoLogin(
               chatGenerateAiDto.question,
