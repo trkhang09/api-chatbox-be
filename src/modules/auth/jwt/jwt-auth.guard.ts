@@ -12,12 +12,16 @@ import { clientIdConstants } from 'src/common/constants/clientId-constants';
 import { headerConstants } from 'src/common/constants/header-constants';
 import { jwtConstants } from 'src/common/constants/jwt-constants';
 import { IS_FILE_SECURITY_KEY } from 'src/common/decorators/file-security-key.decorator';
+import { SettingsService } from 'src/modules/settings/settings.service';
+import { SETTING_KEY } from 'src/common/decorators/setting.decorator';
+import { SettingConstants } from 'src/common/constants/setting-constrants';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private reflector: Reflector,
+    private settingService: SettingsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -52,6 +56,20 @@ export class AuthGuard implements CanActivate {
     if (isPublic) return true;
 
     const token = this.extractTokenFromHeader(request);
+
+    const setting = this.reflector.getAllAndOverride<string>(SETTING_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (setting && !token) {
+      const allowNoLogin = await this.settingService.getValueByKey(
+        SettingConstants.ALL_CHATBOX_NO_LOGIN,
+      );
+      if (setting === SettingConstants.ALL_CHATBOX_NO_LOGIN && allowNoLogin) {
+        return true;
+      }
+    }
     if (!token) {
       throw new UnauthorizedException('Unauthorized 1');
     }
