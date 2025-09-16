@@ -8,6 +8,7 @@ import {
 import { Request, Response } from 'express';
 import { GetHttpResponseDto } from '../dtos/get-http-response.dto';
 import { isArray } from 'class-validator';
+import ReasonStatusCode from '../utils/reason-phrases';
 
 @Catch()
 export default class AllExceptionsFilter implements ExceptionFilter {
@@ -17,12 +18,11 @@ export default class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error';
+    let message = ReasonStatusCode.INTERNAL_SERVER_ERROR;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const res = exception.getResponse();
-
       message = typeof res === 'string' ? res : (res as any).message || message;
     } else if (exception instanceof Error) {
       message = exception.message;
@@ -30,7 +30,13 @@ export default class AllExceptionsFilter implements ExceptionFilter {
 
     const dto = new GetHttpResponseDto();
     dto.statusCode = status;
-    dto.message = isArray(message) ? message : [message];
+    dto.message =
+      status === HttpStatus.INTERNAL_SERVER_ERROR &&
+      process.env.NODE_ENV === 'production'
+        ? [ReasonStatusCode.INTERNAL_SERVER_ERROR]
+        : isArray(message)
+          ? message
+          : [message];
     dto.timestamp = new Date();
     dto.path = request.url;
 

@@ -47,6 +47,7 @@ export class DocumentsController {
   constructor(private readonly docService: DocumentsService) {}
 
   @ApiDashboardQuantity(DocumentStatus)
+  @Permissions(PermissionType.DOCUMENT_GET)
   async getQuantity(
     @Query() query: InstanceType<typeof DashboardForDocumentRequestDto>,
   ) {

@@ -8,6 +8,7 @@ import {
   Put,
   Query,
   Sse,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ChatService,
@@ -37,6 +38,10 @@ import { isNumber } from 'class-validator';
 import { getEnumJoin } from 'src/common/utils/get-enum-join';
 import { ChatGenerateAiDto } from './dtos/chat-generate-ai.dto';
 import { RespondLatestChatDto } from './dtos/respond-latest-chat.dto';
+import { Setting } from 'src/common/decorators/setting.decorator';
+import { SettingConstants } from 'src/common/constants/setting-constrants';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { PermissionType } from 'src/common/constants/permission-constants';
 
 @ApiTags('Conversation History')
 @ApiSecurity('bare-token')
@@ -45,30 +50,8 @@ import { RespondLatestChatDto } from './dtos/respond-latest-chat.dto';
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  @Get('/')
-  @ApiOperation({
-    summary: 'Get conversations with status/type within s specifi days',
-  })
-  @ApiQuery({
-    name: 'status',
-    enum: Object.values(ChatTypes).filter((v) => isNumber(v)),
-    description: 'Status value, must be one of: ' + getEnumJoin(ChatTypes),
-    example: Object.values(ChatTypes)[0],
-  })
-  @ApiQuery({
-    name: 'days',
-    type: Number,
-    description: 'Number of days (max 90)',
-    minimum: 1,
-    maximum: 90,
-    example: 30,
-  })
-  @ApiCommonResponseCustom(Array<RespondChatDto>)
-  async getAllConversations(
-    @Query() query: InstanceType<typeof DashboardForConversationRequestDto>,
-  ) {}
-
   @ApiDashboardQuantity(ChatTypes)
+  @Permissions(PermissionType.CONVERSATION_GET)
   async getQuantity(
     @Query() query: InstanceType<typeof DashboardForConversationRequestDto>,
   ) {
@@ -76,6 +59,7 @@ export class ChatController {
   }
 
   @Get('/latest')
+  @Permissions(PermissionType.CONVERSATION_GET)
   @ApiOperation({
     summary:
       'Get list of conversations with or without status within a specific number of days',
@@ -115,7 +99,7 @@ export class ChatController {
       messagesCount: 42,
     },
   ])
-  async getLatestDocuments(
+  async getLatestConversations(
     @Query() query: InstanceType<typeof DashboardForConversationRequestDto>,
   ) {
     return this.chatService.getLatestConversations(query);
@@ -205,7 +189,7 @@ export class ChatController {
   @ApiOperation({
     summary: 'chats generate answer with ai',
   })
-  @Public()
+  @Setting(SettingConstants.ALLOW_CHATBOX_NO_LOGIN)
   @ApiOkResponseCustom(Observable<MessageEvent>, true)
   @Sse('conversation')
   generate(
