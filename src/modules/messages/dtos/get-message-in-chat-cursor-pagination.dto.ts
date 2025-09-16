@@ -16,6 +16,7 @@ export class GetMessagesInChatCursorPaginationDto {
   })
   @IsUUID()
   readonly chatId: string;
+
   @ApiPropertyOptional({
     description: 'Number of messages to retrieve',
     example: 20,
@@ -31,9 +32,8 @@ export class GetMessagesInChatCursorPaginationDto {
     description: 'older message received time',
     example: '2025-09-10T12:00:00Z',
   })
-  @Transform(({ value }) => (value === '' ? undefined : value)) // nếu chuỗi rỗng => undefined
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsOptional()
-  @IsNotEmpty()
   @IsDateString()
   readonly cursor?: string;
 }

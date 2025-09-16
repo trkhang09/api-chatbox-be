@@ -32,7 +32,9 @@ export class MessageRepository extends Repository<Message> {
       const messages = await query.getMany();
 
       const nextCursor =
-        messages.length > 0 ? messages[messages.length - 1].createdAt : null;
+        messages.length > 0
+          ? messages[messages.length - 1].createdAt
+          : undefined;
 
       return {
         messages: plainToInstance(RespondMessageDto, messages, {
