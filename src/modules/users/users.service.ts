@@ -9,7 +9,7 @@ import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dtos/create-user.dto';
 import bcrypt from 'bcrypt';
-import { FindOptionsWhere, ILike, MoreThanOrEqual, Not } from 'typeorm';
+import { MoreThanOrEqual } from 'typeorm';
 import { Role } from '../roles/entities/role.entity';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
