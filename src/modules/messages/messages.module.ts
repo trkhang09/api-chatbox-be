@@ -27,6 +27,6 @@ import { UsersModule } from '../users/users.module';
     MessageRepository,
   ],
   controllers: [MessagesController],
-  exports: [MessagesService],
+  exports: [MessagesService, MessageRepository],
 })
 export class MessagesModule {}

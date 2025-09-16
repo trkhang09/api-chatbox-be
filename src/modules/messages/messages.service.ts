@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { RespondCreatedFirstMessageDto } from './dtos/respond-created-first-message.dto';
 import {
   Between,
@@ -183,26 +187,20 @@ export class MessagesService {
           createdByUserId: userId,
         },
       );
-
-      const editedMessage = await this.messageRepository.findOneBy({
-        id: query.id,
+      const editedMessage = await this.messageRepository.findOne({
+        where: { id: query.id },
       });
-      if (!editedMessage)
-        throw new InternalServerErrorException('Message not found');
-      const response = plainToInstance(RespondMessageDto, editedMessage);
-      return response;
+      if (editedMessage) {
+        return plainToInstance(RespondMessageDto, editedMessage);
+      }
+      throw new NotFoundException('Message not found');
     } catch (error) {
       throw error;
     }
   }
 
-  async softRemoveMessage(id: string): Promise<boolean> {
-    try {
-      await this.messageRepository.softDelete(id);
-      return true;
-    } catch (error) {
-      throw new InternalServerErrorException('fail to remove message');
-    }
+  async softRemoveMessage(id: string): Promise<RespondMessageDto> {
+    return await this.messageRepository.softRemoveMessage(id);
   }
 
   async removeAllMessagesFromChat(
@@ -223,13 +221,13 @@ export class MessagesService {
   }
 
   async getUnreadMessagesInChat(chatId: string): Promise<RespondMessageDto[]> {
-    return this.messageRepository.findUnreadMessageInChat(chatId);
+    return this.messageRepository.findUnreadMessagesInChat(chatId);
   }
 
-  async readMessages(messageIds: string[]) {
-    await this.messageRepository.update(
-      { id: In(messageIds) },
-      { isRead: true },
-    );
+  async readMessages(messageIds: string[]): Promise<RespondMessageDto[]> {
+    if (!messageIds || messageIds.length === 0) {
+      return [];
+    }
+    return await this.messageRepository.readMessages(messageIds);
   }
 }
