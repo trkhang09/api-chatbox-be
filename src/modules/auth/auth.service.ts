@@ -140,7 +140,7 @@ export class AuthService {
    * @returns
    */
   async changePassword(changePasswordDto: ChangePasswordDto, email: string) {
-    const foundUser = await this.usersRepository.findPasswordByEmail(email);
+    const foundUser = await this.usersRepository.findByEmail(email);
 
     if (!foundUser) {
       throw new NotFoundException('user found found');

@@ -31,7 +31,7 @@ export class UsersRepository extends Repository<User> {
       .getOne();
   }
 
-  async findPasswordByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<User | null> {
     return this.createQueryBuilder('user')
       .select([
         'user.id',
