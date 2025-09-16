@@ -12,12 +12,7 @@ import { MessagesService } from './messages.service';
 import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
-import {
-  ApiInternalServerErrorResponse,
-  ApiNotFoundResponse,
-  ApiOperation,
-  ApiSecurity,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiSecurity } from '@nestjs/swagger';
 import { ApiPaginatedResponseCustom } from 'src/common/decorators/api-paginated-response.decorator';
 import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-request-response.decorator';
 import { createMessageDto } from './dtos/create-message.dto';
@@ -25,6 +20,10 @@ import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-respon
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
+import { GetSearchedMessagesDto } from './dtos/get-searched-messages.dto';
+import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
+import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
+import { ResponseSearchedMessagesDto } from './dtos/response-searched-messages.dto';
 import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
 import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
 
@@ -39,12 +38,25 @@ export class MessagesController {
     summary: 'get list of messages in a specific conversation',
   })
   @ApiCommonResponseCustom(ResponseGetMessageInChatDto)
-  @ApiInternalServerErrorResponse()
+  @ApiInternalServerErrorResponseCustom()
   @ApiBadRequestResponseCustom()
   async getMessagesWithCursorPagination(
     @Query() query: GetMessagesInChatCursorPaginationDto,
   ) {
     return this.messagesService.getMessagesWithCursorPagination(query);
+  }
+
+  @Get('/:chatId/search')
+  @ApiOperation({
+    summary: 'Get list of messages match a specific keyword',
+  })
+  @ApiCommonResponseCustom(ResponseSearchedMessagesDto)
+  @ApiNotFoundResponseCustom()
+  async searchMessage(
+    @Param('chatId') chatId: string,
+    @Query() query: GetSearchedMessagesDto,
+  ) {
+    return this.messagesService.searchMessagesInChat(chatId, query);
   }
 
   @Post('/')
@@ -53,7 +65,7 @@ export class MessagesController {
   })
   @ApiCommonResponseCustom(RespondMessageDto)
   @ApiBadRequestResponseCustom()
-  @ApiInternalServerErrorResponse()
+  @ApiInternalServerErrorResponseCustom()
   async createMessage(
     @Body() body: createMessageDto,
     @AuthUser('sub') creatorId: string,
@@ -67,8 +79,8 @@ export class MessagesController {
   })
   @ApiCommonResponseCustom(RespondMessageDto)
   @ApiBadRequestResponseCustom()
-  @ApiInternalServerErrorResponse()
-  @ApiNotFoundResponse()
+  @ApiInternalServerErrorResponseCustom()
+  @ApiNotFoundResponseCustom()
   async editMessage(
     @Body() body: EditMessageDto,
     @AuthUser('sub') userId: string,
@@ -81,8 +93,8 @@ export class MessagesController {
     summary: 'Softly remove a specific message',
   })
   @ApiOkResponseCustom(Boolean, true)
-  @ApiNotFoundResponse()
-  @ApiInternalServerErrorResponse()
+  @ApiNotFoundResponseCustom()
+  @ApiInternalServerErrorResponseCustom()
   async removeMessage(@Param('id') id: string) {
     return this.messagesService.softRemoveMessage(id);
   }

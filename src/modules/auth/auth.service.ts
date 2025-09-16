@@ -20,6 +20,8 @@ import { OtpService } from '../otp/otp.service';
 import { EmailService } from '../email/email.service';
 import { replacePlaceHolder } from 'src/common/utils';
 import { newOtpTemplate } from 'src/common/utils/template';
+import { ChangePasswordDto } from './dtos/change-password.dto';
+import { UsersService } from '../users/users.service';
 @Injectable()
 export class AuthService {
   constructor(
@@ -127,6 +129,45 @@ export class AuthService {
     userFound.password = hashPassword;
 
     await this.usersRepository.save(userFound);
+
+    return true;
+  }
+
+  /**
+   * change password
+   * @param changePasswordDto
+   * @param email
+   * @returns
+   */
+  async changePassword(changePasswordDto: ChangePasswordDto, email: string) {
+    const foundUser = await this.usersRepository.findByEmail(email);
+
+    if (!foundUser) {
+      throw new NotFoundException('user found found');
+    }
+
+    if (changePasswordDto.newPassword === changePasswordDto.oldPassword) {
+      throw new BadRequestException(
+        'new password cannot be the same as the old password.',
+      );
+    }
+
+    const isMatch = await bcrypt.compare(
+      changePasswordDto.oldPassword,
+      foundUser.password,
+    );
+
+    if (!isMatch) {
+      throw new UnauthorizedException('old passsword incorrect');
+    }
+
+    const hashPassword = await UsersService.generateHashPassword(
+      changePasswordDto.newPassword,
+    );
+
+    foundUser.password = hashPassword;
+
+    await this.usersRepository.save(foundUser);
 
     return true;
   }
