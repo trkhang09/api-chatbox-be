@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsDateString,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -9,7 +10,7 @@ import {
   IsUUID,
   Min,
 } from 'class-validator';
-import { directionConstants } from 'src/common/constants/direction.constants';
+import { DirectionConstants } from 'src/common/constants/direction.constants';
 
 export class GetMessagesInChatCursorPaginationDto {
   @ApiProperty({
@@ -42,15 +43,11 @@ export class GetMessagesInChatCursorPaginationDto {
   @ApiProperty({
     description:
       'Pagination direction. Use "next" to load newer messages after the cursor, or "prev" to load older messages before the cursor, "both" to load around cursor message with "size" messages .',
-    example: 'prev',
+    example: DirectionConstants.PREV,
     required: false,
-    enum: [
-      directionConstants.NEXT,
-      directionConstants.PREV,
-      directionConstants.BOTH,
-    ],
+    enum: DirectionConstants,
   })
   @IsOptional()
-  @IsString()
-  readonly direction?: directionConstants;
+  @IsEnum(DirectionConstants)
+  readonly direction?: DirectionConstants;
 }

@@ -10,7 +10,7 @@ import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
 import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
 import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
-import { directionConstants } from 'src/common/constants/direction.constants';
+import { DirectionConstants } from 'src/common/constants/direction.constants';
 
 @Injectable()
 export class MessageRepository extends Repository<Message> {
@@ -33,7 +33,7 @@ export class MessageRepository extends Repository<Message> {
         .where(`${alias}.chat_id = :chatId`, { chatId })
         .withDeleted();
 
-    if (direction == 'both') {
+    if (direction == DirectionConstants.BOTH) {
       if (!cursorDate) {
         throw new BadRequestException(
           "cursor timestamp is require  for direction='both'.",
@@ -70,16 +70,16 @@ export class MessageRepository extends Repository<Message> {
     const query = baseQuery('messages').take(size);
 
     if (cursorDate) {
-      if (direction === 'next') {
+      if (direction === DirectionConstants.NEXT) {
         query.andWhere('messages.createdAt > :cursor', { cursor: cursor });
-      } else if (direction === 'prev') {
+      } else if (direction === DirectionConstants.PREV) {
         query.andWhere('messages.createdAt <= :cursor', { cursor: cursor });
       }
     }
 
-    if (direction === 'next') {
+    if (direction === DirectionConstants.NEXT) {
       query.orderBy('messages.createdAt', 'ASC');
-    } else if (direction === 'prev') {
+    } else if (direction === DirectionConstants.PREV) {
       query.orderBy('messages.createdAt', 'DESC');
     } else {
       query.orderBy('messages.createdAt', 'DESC');
@@ -88,7 +88,7 @@ export class MessageRepository extends Repository<Message> {
     try {
       let messages = await query.getMany();
 
-      if (param.direction === directionConstants.NEXT) {
+      if (param.direction === DirectionConstants.NEXT) {
         messages = messages.reverse();
       }
 

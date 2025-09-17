@@ -1,4 +1,4 @@
-export enum directionConstants {
+export enum DirectionConstants {
   BOTH = 'both',
   NEXT = 'next',
   PREV = 'prev',
