@@ -9,11 +9,15 @@ export class ResponseGetMessageInChatDto {
   messages: RespondMessageDto[];
 
   @ApiProperty({
-    type: String,
-    format: 'date-time',
-    nullable: true,
-    description: 'older message received time',
-    example: '2025-09-16T10:20:30.000Z',
+    description: 'Pagination cursors for fetching next or previous messages',
+    example: {
+      first: '2025-09-12T10:15:30.000Z',
+      last: '2025-09-12T10:20:45.000Z',
+    },
+    required: false,
   })
-  cursor?: Date;
+  cursors?: {
+    first: string;
+    last: string;
+  };
 }

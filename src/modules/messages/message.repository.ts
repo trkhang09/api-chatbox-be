@@ -1,12 +1,16 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 import { Message } from './entities/messages.entity';
-import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
-import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
 import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
 import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
+import { DirectionConstants } from 'src/common/constants/direction.constants';
 
 @Injectable()
 export class MessageRepository extends Repository<Message> {
@@ -16,33 +20,92 @@ export class MessageRepository extends Repository<Message> {
   async findWithCursorPagination(
     param: GetMessagesInChatCursorPaginationDto,
   ): Promise<ResponseGetMessageInChatDto> {
-    const chatId = param.chatId;
+    const { chatId, size, cursor, direction } = param;
+    let cursorDate: Date | undefined;
+    if (cursor) {
+      cursorDate = new Date(cursor);
+      if (isNaN(cursorDate.getTime())) {
+        throw new BadRequestException('Invalid cursor timestamp');
+      }
+    }
+    const baseQuery = (alias = 'm') =>
+      this.createQueryBuilder(alias)
+        .where(`${alias}.chat_id = :chatId`, { chatId })
+        .withDeleted();
 
-    const query = this.createQueryBuilder('messages')
-      .where('messages.chat_id = :chatId', { chatId })
-      .orderBy('messages.createdAt', 'DESC')
-      .limit(param.size)
-      .withDeleted();
+    if (direction == DirectionConstants.BOTH) {
+      if (!cursorDate) {
+        throw new BadRequestException(
+          "cursor timestamp is require  for direction='both'.",
+        );
+      }
+      const beforeMsgs = await baseQuery('m')
+        .andWhere('m.createdAt <= :cursorDate', { cursorDate })
+        .orderBy('m.createdAt', 'DESC')
+        .take(size)
+        .getMany();
 
-    if (param.cursor) {
-      const cursor = new Date(param.cursor);
-      query.andWhere('messages.createdAt <= :cursor', { cursor });
+      const afterMsgs = await baseQuery('m')
+        .andWhere('m.createdAt > :cursorDate', { cursorDate })
+        .orderBy('m.createdAt', 'ASC')
+        .take(size)
+        .getMany();
+
+      const messages = [...afterMsgs.reverse(), ...beforeMsgs];
+
+      return {
+        messages: plainToInstance(RespondMessageDto, messages, {
+          excludeExtraneousValues: true,
+        }),
+        cursors:
+          messages.length > 0
+            ? {
+                first: messages[0].createdAt.toISOString(),
+                last: messages[messages.length - 1].createdAt.toISOString(),
+              }
+            : undefined,
+      } as ResponseGetMessageInChatDto;
+    }
+
+    const query = baseQuery('messages').take(size);
+
+    if (cursorDate) {
+      if (direction === DirectionConstants.NEXT) {
+        query.andWhere('messages.createdAt > :cursor', { cursor: cursor });
+      } else if (direction === DirectionConstants.PREV) {
+        query.andWhere('messages.createdAt <= :cursor', { cursor: cursor });
+      }
+    }
+
+    if (direction === DirectionConstants.NEXT) {
+      query.orderBy('messages.createdAt', 'ASC');
+    } else if (direction === DirectionConstants.PREV) {
+      query.orderBy('messages.createdAt', 'DESC');
+    } else {
+      query.orderBy('messages.createdAt', 'DESC');
     }
 
     try {
-      const messages = await query.getMany();
+      let messages = await query.getMany();
 
-      const nextCursor =
+      if (param.direction === DirectionConstants.NEXT) {
+        messages = messages.reverse();
+      }
+
+      const cursors =
         messages.length > 0
-          ? messages[messages.length - 1].createdAt
+          ? {
+              first: messages[0].createdAt.toISOString(),
+              last: messages[messages.length - 1].createdAt.toISOString(),
+            }
           : undefined;
 
       return {
         messages: plainToInstance(RespondMessageDto, messages, {
           excludeExtraneousValues: true,
         }),
-        cursor: nextCursor,
-      };
+        cursors: cursors,
+      } as ResponseGetMessageInChatDto;
     } catch (error) {
       throw new InternalServerErrorException('fail to get messages');
     }
