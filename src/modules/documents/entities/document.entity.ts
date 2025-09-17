@@ -5,16 +5,16 @@ import { DocumentChunks } from 'src/modules/document-chunks/entities/document-ch
 
 @Entity('documents')
 export class Document extends AbstractEntity {
-  @Column()
+  @Column({ length: 255 })
   title: string;
 
-  @Column()
+  @Column({ default: '' })
   description: string;
 
   @Column({ name: 'file_path' })
   filePath: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', default: 0 })
   size: number;
 
   @Column({ type: 'int', default: 0 })

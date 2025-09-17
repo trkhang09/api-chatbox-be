@@ -4,13 +4,13 @@ import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity('otps')
 export class Otp extends AbstractEntity {
-  @Column()
+  @Column({ length: 50 })
   code: string;
 
   @Column({ name: 'is_used', default: false })
   isUsed: boolean;
 
-  @Column({ name: 'expired_at' })
+  @Column({ name: 'expired_at', type: 'timestamptz' })
   expiredAt: Date;
 
   @ManyToOne(() => User, (user) => user.otps)
