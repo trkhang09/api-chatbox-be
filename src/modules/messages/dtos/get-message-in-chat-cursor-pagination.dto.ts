@@ -1,13 +1,15 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsDateString,
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsString,
   IsUUID,
   Min,
 } from 'class-validator';
+import { directionConstants } from 'src/common/constants/direction.constants';
 
 export class GetMessagesInChatCursorPaginationDto {
   @ApiProperty({
@@ -17,7 +19,7 @@ export class GetMessagesInChatCursorPaginationDto {
   @IsUUID()
   readonly chatId: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Number of messages to retrieve',
     example: 20,
     default: 20,
@@ -28,7 +30,7 @@ export class GetMessagesInChatCursorPaginationDto {
   @IsOptional()
   readonly size: number = 20;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'older message received time',
     example: '2025-09-10T12:00:00Z',
   })
@@ -36,4 +38,19 @@ export class GetMessagesInChatCursorPaginationDto {
   @IsOptional()
   @IsDateString()
   readonly cursor?: string;
+
+  @ApiProperty({
+    description:
+      'Pagination direction. Use "next" to load newer messages after the cursor, or "prev" to load older messages before the cursor, "both" to load around cursor message with "size" messages .',
+    example: 'prev',
+    required: false,
+    enum: [
+      directionConstants.NEXT,
+      directionConstants.PREV,
+      directionConstants.BOTH,
+    ],
+  })
+  @IsOptional()
+  @IsString()
+  readonly direction?: directionConstants;
 }
