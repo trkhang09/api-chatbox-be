@@ -7,7 +7,7 @@ import { UserStatus } from 'src/common/enums/user-status.enum';
 import seededUsers from './users.factory.json';
 import { In } from 'typeorm';
 
-export class UserSeeder {
+export class UserFactory {
   public async run(): Promise<void> {
     const userRepo = appDataSource.getRepository(User);
     const roleRepo = appDataSource.getRepository(Role);
@@ -59,7 +59,7 @@ export class UserSeeder {
 }
 
 (async () => {
-  const seeder = new UserSeeder();
+  const seeder = new UserFactory();
   const args = process.argv.slice(2);
   const hasTruncate = args.includes('-c');
 
