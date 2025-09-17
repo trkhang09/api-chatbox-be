@@ -4,6 +4,8 @@ import { ConversationSeeder } from './conversations/conversation.seeder';
 import { DocumentSeeder } from './documents/document.seeder';
 import { PermissionSeeder } from './permissions/permission.seeder';
 import { RoleSeeder } from './roles/role.seeder';
+import { SuperAdminSeeder } from './users/superadmin.seeder';
+import { SettingSeeder } from './settings/setting.seeder';
 
 export interface ISeeder {
   run(): Promise<void>;
@@ -12,9 +14,11 @@ export interface ISeeder {
 const SeederClassList: (new () => ISeeder)[] = [
   PermissionSeeder,
   RoleSeeder,
+  SuperAdminSeeder,
   UserSeeder,
   ConversationSeeder,
   DocumentSeeder,
+  SettingSeeder,
 ];
 
 (async () => {

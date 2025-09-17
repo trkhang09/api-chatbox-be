@@ -6,6 +6,7 @@ import { NotFoundException } from '@nestjs/common';
 import { UserStatus } from 'src/common/enums/user-status.enum';
 import { ISeeder } from '../main.seeder';
 import seededUsers from './users.seeder.json';
+import { In } from 'typeorm';
 
 export class UserSeeder implements ISeeder {
   public async run(): Promise<void> {
@@ -20,18 +21,27 @@ export class UserSeeder implements ISeeder {
       );
     }
 
+    const foundUsers = await userRepo.find({
+      where: { email: In(seededUsers.map((u) => u.email)) },
+    });
+
     const users = await Promise.all(
-      seededUsers.map(async (user) => ({
-        ...user,
-        password: await UsersService.generateHashPassword(user.password),
-        status: Object.values(UserStatus).includes(user.status)
-          ? user.status
-          : UserStatus.ACTIVED,
-        role: roles.find((r) => r.code === user.role),
-      })),
+      seededUsers.map(async (user) => {
+        const existUser = foundUsers.find((u) => u.email === user.email) ?? {};
+
+        return {
+          ...existUser,
+          ...user,
+          password: await UsersService.generateHashPassword(user.password),
+          status: Object.values(UserStatus).includes(user.status)
+            ? user.status
+            : UserStatus.ACTIVED,
+          role: roles.find((r) => r.code === user.role),
+        };
+      }),
     );
 
-    await userRepo.insert(users);
+    await userRepo.save(users);
   }
 }
 

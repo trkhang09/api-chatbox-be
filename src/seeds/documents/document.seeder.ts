@@ -1,14 +1,18 @@
 import { appDataSource } from 'src/data-source';
 import { NotFoundException } from '@nestjs/common';
-import seededDocs from './documents.seeder.json';
 import { Document } from 'src/modules/documents/entities/document.entity';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
 import { FileService } from 'src/modules/files/file.service';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import seededDocs from './documents.seeder.json';
 
 export class DocumentSeeder {
   public async run(): Promise<void> {
     const repo = appDataSource.getRepository(Document);
+
+    const foundDocs = await repo.find({
+      where: { title: In(seededDocs.map((d) => d.title)) },
+    });
 
     const documents = await Promise.all(
       seededDocs.map(async (doc) => {
@@ -35,7 +39,10 @@ export class DocumentSeeder {
             break;
         }
 
+        const existDoc = foundDocs.find((d) => d.title === doc.title) ?? {};
+
         return {
+          ...existDoc,
           ...doc,
           ...(await this.getRandomFileInfo(repo)),
           status,
@@ -44,7 +51,7 @@ export class DocumentSeeder {
       }),
     );
 
-    await repo.insert(documents);
+    await repo.save(documents);
   }
 
   private async getRandomFileInfo(docRepo: Repository<Document>): Promise<{
