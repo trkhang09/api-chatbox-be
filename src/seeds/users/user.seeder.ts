@@ -4,11 +4,10 @@ import { UsersService } from 'src/modules/users/users.service';
 import { Role } from 'src/modules/roles/entities/role.entity';
 import { NotFoundException } from '@nestjs/common';
 import { UserStatus } from 'src/common/enums/user-status.enum';
-import { ISeeder } from '../main.seeder';
 import seededUsers from './users.seeder.json';
 import { In } from 'typeorm';
 
-export class UserSeeder implements ISeeder {
+export class UserSeeder {
   public async run(): Promise<void> {
     const userRepo = appDataSource.getRepository(User);
     const roleRepo = appDataSource.getRepository(Role);

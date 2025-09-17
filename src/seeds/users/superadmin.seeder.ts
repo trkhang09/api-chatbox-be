@@ -3,14 +3,13 @@ import { User } from 'src/modules/users/entities/user.entity';
 import { UsersService } from 'src/modules/users/users.service';
 import { Role } from 'src/modules/roles/entities/role.entity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { ISeeder } from '../main.seeder';
 import { RoleType } from 'src/common/constants/role-constants';
 import { config } from 'dotenv';
 import { UserStatus } from 'src/common/enums/user-status.enum';
 
 config();
 
-export class SuperAdminSeeder implements ISeeder {
+export class SuperAdminSeeder {
   public async run(): Promise<void> {
     const userRepo = appDataSource.getRepository(User);
     const roleRepo = appDataSource.getRepository(Role);

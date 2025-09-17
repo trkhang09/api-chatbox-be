@@ -31,8 +31,7 @@
     "seed:users": "ts-node -r tsconfig-paths/register src/seeds/users/user.seeder.ts",
     "seed:conversations": "ts-node -r tsconfig-paths/register src/seeds/conversations/conversation.seeder.ts",
     "seed:documents": "ts-node -r tsconfig-paths/register src/seeds/documents/document.seeder.ts",
-    "seed:settings": "ts-node -r tsconfig-paths/register src/seeds/settings/setting.seeder.ts",
-    "seed:all": "ts-node -r tsconfig-paths/register src/seeds/main.seeder.ts"
+    "seed:settings": "ts-node -r tsconfig-paths/register src/seeds/settings/setting.seeder.ts"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"

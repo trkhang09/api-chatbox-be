@@ -1,12 +1,11 @@
 import { appDataSource } from 'src/data-source';
 import { In } from 'typeorm';
-import { ISeeder } from '../main.seeder';
 import { Setting } from 'src/modules/settings/entities/setting.entity';
 import { SettingConstants } from 'src/common/constants/setting-constrants';
 import { TypeSettings } from 'src/common/enums/type-settings.enum';
 import seededSettings from './settings.seeder.json';
 
-export class SettingSeeder implements ISeeder {
+export class SettingSeeder {
   public async run(): Promise<void> {
     const repo = appDataSource.getRepository(Setting);
 

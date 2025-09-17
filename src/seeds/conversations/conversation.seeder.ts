@@ -3,11 +3,10 @@ import { User } from 'src/modules/users/entities/user.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 import { Chat } from 'src/modules/chats/entities/chat.entity';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
-import { ISeeder } from '../main.seeder';
 import seededConversations from './conversations.seeder.json';
 import { In } from 'typeorm';
 
-export class ConversationSeeder implements ISeeder {
+export class ConversationSeeder {
   public async run(): Promise<void> {
     const chatRepo = appDataSource.getRepository(Chat);
 

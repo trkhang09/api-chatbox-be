@@ -3,7 +3,6 @@ import { Role } from 'src/modules/roles/entities/role.entity';
 import { Permission } from 'src/modules/permissions/entities/permission.entity';
 import { RoleType } from 'src/common/constants/role-constants';
 import { NotFoundException } from '@nestjs/common';
-import { ISeeder } from '../main.seeder';
 import seededRoles from './roles.seeder.json';
 import { RoleStatus } from 'src/common/enums/role-status.enum';
 import { In } from 'typeorm';
@@ -17,7 +16,7 @@ const formatName = (code: string): string => {
 
 const mappingCode = (role: { code: string } & any) => role.code;
 
-export class RoleSeeder implements ISeeder {
+export class RoleSeeder {
   public async run(): Promise<void> {
     const roleRepo = appDataSource.getRepository(Role);
     const permRepo = appDataSource.getRepository(Permission);
