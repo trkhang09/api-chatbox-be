@@ -6,7 +6,7 @@ import { TypeSettings } from 'src/common/enums/type-settings.enum';
 import seededSettings from './settings.seeder.json';
 
 export class SettingSeeder {
-  public async run(): Promise<void> {
+  public async run(remained: boolean = true): Promise<void> {
     const repo = appDataSource.getRepository(Setting);
 
     const settingKeys = Object.values<string>(SettingConstants);
@@ -22,13 +22,19 @@ export class SettingSeeder {
         Object.values<string>(SettingConstants).includes(setting.key + ''),
       )
       .forEach((setting) => {
-        const existSetting =
-          foundSettings.find((s) => s.key === setting.key) ?? {};
+        let existSetting = foundSettings.find((s) => s.key === setting.key);
+        let value;
+
+        if (remained && existSetting) {
+          value = existSetting.value;
+        } else {
+          value = setting.value + '';
+        }
 
         newSettings.push({
           ...existSetting,
           ...setting,
-          value: setting.value + '',
+          value,
           type: typeof setting.value as TypeSettings,
         });
       });
@@ -40,9 +46,11 @@ export class SettingSeeder {
 (async () => {
   try {
     const seeder = new SettingSeeder();
+    const args = process.argv.slice(2);
+    const remained = args.includes('-r');
 
     await appDataSource.initialize();
-    await seeder.run();
+    await seeder.run(remained);
     await appDataSource.destroy();
     process.exit(0);
   } catch (error) {

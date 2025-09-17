@@ -4,7 +4,7 @@ import { UsersService } from 'src/modules/users/users.service';
 import { Role } from 'src/modules/roles/entities/role.entity';
 import { NotFoundException } from '@nestjs/common';
 import { UserStatus } from 'src/common/enums/user-status.enum';
-import seededUsers from './users.seeder.json';
+import seededUsers from './users.factory.json';
 import { In } from 'typeorm';
 
 export class UserSeeder {
@@ -16,7 +16,7 @@ export class UserSeeder {
 
     if (roles.length === 0) {
       throw new NotFoundException(
-        'No role found in database, seed roles before running this seeder',
+        'No role found in database, seed roles before running this factory',
       );
     }
 
@@ -42,18 +42,42 @@ export class UserSeeder {
 
     await userRepo.save(users);
   }
+
+  public async truncate(): Promise<void> {
+    await appDataSource.query(
+      `TRUNCATE TABLE "chat_participants" RESTART IDENTITY CASCADE;`,
+    );
+
+    await appDataSource.query(
+      `TRUNCATE TABLE "otps" RESTART IDENTITY CASCADE;`,
+    );
+
+    await appDataSource.query(
+      `TRUNCATE TABLE "users" RESTART IDENTITY CASCADE;`,
+    );
+  }
 }
 
 (async () => {
-  try {
-    const seeder = new UserSeeder();
+  const seeder = new UserSeeder();
+  const args = process.argv.slice(2);
+  const hasTruncate = args.includes('-c');
 
+  try {
     await appDataSource.initialize();
-    await seeder.run();
+
+    if (hasTruncate) {
+      await seeder.truncate();
+    } else {
+      await seeder.run();
+    }
+
     await appDataSource.destroy();
     process.exit(0);
   } catch (error) {
-    throw new Error(`Error seeding users: ${error.message}`);
+    throw new Error(
+      `Error ${hasTruncate ? 'truncate' : 'create'} users: ${error.message}`,
+    );
   } finally {
     process.exit(1);
   }

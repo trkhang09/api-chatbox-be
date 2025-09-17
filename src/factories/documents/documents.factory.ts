@@ -4,9 +4,9 @@ import { Document } from 'src/modules/documents/entities/document.entity';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
 import { FileService } from 'src/modules/files/file.service';
 import { In, Repository } from 'typeorm';
-import seededDocs from './documents.seeder.json';
+import seededDocs from './documents.factory.json';
 
-export class DocumentSeeder {
+export class DocumentFactory {
   public async run(): Promise<void> {
     const repo = appDataSource.getRepository(Document);
 
@@ -54,6 +54,16 @@ export class DocumentSeeder {
     await repo.save(documents);
   }
 
+  public async truncate(): Promise<void> {
+    await appDataSource.query(
+      `TRUNCATE TABLE "document_chunks" RESTART IDENTITY CASCADE;`,
+    );
+
+    await appDataSource.query(
+      `TRUNCATE TABLE "documents" RESTART IDENTITY CASCADE;`,
+    );
+  }
+
   private async getRandomFileInfo(docRepo: Repository<Document>): Promise<{
     filePath: string;
     size: number;
@@ -76,15 +86,25 @@ export class DocumentSeeder {
 }
 
 (async () => {
-  try {
-    const seeder = new DocumentSeeder();
+  const seeder = new DocumentFactory();
+  const args = process.argv.slice(2);
+  const hasTruncate = args.includes('-c');
 
+  try {
     await appDataSource.initialize();
-    await seeder.run();
+
+    if (hasTruncate) {
+      await seeder.truncate();
+    } else {
+      await seeder.run();
+    }
+
     await appDataSource.destroy();
     process.exit(0);
   } catch (error) {
-    throw new Error(`Error seeding documents: ${error.message}`);
+    throw new Error(
+      `Error ${hasTruncate ? 'truncate' : 'create'} documents: ${error.message}`,
+    );
   } finally {
     process.exit(1);
   }
