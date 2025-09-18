@@ -36,6 +36,7 @@ export class ChatRepository extends Repository<Chat> {
           query.type === ChatTypes.USER ? 'users.id != :userId' : '',
           { userId },
         )
+        .leftJoin('chat.messages', 'messages')
         .where((qb) => {
           qb.where(
             'EXISTS (SELECT 1 FROM chat_participants cp WHERE cp."chat_id" = chat.id AND cp."user_id" = :userId)',
@@ -46,7 +47,10 @@ export class ChatRepository extends Repository<Chat> {
         .andWhere('chat.title ILIKE :title', {
           title: `%${query.searchKeyword || ''}%`,
         })
-        .orderBy('chat.createdAt', 'DESC')
+        .addSelect('MAX(messages.created_at)', 'last_message_at')
+        .groupBy('chat.id')
+        .addGroupBy('users.id')
+        .orderBy('last_message_at', 'DESC')
         .skip((query.page - 1) * query.size)
         .take(query.size)
         .getManyAndCount();
