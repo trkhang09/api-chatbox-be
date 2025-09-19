@@ -9,17 +9,13 @@ import {
   EntityManager,
   FindOptionsWhere,
   ILike,
-  In,
   LessThan,
-  LessThanOrEqual,
-  MoreThanOrEqual,
 } from 'typeorm';
 import { Message } from './entities/messages.entity';
 import { Chat } from '../chats/entities/chat.entity';
 import { GeminiService } from '../gemini/gemini.service';
 import { AiRespondWithoutLoginDto } from './dtos/ai-respond-without-login.dto';
 import { ChatRepository } from '../chats/chat.repository';
-import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
 import { MessageRepository } from './message.repository';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { createMessageDto } from './dtos/create-message.dto';
@@ -27,8 +23,6 @@ import { EditMessageDto } from './dtos/edit-message.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
 import { GetSearchedMessagesDto } from './dtos/get-searched-messages.dto';
-import { ResponseSearchedMessagesDto } from './dtos/response-searched-messages.dto';
-
 import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
 import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
 
@@ -51,7 +45,7 @@ export class MessagesService {
   async searchMessagesInChat(
     chatId: string,
     query: GetSearchedMessagesDto,
-  ): Promise<ResponseSearchedMessagesDto> {
+  ): Promise<ResponsePaginateDto<RespondMessageDto>> {
     let foundChat: Chat;
     try {
       foundChat = await this.chatRepository.findChat(chatId);
@@ -84,17 +78,25 @@ export class MessagesService {
     }
 
     try {
-      const foundMessages = await this.messageRepository.find({
+      const [foundMessages, total] = await this.messageRepository.findAndCount({
         where,
         take: query.size,
+        skip: (query.page - 1) * query.size,
         order: { updatedAt: { direction: 'DESC' } },
       });
 
-      const responseMessages: Array<RespondMessageDto> = foundMessages.map(
-        (message) => plainToInstance(RespondMessageDto, message),
+      const data: Array<RespondMessageDto> = foundMessages.map((message) =>
+        plainToInstance(RespondMessageDto, message),
       );
 
-      const responseDto = new ResponseSearchedMessagesDto(responseMessages);
+      const responseDto = new ResponsePaginateDto<RespondMessageDto>({
+        data,
+        total,
+        size: query.size,
+        page: query.page,
+        totalInPage: data.length,
+        totalPage: Math.ceil(total / query.size),
+      });
 
       return responseDto;
     } catch (error) {
