@@ -27,10 +27,11 @@
     "migration:create": "npx typeorm migration:create",
     "seed:permissions": "ts-node -r tsconfig-paths/register src/seeds/permissions/permission.seeder.ts",
     "seed:roles": "ts-node -r tsconfig-paths/register src/seeds/roles/role.seeder.ts",
-    "seed:users": "ts-node -r tsconfig-paths/register src/seeds/users/user.seeder.ts",
-    "seed:conversations": "ts-node -r tsconfig-paths/register src/seeds/conversations/conversation.seeder.ts",
-    "seed:documents": "ts-node -r tsconfig-paths/register src/seeds/documents/document.seeder.ts",
-    "seed:all": "ts-node -r tsconfig-paths/register src/seeds/main.seeder.ts"
+    "seed:settings": "ts-node -r tsconfig-paths/register src/seeds/settings/setting.seeder.ts",
+    "seed:superadmin": "ts-node -r tsconfig-paths/register src/seeds/users/superadmin.seeder.ts",
+    "factory:users": "ts-node -r tsconfig-paths/register src/factories/users/users.factory.ts",
+    "factory:conversations": "ts-node -r tsconfig-paths/register src/factories/conversations/conversations.factory.ts",
+    "factory:documents": "ts-node -r tsconfig-paths/register src/factories/documents/documents.factory.ts"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
@@ -58,6 +59,7 @@
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "dotenv": "^17.2.2",
     "helmet": "^8.1.0",
     "nodemailer": "^7.0.5",
     "passport": "^0.7.0",

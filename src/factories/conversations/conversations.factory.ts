@@ -2,13 +2,18 @@ import { appDataSource } from 'src/data-source';
 import { User } from 'src/modules/users/entities/user.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 import { Chat } from 'src/modules/chats/entities/chat.entity';
-import seededConversations from './conversations.seeder.json';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
-import { ISeeder } from '../main.seeder';
+import seededConversations from './conversations.factory.json';
+import { In } from 'typeorm';
 
-export class ConversationSeeder implements ISeeder {
+export class ConversationFactory {
   public async run(): Promise<void> {
     const chatRepo = appDataSource.getRepository(Chat);
+
+    const foundCons = await chatRepo.find({
+      where: { title: In(seededConversations.map((c) => c.title)) },
+      relations: ['messages'],
+    });
 
     const conversations = await Promise.all(
       seededConversations.map(async (conversation) => {
@@ -16,8 +21,19 @@ export class ConversationSeeder implements ISeeder {
           ? conversation.type
           : ChatTypes.BOT;
 
+        const existCon: any & { messages: (any & { content: string })[] } =
+          foundCons.find((c) => c.title === conversation.title) ?? {
+            messages: [],
+          };
+
+        conversation.messages = conversation.messages.filter(
+          (m) => !existCon.messages.map((_m) => _m.content).includes(m.content),
+        );
+
         return {
+          ...existCon,
           ...conversation,
+          messages: [...existCon.messages, ...conversation.messages],
           type,
           users: await this.getRandomParticipants(type),
         };
@@ -25,6 +41,20 @@ export class ConversationSeeder implements ISeeder {
     );
 
     await chatRepo.save(conversations);
+  }
+
+  public async truncate(): Promise<void> {
+    await appDataSource.query(
+      `TRUNCATE TABLE "chat_participants" RESTART IDENTITY CASCADE;`,
+    );
+
+    await appDataSource.query(
+      `TRUNCATE TABLE "messages" RESTART IDENTITY CASCADE;`,
+    );
+
+    await appDataSource.query(
+      `TRUNCATE TABLE "chats" RESTART IDENTITY CASCADE;`,
+    );
   }
 
   private async getRandomParticipants(chatType: ChatTypes): Promise<User[]> {
@@ -48,7 +78,7 @@ export class ConversationSeeder implements ISeeder {
 
     if (users.length < limit) {
       throw new InternalServerErrorException(
-        'Not found enough users to seed conversations, seed users before running this seeder',
+        'Not found enough users to seed conversations, run factory users before running this factory',
       );
     }
 
@@ -57,15 +87,25 @@ export class ConversationSeeder implements ISeeder {
 }
 
 (async () => {
-  try {
-    const seeder = new ConversationSeeder();
+  const seeder = new ConversationFactory();
+  const args = process.argv.slice(2);
+  const hasTruncate = args.includes('-c');
 
+  try {
     await appDataSource.initialize();
-    await seeder.run();
+
+    if (hasTruncate) {
+      await seeder.truncate();
+    } else {
+      await seeder.run();
+    }
+
     await appDataSource.destroy();
     process.exit(0);
   } catch (error) {
-    throw new Error(`Error seeding conversations: ${error.message}`);
+    throw new Error(
+      `Error ${hasTruncate ? 'truncate' : 'create'} conversations, ${error.message}`,
+    );
   } finally {
     process.exit(1);
   }
