@@ -2,7 +2,6 @@ import { Permission } from 'src/modules/permissions/entities/permission.entity';
 import { PermissionType } from 'src/common/constants/permission-constants';
 import { appDataSource } from 'src/data-source';
 import { In } from 'typeorm';
-import { ISeeder } from '../main.seeder';
 
 const formatName = (code: string): string => {
   return code
@@ -11,7 +10,7 @@ const formatName = (code: string): string => {
     .join(' ');
 };
 
-export class PermissionSeeder implements ISeeder {
+export class PermissionSeeder {
   public async run(): Promise<void> {
     const repo = appDataSource.getRepository(Permission);
 

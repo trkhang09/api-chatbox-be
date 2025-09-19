@@ -1,0 +1,17 @@
+[
+  {
+    "key": "AllowChatBoxNoLogin",
+    "value": true,
+    "description": "Determines if users can access the chatbox without logging in."
+  },
+  {
+    "key": "AllowExternalInfo",
+    "value": false,
+    "description": "Specifies whether external information can be accessed or integrated."
+  },
+  {
+    "key": "MaxTokens",
+    "value": 4096,
+    "description": "The maximum number of tokens allowed in a single request or response."
+  }
+]
