@@ -45,6 +45,6 @@ export class User extends AbstractEntity {
   @OneToMany(() => Otp, (otp) => otp.user)
   otps: Otp[];
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', default: 0 })
   count_tokens_used: number;
 }
