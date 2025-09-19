@@ -23,10 +23,7 @@ export class GetUsersDto extends PaginateDto {
   @IsArray()
   @Transform(({ value }) => {
     if (typeof value === 'string') {
-      const arr = value
-        .split(',')
-        // .map((v) => v.trim())
-        .filter((v) => v !== '');
+      const arr = value.split(',').filter((v) => v !== '');
       return arr.length > 0 ? arr : undefined;
     }
     if (Array.isArray(value)) {
@@ -46,10 +43,7 @@ export class GetUsersDto extends PaginateDto {
   @IsOptional()
   @Transform(({ value }) => {
     if (typeof value === 'string') {
-      const arr = value
-        .split(',')
-        // .map((v) => v.trim())
-        .filter((v) => v !== '');
+      const arr = value.split(',').filter((v) => v !== '');
       return arr.length > 0 ? arr : undefined;
     }
     if (Array.isArray(value)) {
