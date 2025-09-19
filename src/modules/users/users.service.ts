@@ -362,4 +362,29 @@ export class UsersService {
     }
     return hashPassword;
   }
+
+  /**
+   * get count tokens used user
+   * @param userId
+   * @returns
+   */
+  async getCountTokensUsed(userId: string): Promise<number> {
+    const countTokenUsed = await this.usersRepository.findOneBy({
+      id: userId,
+    });
+    return countTokenUsed?.count_tokens_used || 0;
+  }
+
+  /**
+   * update count tokens used
+   * @param userId
+   * @param countTokensUsed
+   * @returns
+   */
+  async updateCountTokensdUsed(userId: string, countTokensUsed) {
+    return await this.usersRepository.save({
+      id: userId,
+      count_tokens_used: countTokensUsed,
+    });
+  }
 }

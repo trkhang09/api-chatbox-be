@@ -17,41 +17,53 @@ export class MessageRepository extends Repository<Message> {
   constructor(private dataSource: DataSource) {
     super(Message, dataSource.createEntityManager());
   }
+
   async findWithCursorPagination(
     param: GetMessagesInChatCursorPaginationDto,
   ): Promise<ResponseGetMessageInChatDto> {
     const { chatId, size, cursor, direction } = param;
     let cursorDate: Date | undefined;
+
     if (cursor) {
       cursorDate = new Date(cursor);
       if (isNaN(cursorDate.getTime())) {
         throw new BadRequestException('Invalid cursor timestamp');
       }
     }
+
     const baseQuery = (alias = 'm') =>
       this.createQueryBuilder(alias)
         .where(`${alias}.chat_id = :chatId`, { chatId })
         .withDeleted();
 
-    if (direction == DirectionConstants.BOTH) {
+    if (direction === DirectionConstants.BOTH) {
       if (!cursorDate) {
         throw new BadRequestException(
-          "cursor timestamp is require  for direction='both'.",
+          "cursor timestamp is required for direction='both'.",
         );
       }
+
+      // fetch trước cursor
       const beforeMsgs = await baseQuery('m')
         .andWhere('m.createdAt <= :cursorDate', { cursorDate })
         .orderBy('m.createdAt', 'DESC')
-        .take(size)
+        .take(size + 1)
         .getMany();
 
+      // fetch sau cursor
       const afterMsgs = await baseQuery('m')
         .andWhere('m.createdAt > :cursorDate', { cursorDate })
         .orderBy('m.createdAt', 'ASC')
-        .take(size)
+        .take(size + 1)
         .getMany();
 
-      const messages = [...afterMsgs.reverse(), ...beforeMsgs];
+      const hasMorePrev = beforeMsgs.length > size;
+      const hasMoreNext = afterMsgs.length > size;
+
+      const messages = [
+        ...afterMsgs.slice(0, size).reverse(),
+        ...beforeMsgs.slice(0, size),
+      ];
 
       return {
         messages: plainToInstance(RespondMessageDto, messages, {
@@ -64,31 +76,38 @@ export class MessageRepository extends Repository<Message> {
                 last: messages[messages.length - 1].createdAt.toISOString(),
               }
             : undefined,
+        hasMore: {
+          prev: hasMorePrev,
+          next: hasMoreNext,
+        },
       } as ResponseGetMessageInChatDto;
     }
 
-    const query = baseQuery('messages').take(size);
+    const query = baseQuery('messages').take(size + 1);
 
     if (cursorDate) {
       if (direction === DirectionConstants.NEXT) {
-        query.andWhere('messages.createdAt > :cursor', { cursor: cursor });
+        query.andWhere('messages.createdAt > :cursor', { cursor });
       } else if (direction === DirectionConstants.PREV) {
-        query.andWhere('messages.createdAt <= :cursor', { cursor: cursor });
+        query.andWhere('messages.createdAt <= :cursor', { cursor });
       }
     }
 
     if (direction === DirectionConstants.NEXT) {
       query.orderBy('messages.createdAt', 'ASC');
-    } else if (direction === DirectionConstants.PREV) {
-      query.orderBy('messages.createdAt', 'DESC');
     } else {
       query.orderBy('messages.createdAt', 'DESC');
     }
 
     try {
       let messages = await query.getMany();
+      const hasMoreFlag = messages.length > size;
 
-      if (param.direction === DirectionConstants.NEXT) {
+      if (hasMoreFlag) {
+        messages = messages.slice(0, size);
+      }
+
+      if (direction === DirectionConstants.NEXT) {
         messages = messages.reverse();
       }
 
@@ -104,7 +123,11 @@ export class MessageRepository extends Repository<Message> {
         messages: plainToInstance(RespondMessageDto, messages, {
           excludeExtraneousValues: true,
         }),
-        cursors: cursors,
+        cursors,
+        hasMore: {
+          prev: direction === DirectionConstants.PREV ? hasMoreFlag : false,
+          next: direction === DirectionConstants.NEXT ? hasMoreFlag : false,
+        },
       } as ResponseGetMessageInChatDto;
     } catch (error) {
       throw new InternalServerErrorException('fail to get messages');
