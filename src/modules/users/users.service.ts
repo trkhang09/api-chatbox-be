@@ -235,6 +235,8 @@ export class UsersService {
   async getListUsers(
     getUsersDto: GetUsersDto,
   ): Promise<ResponsePaginateDto<UserDto>> {
+    console.log(getUsersDto);
+
     const qb = this.usersRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
@@ -246,8 +248,16 @@ export class UsersService {
       });
     }
 
-    if (getUsersDto?.status !== undefined && getUsersDto?.status !== null) {
-      qb.andWhere('user.status = :status', { status: getUsersDto.status });
+    if (getUsersDto.status && getUsersDto.status.length > 0) {
+      qb.andWhere('user.status IN (:...statuses)', {
+        statuses: getUsersDto.status,
+      });
+    }
+
+    if (getUsersDto.roles && getUsersDto.roles.length > 0) {
+      qb.andWhere('role.code IN (:...roles)', {
+        roles: getUsersDto.roles,
+      });
     }
 
     qb.orderBy('user.updatedAt', 'DESC')
