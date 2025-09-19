@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
+import { AiService } from '../ai/ai.service';
 
 dotenv.config();
 
 @Injectable()
-export class OpenaiService {
+export class OpenaiService implements AiService {
   private readonly apiKey: string;
   private readonly endpoint: string =
     'https://api.openai.com/v1/chat/completions';
@@ -143,6 +144,8 @@ export class OpenaiService {
       }
     }
   }
+
+  async *generateStreamResponseNoLogin(prompt: string) {}
 
   private handleApiResponse(response: any): any {
     if (response.choices && response.choices.length > 0) {

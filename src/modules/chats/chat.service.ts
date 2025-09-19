@@ -30,6 +30,9 @@ import { isNumber } from 'class-validator';
 import { RespondLatestChatDto } from './dtos/respond-latest-chat.dto';
 import { UserDto } from '../users/dtos/user.dto';
 import { UsersRepository } from '../users/users.repository';
+import { SettingConstants } from 'src/common/constants/setting-constrants';
+import { SettingsService } from '../settings/settings.service';
+import { UsersService } from '../users/users.service';
 
 export const DashboardForConversationRequestDto =
   createDashboardRequestDto(ChatTypes);
@@ -41,6 +44,8 @@ export class ChatService {
     private readonly userRepository: UsersRepository,
     private readonly dataSource: DataSource,
     private readonly messagesService: MessagesService,
+    private readonly settingService: SettingsService,
+    private readonly userService: UsersService,
     @Inject('AI_SERVICE') private readonly aiService: AiService,
   ) {}
 
@@ -364,41 +369,62 @@ export class ChatService {
   /**
    * generate
    */
-  generate(chatGenerateAiDto: ChatGenerateAiDto): Observable<MessageEvent> {
+  generate(
+    chatGenerateAiDto: ChatGenerateAiDto,
+    user: AuthUserDto,
+  ): Observable<MessageEvent> {
     return new Observable<MessageEvent>((subscriber) => {
       (async () => {
         try {
-          // save question to db
-          let chat;
-          if (chatGenerateAiDto.chatId) {
-            chat = await this.chatRepository.findOne({
-              where: { id: chatGenerateAiDto.chatId },
+          if (user) {
+            let chat;
+            if (chatGenerateAiDto.chatId) {
+              chat = await this.chatRepository.findOne({
+                where: { id: chatGenerateAiDto.chatId },
+              });
+              if (!chat) throw new NotFoundException('Chat not found');
+            } else {
+              chat = await this.chatRepository.save({
+                title: chatGenerateAiDto.question.slice(0, 50),
+                type: ChatTypes.BOT,
+              });
+            }
+
+            let chunksString = '';
+            let isAllowExternal = (await this.settingService.getValueByKey(
+              SettingConstants.ALLOW_EXTERNAL_INFO,
+            )) as boolean;
+            const maxTokens = (await this.settingService.getValueByKey(
+              SettingConstants.MAX_TOKENS,
+            )) as number;
+            const countTokensUsed = await this.userService.getCountTokensUsed(
+              user.sub,
+            );
+            isAllowExternal = isAllowExternal && countTokensUsed < maxTokens;
+
+            for await (const chunk of this.aiService.generateStreamResponse(
+              chatGenerateAiDto.question,
+              isAllowExternal,
+              user.sub,
+            )) {
+              subscriber.next({ data: chunk } as MessageEvent);
+            }
+            await this.messagesService.createAiMessage({
+              chatId: chat.id,
+              content: chatGenerateAiDto.question,
             });
-            if (!chat) throw new NotFoundException('Chat not found');
+
+            await this.messagesService.createAiMessage({
+              chatId: chat.id,
+              content: chunksString,
+            });
           } else {
-            chat = await this.chatRepository.save({
-              title: chatGenerateAiDto.question.slice(0, 50),
-              type: ChatTypes.BOT,
-            });
+            for await (const chunk of this.aiService.generateStreamResponseNoLogin(
+              chatGenerateAiDto.question,
+            )) {
+              subscriber.next({ data: chunk } as MessageEvent);
+            }
           }
-
-          let chunksString = '';
-          for await (const chunk of this.aiService.generateStreamResponse(
-            chatGenerateAiDto.question,
-          )) {
-            chunksString += chunk;
-            subscriber.next({ data: chunk } as MessageEvent);
-          }
-
-          await this.messagesService.createAiMessage({
-            chatId: chat.id,
-            content: chatGenerateAiDto.question,
-          });
-
-          await this.messagesService.createAiMessage({
-            chatId: chat.id,
-            content: chunksString,
-          });
           subscriber.complete();
         } catch (err) {
           subscriber.error(err);
