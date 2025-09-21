@@ -20,7 +20,7 @@ export class MessageRepository extends Repository<Message> {
 
     const query = this.createQueryBuilder('messages')
       .where('messages.chat_id = :chatId', { chatId })
-      .orderBy('messages.createdAt', 'DESC')
+      .orderBy('messages.updatedAt', 'DESC')
       .limit(param.size)
       .withDeleted();
 

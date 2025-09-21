@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { DocumentChunksRepository } from '../document-chunks/document-chunks.repository';
@@ -40,7 +44,7 @@ export class GeminiService implements AiService {
     isExternal = false,
   ): string {
     const externalInfo = !isExternal
-      ? `\nNếu thông tin không có trong dữ liệu, hãy trả lời rằng bạn không có thông tin.\nTuyệt đối không bịa ra câu trả lời`
+      ? `\nNếu thông tin không có trong dữ liệu, hãy trả lời rằng bạn không có thông tin và đưa ra gợi ý liên hệ admin.\nTuyệt đối không bịa ra câu trả lời`
       : `\nNếu thông tin không có trong dữ liệu, hãy dựa vào nguồn tìm kiếm trên internet mà bạn có`;
     return `Dưới đây là một số thông tin nội bộ được lấy từ tài liệu: ${content} | . \nCâu hỏi của người dùng: ${prompt} | .\nTrả lời tự nhiên, dễ hiểu. ${externalInfo}`;
   }
@@ -202,9 +206,17 @@ export class GeminiService implements AiService {
         yield chunk.text;
       }
     } catch (error) {
-      throw new Error(
-        `Failed to get response from Gemini API: ${error.message}`,
-      );
+      let message = 'Internal Server Error';
+      try {
+        const parsedOuter = JSON.parse(error.message);
+        if (parsedOuter?.error?.message) {
+          const parsedInner = JSON.parse(parsedOuter.error.message);
+          message = parsedInner?.error?.message ?? message;
+        }
+      } catch (parseErr) {
+        message = error.message ?? message;
+      }
+      throw new InternalServerErrorException(message);
     }
   }
 
@@ -243,9 +255,17 @@ export class GeminiService implements AiService {
         yield chunk.text;
       }
     } catch (error) {
-      throw new Error(
-        `Failed to get response from Gemini API: ${error.message}`,
-      );
+      let message = 'Internal Server Error';
+      try {
+        const parsedOuter = JSON.parse(error.message);
+        if (parsedOuter?.error?.message) {
+          const parsedInner = JSON.parse(parsedOuter.error.message);
+          message = parsedInner?.error?.message ?? message;
+        }
+      } catch (parseErr) {
+        message = error.message ?? message;
+      }
+      throw new InternalServerErrorException(message);
     }
   }
 
