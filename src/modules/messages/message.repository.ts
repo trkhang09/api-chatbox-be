@@ -1,48 +1,134 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 import { Message } from './entities/messages.entity';
-import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
-import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
 import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
 import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
+import { DirectionConstants } from 'src/common/constants/direction.constants';
 
 @Injectable()
 export class MessageRepository extends Repository<Message> {
   constructor(private dataSource: DataSource) {
     super(Message, dataSource.createEntityManager());
   }
+
   async findWithCursorPagination(
     param: GetMessagesInChatCursorPaginationDto,
   ): Promise<ResponseGetMessageInChatDto> {
-    const chatId = param.chatId;
+    const { chatId, size, cursor, direction } = param;
+    let cursorDate: Date | undefined;
 
-    const query = this.createQueryBuilder('messages')
-      .where('messages.chat_id = :chatId', { chatId })
-      .orderBy('messages.updatedAt', 'DESC')
-      .limit(param.size)
-      .withDeleted();
+    if (cursor) {
+      cursorDate = new Date(cursor);
+      if (isNaN(cursorDate.getTime())) {
+        throw new BadRequestException('Invalid cursor timestamp');
+      }
+    }
 
-    if (param.cursor) {
-      const cursor = new Date(param.cursor);
-      query.andWhere('messages.createdAt <= :cursor', { cursor });
+    const baseQuery = (alias = 'm') =>
+      this.createQueryBuilder(alias)
+        .where(`${alias}.chat_id = :chatId`, { chatId })
+        .withDeleted();
+
+    if (direction === DirectionConstants.BOTH) {
+      if (!cursorDate) {
+        throw new BadRequestException(
+          "cursor timestamp is required for direction='both'.",
+        );
+      }
+
+      // fetch trước cursor
+      const beforeMsgs = await baseQuery('m')
+        .andWhere('m.createdAt <= :cursorDate', { cursorDate })
+        .orderBy('m.createdAt', 'DESC')
+        .take(size + 1)
+        .getMany();
+
+      // fetch sau cursor
+      const afterMsgs = await baseQuery('m')
+        .andWhere('m.createdAt > :cursorDate', { cursorDate })
+        .orderBy('m.createdAt', 'ASC')
+        .take(size + 1)
+        .getMany();
+
+      const hasMorePrev = beforeMsgs.length > size;
+      const hasMoreNext = afterMsgs.length > size;
+
+      const messages = [
+        ...afterMsgs.slice(0, size).reverse(),
+        ...beforeMsgs.slice(0, size),
+      ];
+
+      return {
+        messages: plainToInstance(RespondMessageDto, messages, {
+          excludeExtraneousValues: true,
+        }),
+        cursors:
+          messages.length > 0
+            ? {
+                first: messages[0].createdAt.toISOString(),
+                last: messages[messages.length - 1].createdAt.toISOString(),
+              }
+            : undefined,
+        hasMore: {
+          prev: hasMorePrev,
+          next: hasMoreNext,
+        },
+      } as ResponseGetMessageInChatDto;
+    }
+
+    const query = baseQuery('messages').take(size + 1);
+
+    if (cursorDate) {
+      if (direction === DirectionConstants.NEXT) {
+        query.andWhere('messages.createdAt > :cursor', { cursor });
+      } else if (direction === DirectionConstants.PREV) {
+        query.andWhere('messages.createdAt <= :cursor', { cursor });
+      }
+    }
+
+    if (direction === DirectionConstants.NEXT) {
+      query.orderBy('messages.createdAt', 'ASC');
+    } else {
+      query.orderBy('messages.createdAt', 'DESC');
     }
 
     try {
-      const messages = await query.getMany();
+      let messages = await query.getMany();
+      const hasMoreFlag = messages.length > size;
 
-      const nextCursor =
+      if (hasMoreFlag) {
+        messages = messages.slice(0, size);
+      }
+
+      if (direction === DirectionConstants.NEXT) {
+        messages = messages.reverse();
+      }
+
+      const cursors =
         messages.length > 0
-          ? messages[messages.length - 1].createdAt
+          ? {
+              first: messages[0].createdAt.toISOString(),
+              last: messages[messages.length - 1].createdAt.toISOString(),
+            }
           : undefined;
 
       return {
         messages: plainToInstance(RespondMessageDto, messages, {
           excludeExtraneousValues: true,
         }),
-        cursor: nextCursor,
-      };
+        cursors,
+        hasMore: {
+          prev: direction === DirectionConstants.PREV ? hasMoreFlag : false,
+          next: direction === DirectionConstants.NEXT ? hasMoreFlag : false,
+        },
+      } as ResponseGetMessageInChatDto;
     } catch (error) {
       throw new InternalServerErrorException('fail to get messages');
     }

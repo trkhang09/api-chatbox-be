@@ -4,13 +4,12 @@ import { Column, Entity, ManyToMany } from 'typeorm';
 
 @Entity('permissions')
 export class Permission extends AbstractEntity {
+  @Column({ length: 255 })
+  name: string;
 
-    @Column({ length: 255 })
-    name: string;
+  @Column({ length: 50, unique: true })
+  code: string;
 
-    @Column({ length: 50 })
-    code: string;
-
-    @ManyToMany(() => Role, (role) => role.permissions)
-    roles: Role[];
+  @ManyToMany(() => Role, (role) => role.permissions)
+  roles: Role[];
 }

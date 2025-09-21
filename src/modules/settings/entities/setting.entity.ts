@@ -4,12 +4,15 @@ import { Column, Entity } from 'typeorm';
 
 @Entity('settings')
 export class Setting extends AbstractEntity {
-  @Column({ length: 255 })
+  @Column({ length: 50, unique: true })
   key: string;
-  @Column({ length: 255 })
+
+  @Column()
   value: string;
-  @Column({ length: 255, default: TypeSettings.STRING })
+
+  @Column({ length: 50, type: 'varchar', default: TypeSettings.STRING })
   type: TypeSettings;
-  @Column({ length: 255, default: '' })
+
+  @Column({ default: '' })
   description: string;
 }

@@ -9,7 +9,6 @@ import {
   Query,
 } from '@nestjs/common';
 import { MessagesService } from './messages.service';
-import { GetMessagesInChatDto } from './dtos/get-message-in-chat.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ApiOperation, ApiSecurity } from '@nestjs/swagger';
@@ -23,7 +22,6 @@ import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { GetSearchedMessagesDto } from './dtos/get-searched-messages.dto';
 import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
-import { ResponseSearchedMessagesDto } from './dtos/response-searched-messages.dto';
 import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
 import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
 
@@ -50,7 +48,7 @@ export class MessagesController {
   @ApiOperation({
     summary: 'Get list of messages match a specific keyword',
   })
-  @ApiCommonResponseCustom(ResponseSearchedMessagesDto)
+  @ApiPaginatedResponseCustom(ResponsePaginateDto, RespondMessageDto)
   @ApiNotFoundResponseCustom()
   async searchMessage(
     @Param('chatId') chatId: string,

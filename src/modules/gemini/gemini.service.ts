@@ -191,7 +191,7 @@ export class GeminiService implements AiService {
           },
         ],
       });
-
+      
       for await (const chunk of response) {
         if (
           chunk.usageMetadata &&

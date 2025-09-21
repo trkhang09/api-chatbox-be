@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class ChangeEmbeddingColumnToVector1755830637178
+export class ChangeEmbeddingColumnToVector1758079752772
   implements MigrationInterface
 {
   public async up(queryRunner: QueryRunner): Promise<void> {

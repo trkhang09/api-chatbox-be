@@ -8,8 +8,9 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
+import { PaginateDto } from 'src/common/dtos/paginate.dto';
 
-export class GetSearchedMessagesDto {
+export class GetSearchedMessagesDto extends PaginateDto {
   @ApiPropertyOptional({
     description: 'Keyword used to search for messages (case-insensitive)',
     example: 'Hello world',
@@ -17,17 +18,6 @@ export class GetSearchedMessagesDto {
   @IsOptional()
   @IsString()
   readonly keyword?: string;
-
-  @ApiProperty({
-    description: 'The number of messages to retrieve (must be positive)',
-    example: 60,
-    minimum: 1,
-    default: 60,
-  })
-  @Type(() => Number)
-  @IsNumber()
-  @IsPositive()
-  readonly size: number = 60;
 
   @ApiPropertyOptional({
     description: 'The unique identifier of the sender (UUID format)',
