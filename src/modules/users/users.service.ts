@@ -43,7 +43,6 @@ export class UsersService {
       const payload = validateDashboardRequest(query, UserStatus);
       let where: any = {};
       where.status = payload.status;
-      console.log(payload);
 
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - payload.days);
@@ -235,8 +234,6 @@ export class UsersService {
   async getListUsers(
     getUsersDto: GetUsersDto,
   ): Promise<ResponsePaginateDto<UserDto>> {
-    console.log(getUsersDto);
-
     const qb = this.usersRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
@@ -254,9 +251,9 @@ export class UsersService {
       });
     }
 
-    if (getUsersDto.roles && getUsersDto.roles.length > 0) {
-      qb.andWhere('role.code IN (:...roles)', {
-        roles: getUsersDto.roles,
+    if (getUsersDto.role && getUsersDto.role.length > 0) {
+      qb.andWhere('role.code IN (:...role)', {
+        role: getUsersDto.role,
       });
     }
 
