@@ -33,6 +33,12 @@ import { UsersRepository } from '../users/users.repository';
 import { SettingConstants } from 'src/common/constants/setting-constrants';
 import { SettingsService } from '../settings/settings.service';
 import { UsersService } from '../users/users.service';
+import {
+  ChatboxSseEvent,
+  ChatboxSseMessageType,
+} from 'src/common/constants/chatbox-sse';
+import { SseDeltaDto, SseMessageDto } from './dtos/sse.dto';
+
 
 export const DashboardForConversationRequestDto =
   createDashboardRequestDto(ChatTypes);
@@ -366,70 +372,80 @@ export class ChatService {
     }
   }
 
-  /**
-   * generate
-   */
-  generate(
+  async *generate(
     chatGenerateAiDto: ChatGenerateAiDto,
     user: AuthUserDto,
-  ): Observable<MessageEvent> {
-    return new Observable<MessageEvent>((subscriber) => {
-      (async () => {
-        try {
-          if (user) {
-            let chat;
-            if (chatGenerateAiDto.chatId) {
-              chat = await this.chatRepository.findOne({
-                where: { id: chatGenerateAiDto.chatId },
-              });
-              if (!chat) throw new NotFoundException('Chat not found');
-            } else {
-              chat = await this.chatRepository.save({
-                title: chatGenerateAiDto.question.slice(0, 50),
-                type: ChatTypes.BOT,
-              });
-            }
+  ): AsyncGenerator<{ event: string; data: SseDeltaDto | SseMessageDto }> {
+    if (!user) {
+      for await (const chunk of this.aiService.generateStreamResponseNoLogin(
+        chatGenerateAiDto.question,
+      )) {
+        yield {
+          event: ChatboxSseEvent.DELTA,
+          data: { chatId: null, content: chunk },
+        };
+      }
+      return;
+    }
 
-            let chunksString = '';
-            let isAllowExternal = (await this.settingService.getValueByKey(
-              SettingConstants.ALLOW_EXTERNAL_INFO,
-            )) as boolean;
-            const maxTokens = (await this.settingService.getValueByKey(
-              SettingConstants.MAX_TOKENS,
-            )) as number;
-            const countTokensUsed = await this.userService.getCountTokensUsed(
-              user.sub,
-            );
-            isAllowExternal = isAllowExternal && countTokensUsed < maxTokens;
+    let chat: Chat | null;
+    if (chatGenerateAiDto.chatId) {
+      chat = await this.chatRepository.findOne({
+        where: { id: chatGenerateAiDto.chatId },
+      });
+      if (!chat) throw new NotFoundException('Chat not found');
+    } else {
+      chat = await this.chatRepository.save({
+        title: chatGenerateAiDto.question.slice(0, 50),
+        type: ChatTypes.BOT,
+        createdByUserId: user.sub,
+        users: [{ id: user.sub }],
+      });
 
-            for await (const chunk of this.aiService.generateStreamResponse(
-              chatGenerateAiDto.question,
-              isAllowExternal,
-              user.sub,
-            )) {
-              subscriber.next({ data: chunk } as MessageEvent);
-            }
-            await this.messagesService.createAiMessage({
-              chatId: chat.id,
-              content: chatGenerateAiDto.question,
-            });
+      yield {
+        event: ChatboxSseEvent.MESSAGE,
+        data: { chatId: chat.id, type: ChatboxSseMessageType.CHAT_CREATED },
+      };
+    }
 
-            await this.messagesService.createAiMessage({
-              chatId: chat.id,
-              content: chunksString,
-            });
-          } else {
-            for await (const chunk of this.aiService.generateStreamResponseNoLogin(
-              chatGenerateAiDto.question,
-            )) {
-              subscriber.next({ data: chunk } as MessageEvent);
-            }
-          }
-          subscriber.complete();
-        } catch (err) {
-          subscriber.error(err);
-        }
-      })();
+    let chunksString = '';
+    let isAllowExternal = (await this.settingService.getValueByKey(
+      SettingConstants.ALLOW_EXTERNAL_INFO,
+    )) as boolean;
+    const maxTokens = (await this.settingService.getValueByKey(
+      SettingConstants.MAX_TOKENS,
+    )) as number;
+    const countTokensUsed = await this.userService.getCountTokensUsed(user.sub);
+    isAllowExternal = isAllowExternal && countTokensUsed < maxTokens;
+
+    for await (const chunk of this.aiService.generateStreamResponse(
+      chatGenerateAiDto.question,
+      isAllowExternal,
+      user.sub,
+    )) {
+      chunksString += chunk;
+      yield {
+        event: ChatboxSseEvent.DELTA,
+        data: { chatId: chat.id, content: chunk },
+      };
+    }
+
+    yield {
+      event: ChatboxSseEvent.MESSAGE,
+      data: { chatId: chat.id, type: ChatboxSseMessageType.COMPLETE },
+    };
+
+    await this.messagesService.createAiMessage(
+      {
+        chatId: chat.id,
+        content: chatGenerateAiDto.question,
+      },
+      user.sub,
+    );
+
+    await this.messagesService.createAiMessage({
+      chatId: chat.id,
+      content: chunksString,
     });
   }
 

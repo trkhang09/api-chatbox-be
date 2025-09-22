@@ -7,8 +7,7 @@ import {
   Post,
   Put,
   Query,
-  Sse,
-  UseGuards,
+  Res,
 } from '@nestjs/common';
 import {
   ChatService,
@@ -17,7 +16,13 @@ import {
 import { GetBatchedChatDto } from './dtos/get-batched-chat.dto';
 import { CreateNewChatDto } from './dtos/create-new-chat.dto';
 import { ChangeChatTitleDto } from './dtos/change-chat-title.dto';
-import { ApiOperation, ApiQuery, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ApiPaginatedResponseCustom } from 'src/common/decorators/api-paginated-response.decorator';
 import { RespondChatDto } from './dtos/respond-chat.dto';
@@ -29,7 +34,6 @@ import { RespondChangedChatTitleDto } from './dtos/respond-changed-chat-title.dt
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
 import { Observable } from 'rxjs';
-import { Public } from '../auth/public.decorator';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
@@ -42,6 +46,8 @@ import { Setting } from 'src/common/decorators/setting.decorator';
 import { SettingConstants } from 'src/common/constants/setting-constrants';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
+import type { Response, Request } from 'express';
+import { SseDeltaDto, SseMessageDto } from './dtos/sse.dto';
 
 @ApiTags('Conversation History')
 @ApiSecurity('bare-token')
@@ -182,7 +188,6 @@ export class ChatController {
       throw error;
     }
   }
-
   /**
    * generate response stream
    */
@@ -190,13 +195,60 @@ export class ChatController {
     summary: 'chats generate answer with ai',
   })
   @Setting(SettingConstants.ALLOW_CHATBOX_NO_LOGIN)
-  @ApiOkResponseCustom(Observable<MessageEvent>, true)
-  @Sse('conversation')
-  generate(
-    @Query() chatGenerateAiDto: ChatGenerateAiDto,
+  @ApiOkResponse({
+    description: 'SSE stream established',
+    content: {
+      'text/event-stream': {
+        schema: {
+          oneOf: [
+            { $ref: '#/components/schemas/SseDeltaDto' },
+            { $ref: '#/components/schemas/SseMessageDto' },
+          ],
+        },
+        examples: {
+          delta: {
+            summary: 'Delta example',
+            value: {
+              chatId: 'e7b8e8c3-7c0d-4d5a-9c6a-2fbb5c5f2a77',
+              content: 'Hello, ',
+            },
+          },
+          message: {
+            summary: 'Message example',
+            value: {
+              chatId: 'e7b8e8c3-7c0d-4d5a-9c6a-2fbb5c5f2a77',
+              type: 'complete',
+            },
+          },
+        },
+      },
+    },
+  })
+  @Post('conversation')
+  async generateConversation(
+    @Body() dto: ChatGenerateAiDto,
     @AuthUser() user: AuthUserDto,
-  ): Observable<MessageEvent> {
-    return this.chatService.generate(chatGenerateAiDto, user);
+    @Res() res: Response,
+  ) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('charset', 'utf-8');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    try {
+      for await (const item of this.chatService.generate(dto, user)) {
+        res.write(`event: ${item.event}\n`);
+        res.write(`data: ${JSON.stringify(item.data)}\n\n`);
+      }
+
+      res.write(`event: done\ndata: [DONE]\n\n`);
+      res.end();
+    } catch (err) {
+      res.write(
+        `event: error\ndata: ${JSON.stringify({ message: err.message })}\n\n`,
+      );
+      res.end();
+    }
   }
 
   @Get('/:id')

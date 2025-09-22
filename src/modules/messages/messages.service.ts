@@ -106,13 +106,17 @@ export class MessagesService {
     }
   }
 
-  async createAiMessage(query: createMessageDto): Promise<Message> {
+  async createAiMessage(
+    query: createMessageDto,
+    createdByUserId?: string,
+  ): Promise<Message> {
     try {
       return await this.messageRepository.save({
         content: query.content,
         chat: {
           id: query.chatId,
         },
+        createdByUserId,
       });
     } catch (error) {
       console.error(error);
