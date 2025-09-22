@@ -1,10 +1,8 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  Res,
 } from '@nestjs/common';
 import { SettingRepository } from './setting.repository';
 import { GetSettingsDto } from './dtos/get-settings.dto';
@@ -12,10 +10,10 @@ import { mapObject } from 'src/common/utils/map-object';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Setting } from './entities/setting.entity';
 import { ILike } from 'typeorm';
-import { TypeSettings } from 'src/common/enums/type-settings.enum';
 import { ResponseSettingsDto } from './dtos/response-settings.dto';
 import { UpdateSettingDto } from './dtos/update-setting.dto';
 import { ResponseSettingDto } from './dtos/response-setting.dto';
+import { castValue } from 'src/common/utils/cast-value';
 
 @Injectable()
 export class SettingsService {
@@ -48,8 +46,12 @@ export class SettingsService {
       take: getSettingsDto.size,
     });
 
+    const data = settings.map((setting) =>
+      mapObject(setting, new ResponseSettingDto()),
+    );
+
     return {
-      data: settings,
+      data,
       size: getSettingsDto.size,
       page: getSettingsDto.page,
       total: total,
@@ -63,21 +65,13 @@ export class SettingsService {
    * @param key
    * @returns
    */
-  async getValueByKey(key: string): Promise<string | boolean | number> {
+  async getValueByKey(key: string): Promise<string | number | boolean> {
     const setting = await this.settingRepository.findOneBy({ key });
     if (!setting) {
       throw new NotFoundException(`Setting with key ${key} not found`);
     }
 
-    switch (setting.type) {
-      case TypeSettings.BOOLEAN:
-        return setting.value === 'true' || setting.value === '1';
-      case TypeSettings.NUMBER:
-        return Number(setting.value);
-      case TypeSettings.STRING:
-      default:
-        return setting.value;
-    }
+    return castValue(setting.value);
   }
 
   /**
@@ -99,29 +93,21 @@ export class SettingsService {
     }
 
     if (
-      updateSettingDto.description &&
+      updateSettingDto.description !== undefined &&
       updateSettingDto.description !== settingFound.description
     ) {
       settingFound.description = updateSettingDto.description;
     }
 
-    if (
-      updateSettingDto.value !== settingFound.value ||
-      updateSettingDto.type !== settingFound.type
-    ) {
+    if (updateSettingDto.value !== settingFound.value) {
       if (
-        updateSettingDto.type === TypeSettings.BOOLEAN &&
-        !['true', 'false'].includes(updateSettingDto.value)
-      ) {
-        throw new BadRequestException('value invalid with type');
-      } else if (
-        updateSettingDto.type === TypeSettings.NUMBER &&
-        isNaN(Number(updateSettingDto.value))
+        settingFound.type !== 'string' &&
+        settingFound.type !== typeof castValue(updateSettingDto.value)
       ) {
         throw new BadRequestException('value invalid with type');
       }
+
       settingFound.value = updateSettingDto.value;
-      settingFound.type = updateSettingDto.type;
     }
 
     const updatedSetting = await this.settingRepository.save(settingFound);
