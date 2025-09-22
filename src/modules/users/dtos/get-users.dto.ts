@@ -54,5 +54,5 @@ export class GetUsersDto extends PaginateDto {
     }
     return undefined;
   })
-  roles?: string[];
+  role?: string[];
 }
