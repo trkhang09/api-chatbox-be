@@ -2,27 +2,40 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ResponseSettingDto {
   @ApiProperty({
-    description: 'id setting',
+    description: 'ID of the setting',
+    example: 'a1b2c3d4-e5f6-7890-abcd-1234567890ef',
   })
   readonly id: string;
 
   @ApiProperty({
-    description: 'key setting',
+    description: 'Key of the setting',
+    example: 'maxTokens',
   })
   readonly key: string;
 
   @ApiProperty({
-    description: 'value setting',
+    description: 'Value of the setting',
+    example: '512',
   })
   readonly value: string;
 
   @ApiProperty({
-    description: 'type setting',
+    description: 'Type of the setting',
+    example: 'number',
   })
   readonly type: string;
 
   @ApiProperty({
-    description: 'description setting',
+    description: 'Description of the setting',
+    example: 'Maximum number of tokens allowed per request',
   })
   readonly description: string;
+
+  @ApiProperty({
+    description: 'Last updated timestamp',
+    type: String,
+    format: 'date-time',
+    example: '2025-09-18T12:34:56.000Z',
+  })
+  readonly updatedAt: Date;
 }

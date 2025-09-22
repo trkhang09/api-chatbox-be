@@ -12,15 +12,6 @@ export class UpdateSettingDto {
   value: string;
 
   @ApiProperty({
-    example: TypeSettings.STRING,
-    description: 'The type of the setting',
-    enum: TypeSettings,
-  })
-  @IsNotEmpty()
-  @IsIn(Object.values(TypeSettings), { message: 'type invalid' })
-  type: TypeSettings;
-
-  @ApiProperty({
     example: 'The site name',
     description: 'The description of the setting',
   })
