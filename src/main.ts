@@ -50,7 +50,17 @@ async function bootstrap() {
   // CORS
   app.enableCors({
     credentials: true,
-    origin: String(configService.get('CORS_ORIGIN')),
+    origin: (origin, callback) => {
+      const allowedOrigins = String(configService.get('CORS_ORIGIN'))
+        .split(',')
+        .map((o) => o.trim());
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'), false);
+      }
+    },
   });
 
   // Validation
