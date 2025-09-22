@@ -26,35 +26,45 @@ export class ChatRepository extends Repository<Chat> {
     userId: string,
     query: GetBatchedChatDto,
   ): Promise<ResponsePaginateDto<RespondChatDto>> {
+    const { page, size, type, searchKeyword } = query;
     let conversations: Chat[];
     let total: number;
     try {
-      [conversations, total] = await this.createQueryBuilder('chat')
+      const qb = this.createQueryBuilder('chat')
         .leftJoinAndSelect(
           'chat.users',
           'users',
-          query.type === ChatTypes.USER ? 'users.id != :userId' : '',
+          type === ChatTypes.USER ? 'users.id != :userId' : '',
           { userId },
         )
         .leftJoin('chat.messages', 'messages')
-        .where((qb) => {
-          qb.where(
-            'EXISTS (SELECT 1 FROM chat_participants cp WHERE cp."chat_id" = chat.id AND cp."user_id" = :userId)',
+        .where((subQb) => {
+          subQb.where(
+            'EXISTS (SELECT 1 FROM chat_participants cp where cp."chat_id" = chat.id AND cp."user_id" = :userId)',
             { userId },
           );
         })
-        .andWhere('chat.type = :type', { type: query.type })
-        .andWhere('chat.title ILIKE :title', {
-          title: `%${query.searchKeyword || ''}%`,
-        })
+        .andWhere('chat.type = :type', { type })
+        .andWhere('chat.deleted_at IS NULL');
+
+      if (searchKeyword) {
+        const keyword = `%${searchKeyword}%`;
+        if (type === ChatTypes.USER) {
+          qb.andWhere('users.fullname ILIKE :keyword', { keyword });
+        } else {
+          qb.andWhere('chat.title ILIKE :keyword', { keyword });
+        }
+      }
+      [conversations, total] = await qb
         .addSelect('MAX(messages.created_at)', 'last_message_at')
         .groupBy('chat.id')
         .addGroupBy('users.id')
         .orderBy('last_message_at', 'DESC')
-        .skip((query.page - 1) * query.size)
-        .take(query.size)
+        .skip((page - 1) * size)
+        .take(size)
         .getManyAndCount();
     } catch (error) {
+      console.log(error);
       throw new InternalServerErrorException('can not get conversations');
     }
 
