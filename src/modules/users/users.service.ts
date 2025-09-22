@@ -108,9 +108,7 @@ export class UsersService {
         { excludeExtraneousValues: true },
       );
     } catch (error) {
-      throw new InternalServerErrorException(
-        `Cannot create a new user with email = \`${createUserDto.email}\`, ${error.message}`,
-      );
+      throw new InternalServerErrorException(`${error.message}`);
     }
   }
 
