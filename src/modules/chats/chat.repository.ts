@@ -64,7 +64,6 @@ export class ChatRepository extends Repository<Chat> {
         .take(size)
         .getManyAndCount();
     } catch (error) {
-      console.log(error);
       throw new InternalServerErrorException('can not get conversations');
     }
 
@@ -138,5 +137,73 @@ export class ChatRepository extends Repository<Chat> {
     } catch (error) {
       throw new InternalServerErrorException(`can not get chat`);
     }
+  }
+
+  async findUnansweredChat(query: GetBatchedChatDto, userId: string) {
+    const { page, size, searchKeyword } = query;
+    let conversations: Chat[];
+    let total: number;
+    try {
+      const qb = this.createQueryBuilder('chat')
+        .leftJoinAndSelect('chat.users', 'users')
+        .leftJoin('chat.messages', 'messages')
+        .where('chat.type = :type', { type: ChatTypes.USER })
+        .andWhere('chat.deleted_at IS NULL')
+        .andWhere(
+          `NOT EXISTS (
+          SELECT 1
+          FROM chat_participants cp
+          WHERE cp.chat_id = chat.id
+          AND cp.user_id = :userId
+        )`,
+          { userId },
+        ).andWhere(`(
+          SELECT COUNT(*) 
+          FROM chat_participants cp2 
+          WHERE cp2.chat_id = chat.id
+        ) = 1`);
+
+      if (searchKeyword) {
+        const keyword = `%${searchKeyword}%`;
+        qb.andWhere('users.fullname ILIKE :keyword', { keyword });
+      }
+
+      [conversations, total] = await qb
+        .addSelect('MAX(messages.created_at)', 'last_message_at')
+        .groupBy('chat.id')
+        .addGroupBy('users.id')
+        .orderBy('last_message_at', 'DESC')
+        .skip((page - 1) * size)
+        .take(size)
+        .getManyAndCount();
+    } catch (error) {
+      throw new InternalServerErrorException('can not get conversations');
+    }
+    const partialConversations: RespondChatDto[] = await Promise.all(
+      conversations.map(async (conversation) => {
+        const lastMessage =
+          await this.messageRepository.findLatestMessageInChat(conversation.id);
+        return {
+          id: conversation.id,
+          title: conversation.title,
+          type: conversation.type,
+          createdAt: conversation.createdAt,
+          createdByUserId: conversation.createdByUserId,
+          lastMessage: lastMessage,
+          receiver: plainToInstance(UserDto, conversation.users[0], {
+            excludeExtraneousValues: true,
+          }),
+        };
+      }),
+    );
+
+    return new ResponsePaginateDto({
+      data: partialConversations,
+      page: query.page,
+      size: query.size,
+      total: total,
+      totalInPage: partialConversations.length,
+      totalPage: Math.ceil(total / query.size),
+    });
   }
 }

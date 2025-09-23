@@ -14,7 +14,7 @@ import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ApiOperation, ApiSecurity } from '@nestjs/swagger';
 import { ApiPaginatedResponseCustom } from 'src/common/decorators/api-paginated-response.decorator';
 import { ApiBadRequestResponseCustom } from 'src/common/decorators/api-bad-request-response.decorator';
-import { createMessageDto } from './dtos/create-message.dto';
+import { CreateMessageDto } from './dtos/create-message.dto';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { ApiOkResponseCustom } from 'src/common/decorators/api-ok-response.decorator';
@@ -65,7 +65,7 @@ export class MessagesController {
   @ApiBadRequestResponseCustom()
   @ApiInternalServerErrorResponseCustom()
   async createMessage(
-    @Body() body: createMessageDto,
+    @Body() body: CreateMessageDto,
     @AuthUser('sub') creatorId: string,
   ) {
     return this.messagesService.createMessage(body, creatorId);

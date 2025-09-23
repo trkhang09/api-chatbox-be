@@ -38,6 +38,7 @@ import {
   ChatboxSseMessageType,
 } from 'src/common/constants/chatbox-sse';
 import { SseDeltaDto, SseMessageDto } from './dtos/sse.dto';
+import { CreateMessageDto } from '../messages/dtos/create-message.dto';
 
 export const DashboardForConversationRequestDto =
   createDashboardRequestDto(ChatTypes);
@@ -450,5 +451,72 @@ export class ChatService {
 
   async findChatById(id: string, userId: string): Promise<RespondChatDto> {
     return await this.chatRepository.findChatWithUser(id, userId);
+  }
+
+  async createNewConversationWithAdmin(message: string, userId: string) {
+    const user = await this.userRepository.findOneBy({ id: userId });
+    if (!user) {
+      throw new NotFoundException(`User with id: ${userId} not found`);
+    }
+    const tempMessage = await this.messagesService.createTempMessage(
+      message,
+      user.id,
+    );
+    try {
+      const newChat = await this.chatRepository.save({
+        createdByUserId: user.id,
+        title: message,
+        users: [user],
+        messages: [tempMessage.message],
+        type: ChatTypes.USER,
+      });
+      return plainToInstance(RespondChatDto, newChat, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        ' fail to create new Conversations',
+      );
+    }
+  }
+
+  async adminJoinConversation(query: CreateMessageDto, userId: string) {
+    const { chatId } = query;
+    const user = await this.userRepository.findOneBy({ id: userId });
+    const chat = await this.chatRepository
+      .createQueryBuilder('chat')
+      .leftJoinAndSelect('chat.users', 'users')
+      .where('chat.id = :chatId', { chatId })
+      .getOne();
+
+    if (!chat) {
+      throw new NotFoundException(
+        `the conversation with id: ${chatId} not found`,
+      );
+    }
+    if (!user) {
+      throw new NotFoundException(`user with id: ${userId} not found`);
+    }
+    const participants: User[] = [];
+    participants.push(user);
+    try {
+      if (chat.users.length >= 2) {
+        throw new BadRequestException(`the conversation already exists admin`);
+      }
+      participants.push(chat.users[0]);
+
+      chat.users = participants;
+      await this.messagesService.createMessage(query, user.id);
+      return await this.chatRepository.save(chat);
+    } catch (error) {
+      throw new InternalServerErrorException('fail to save ');
+    }
+  }
+
+  async getUnansweredConversation(
+    query: GetBatchedChatDto,
+    userId: string,
+  ): Promise<ResponsePaginateDto<RespondChatDto>> {
+    return await this.chatRepository.findUnansweredChat(query, userId);
   }
 }
