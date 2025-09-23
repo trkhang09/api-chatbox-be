@@ -11,7 +11,7 @@ import { SocketService } from './socket.service';
 import { HttpStatus, UseFilters } from '@nestjs/common';
 import { WsExceptionFilter } from 'src/common/filters';
 import { MessagesService } from '../messages/messages.service';
-import { createMessageDto } from '../messages/dtos/create-message.dto';
+import { CreateMessageDto } from '../messages/dtos/create-message.dto';
 import { UsersRepository } from '../users/users.repository';
 import { EditMessageDto } from '../messages/dtos/edit-message.dto';
 import { RespondMessageDto } from '../messages/dtos/respond-message.dto';
@@ -121,7 +121,7 @@ export class SocketGateway implements OnGatewayConnection {
 
   @SubscribeMessage(SocketType.SEND_MESSAGE)
   async handleSendMessage(
-    @MessageBody() body: { query: createMessageDto; creatorId: string },
+    @MessageBody() body: { query: CreateMessageDto; creatorId: string },
     @ConnectedSocket() client: Socket,
   ) {
     let readMessage: RespondMessageDto = new RespondMessageDto({});
