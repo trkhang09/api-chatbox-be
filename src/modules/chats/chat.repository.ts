@@ -139,7 +139,7 @@ export class ChatRepository extends Repository<Chat> {
     }
   }
 
-  async findUnansweredChat(query: GetBatchedChatDto, userId: string) {
+  async findUnansweredChatlist(query: GetBatchedChatDto, userId: string) {
     const { page, size, searchKeyword } = query;
     let conversations: Chat[];
     let total: number;
@@ -205,5 +205,37 @@ export class ChatRepository extends Repository<Chat> {
       totalInPage: partialConversations.length,
       totalPage: Math.ceil(total / query.size),
     });
+  }
+
+  async findUserUnansweredChat(userId: string): Promise<Chat | null> {
+    try {
+      const conversation = await this.createQueryBuilder('chat')
+        .leftJoinAndSelect('chat.users', 'users')
+        .leftJoin('chat.messages', 'messages')
+        .where('chat.type = :type', { type: ChatTypes.USER })
+        .andWhere('chat.deleted_at IS NULL')
+        .andWhere(
+          `EXISTS (
+          SELECT 1 FROM chat_participants cp
+          WHERE cp.chat_id = chat.id AND cp.user_id = :userId
+        )`,
+          { userId },
+        )
+        .andWhere(
+          `(
+          SELECT COUNT(*) FROM chat_participants cp2 WHERE cp2.chat_id = chat.id
+        ) = 1`,
+        )
+        .orderBy('messages.created_at', 'DESC')
+        .limit(1)
+        .getOne();
+      return conversation;
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException(
+        'fail to get conversations',
+        error.message,
+      );
+    }
   }
 }

@@ -232,4 +232,22 @@ export class MessagesService {
   ): Promise<ResponseGetMessageInChatDto> {
     return await this.messageRepository.findWithCursorPagination(param);
   }
+
+  async getMessageByChatId(chatId: string): Promise<Message[]> {
+    try {
+      const messages = await this.messageRepository.find({
+        where: {
+          chat: {
+            id: chatId,
+          },
+        },
+      });
+      return messages;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'fail to get Message in this chat',
+        error.message,
+      );
+    }
+  }
 }

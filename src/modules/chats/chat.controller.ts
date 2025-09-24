@@ -260,21 +260,6 @@ export class ChatController {
     return this.chatService.findChatById(id, userId);
   }
 
-  @Get('/admin/list')
-  @ApiOperation({
-    summary:
-      'Get one batch of conversations of this user in the current page with a specific size',
-  })
-  @ApiPaginatedResponseCustom(ResponsePaginateDto, RespondChatDto)
-  @ApiBadRequestResponseCustom()
-  @ApiInternalServerErrorResponseCustom()
-  async getUnansweredConversation(
-    @Query() query: GetBatchedChatDto,
-    @AuthUser('sub') userId: string,
-  ) {
-    return this.chatService.getUnansweredConversation(query, userId);
-  }
-
   @Post('/admin')
   @ApiOperation({
     summary: 'create new convesation with admin',
@@ -296,10 +281,25 @@ export class ChatController {
   @ApiOperation({
     summary: 'admin join conversation to reply user',
   })
-  async adminJoinConversation(
+  async joinConversationByAdmin(
     @Body() body: CreateMessageDto,
     @AuthUser('sub') userId: string,
   ) {
-    return this.chatService.adminJoinConversation(body, userId);
+    return this.chatService.joinConversationByAdmin(body, userId);
+  }
+
+  @Get('/admin/list')
+  @ApiOperation({
+    summary:
+      'Get one batch of conversations of this user in the current page with a specific size',
+  })
+  @ApiPaginatedResponseCustom(ResponsePaginateDto, RespondChatDto)
+  @ApiBadRequestResponseCustom()
+  @ApiInternalServerErrorResponseCustom()
+  async getUnansweredConversation(
+    @Query() query: GetBatchedChatDto,
+    @AuthUser('sub') userId: string,
+  ) {
+    return this.chatService.getUnansweredConversations(query, userId);
   }
 }
