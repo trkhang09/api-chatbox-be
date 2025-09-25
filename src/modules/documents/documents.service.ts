@@ -42,7 +42,11 @@ export class DocumentsService {
    */
   async getQuantitiesLatestDocuments(): Promise<ResponseQuantityDocumentDto[]> {
     try {
+      const fromDate = new Date();
+      fromDate.setFullYear(fromDate.getFullYear() - 1);
+
       const docs = await this.docRepo.find({
+        where: { createdAt: MoreThanOrEqual(fromDate) },
         select: { createdAt: true, status: true },
       });
 
@@ -74,6 +78,12 @@ export class DocumentsService {
             break;
         }
       });
+
+      for (let i = 0; i < response.length - 1; i++) {
+        response[i + 1].pending += response[i].pending;
+        response[i + 1].progressing += response[i].progressing;
+        response[i + 1].done += response[i].done;
+      }
 
       return response;
     } catch (error) {
