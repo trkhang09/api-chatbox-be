@@ -2,10 +2,11 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, In, MoreThanOrEqual, Repository } from 'typeorm';
+import { ILike, In, Not, Repository } from 'typeorm';
 import { Permission } from '../permissions/entities/permission.entity';
 import { Role } from './entities/role.entity';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
@@ -16,11 +17,7 @@ import { plainToInstance } from 'class-transformer';
 import { RoleFilterResponseDto } from './dto/role-filter-response.dto';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 import { RoleType } from 'src/common/constants/role-constants';
-import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
-import { RoleStatus } from 'src/common/enums/role-status.enum';
-import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
-
-export const DashboardForRoleRequestDto = createDashboardRequestDto(RoleStatus);
+import { ResponseUsersCountInRole } from '../users/dtos/response-users-count-in-role';
 
 @Injectable()
 export class RolesService {
@@ -31,24 +28,52 @@ export class RolesService {
   ) {}
 
   /**
-   * get quantity with a specific status/type within a number of days
+   * get quantity of users in each role
+   * @param size
+   * @returns  Promise<ResponseUsersCountInRole[]>
+   * @throws InternalServerErrorException
    */
-  async getQuantity(
-    query: InstanceType<typeof DashboardForRoleRequestDto>,
-  ): Promise<number> {
+  async getUsersCountEachRoles(size: number): Promise<any[]> {
     try {
-      const payload = validateDashboardRequest(query, RoleStatus);
-      let where: any = {};
-      where.status = payload.status;
+      const roles = await this.roleRepo.find({
+        relations: ['users'],
+        where: { code: Not(RoleType.SUPER_ADMIN) },
+        select: {
+          id: true,
+          name: true,
+          users: {
+            id: true,
+            role: false,
+          },
+        },
+      });
 
-      const fromDate = new Date();
-      fromDate.setDate(fromDate.getDate() - payload.days);
-      where.createdAt = MoreThanOrEqual(fromDate);
+      let listUsersByRoles = roles
+        .sort((prev, next) => next.users.length - prev.users.length)
+        .map((role) => new ResponseUsersCountInRole(role));
 
-      const quantity = await this.roleRepo.count({ where });
-      return quantity;
+      const others = listUsersByRoles.slice(size, -1);
+      listUsersByRoles = listUsersByRoles.slice(0, size);
+
+      if (others.length > 0) {
+        let otherCount = 0;
+        others.forEach((role) => {
+          otherCount += role.usersCount;
+        });
+
+        const other = new ResponseUsersCountInRole(
+          { name: 'Others' } as Role,
+          otherCount,
+        );
+
+        listUsersByRoles.push(other);
+      }
+
+      return listUsersByRoles;
     } catch (error) {
-      throw new Error('Failed to get quantity: ' + error.message);
+      throw new InternalServerErrorException(
+        'Cannot get quantity of users in each role',
+      );
     }
   }
 
