@@ -18,7 +18,7 @@ import { AiRespondWithoutLoginDto } from './dtos/ai-respond-without-login.dto';
 import { ChatRepository } from '../chats/chat.repository';
 import { MessageRepository } from './message.repository';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
-import { createMessageDto } from './dtos/create-message.dto';
+import { CreateMessageDto } from './dtos/create-message.dto';
 import { EditMessageDto } from './dtos/edit-message.dto';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
@@ -107,7 +107,7 @@ export class MessagesService {
   }
 
   async createAiMessage(
-    query: createMessageDto,
+    query: CreateMessageDto,
     createdByUserId?: string,
   ): Promise<Message> {
     try {
@@ -155,7 +155,7 @@ export class MessagesService {
   }
 
   async createMessage(
-    query: createMessageDto,
+    query: CreateMessageDto,
     creatorId: string,
   ): Promise<RespondMessageDto> {
     const chat = await this.chatRepository.findChat(query.chatId);
@@ -231,5 +231,23 @@ export class MessagesService {
     param: GetMessagesInChatCursorPaginationDto,
   ): Promise<ResponseGetMessageInChatDto> {
     return await this.messageRepository.findWithCursorPagination(param);
+  }
+
+  async getMessageByChatId(chatId: string): Promise<Message[]> {
+    try {
+      const messages = await this.messageRepository.find({
+        where: {
+          chat: {
+            id: chatId,
+          },
+        },
+      });
+      return messages;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'fail to get Message in this chat',
+        error.message,
+      );
+    }
   }
 }

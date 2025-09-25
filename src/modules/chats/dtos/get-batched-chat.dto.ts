@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { PaginateDto } from 'src/common/dtos/paginate.dto';
 
 export class GetBatchedChatDto extends PaginateDto {

@@ -38,7 +38,9 @@ import {
   ChatboxSseMessageType,
 } from 'src/common/constants/chatbox-sse';
 import { SseDeltaDto, SseMessageDto } from './dtos/sse.dto';
-
+import { CreateMessageDto } from '../messages/dtos/create-message.dto';
+import { RespondCreateNewChatWithAdminDto } from './dtos/respond-create-new-chat-with-admin.dto';
+import { RespondMessageDto } from '../messages/dtos/respond-message.dto';
 
 export const DashboardForConversationRequestDto =
   createDashboardRequestDto(ChatTypes);
@@ -451,5 +453,115 @@ export class ChatService {
 
   async findChatById(id: string, userId: string): Promise<RespondChatDto> {
     return await this.chatRepository.findChatWithUser(id, userId);
+  }
+
+  async createNewConversationWithAdmin(
+    message: string,
+    userId: string,
+  ): Promise<RespondCreateNewChatWithAdminDto> {
+    const unansweredChat =
+      await this.chatRepository.findUserUnansweredChat(userId);
+    const user = await this.userRepository.findOneBy({ id: userId });
+    let newChat: Chat;
+    if (!user) {
+      throw new NotFoundException(`User with id: ${userId} not found`);
+    }
+    try {
+      if (unansweredChat) {
+        const messages = await this.messagesService.getMessageByChatId(
+          unansweredChat.id,
+        );
+
+        const queryCreateMessage = {
+          chatId: unansweredChat.id,
+          content: message,
+        } as CreateMessageDto;
+        const newMessage = await this.messagesService.createMessage(
+          queryCreateMessage,
+          user.id,
+        );
+        messages.push(
+          plainToInstance(Message, newMessage, { exposeDefaultValues: true }),
+        );
+        unansweredChat.messages = messages;
+        newChat = await this.chatRepository.save(unansweredChat);
+      } else {
+        newChat = await this.chatRepository.save({
+          createdByUserId: user.id,
+          title: message,
+          users: [user],
+          messages: [
+            {
+              content: message,
+              isRead: false,
+              createdByUserId: user.id,
+            },
+          ],
+          type: ChatTypes.USER,
+        });
+      }
+
+      return {
+        id: newChat.id,
+        title: newChat.title,
+        type: newChat.type,
+        users: plainToInstance(UserDto, newChat.users, {
+          excludeExtraneousValues: true,
+        }),
+        messages: plainToInstance(RespondMessageDto, newChat.messages, {
+          excludeExtraneousValues: true,
+        }),
+        createdAt: newChat.createdAt,
+        createdByUserId: newChat.createdByUserId,
+      } as RespondCreateNewChatWithAdminDto;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        ' fail to create new Conversations',
+      );
+    }
+  }
+
+  async joinConversationByAdmin(query: CreateMessageDto, userId: string) {
+    const { chatId } = query;
+    const user = await this.userRepository.findOneBy({ id: userId });
+    const chat = await this.chatRepository
+      .createQueryBuilder('chat')
+      .leftJoinAndSelect('chat.users', 'users')
+      .where('chat.id = :chatId', { chatId })
+      .getOne();
+
+    if (!chat) {
+      throw new NotFoundException(
+        `the conversation with id: ${chatId} not found`,
+      );
+    }
+    if (!user) {
+      throw new NotFoundException(`user with id: ${userId} not found`);
+    }
+    const participants: User[] = [];
+    participants.push(user);
+    try {
+      if (chat.users.length >= 2) {
+        throw new BadRequestException(`the conversation already exists admin`);
+      }
+      participants.push(chat.users[0]);
+
+      chat.users = participants;
+      await this.messagesService.createMessage(query, user.id);
+      return await this.chatRepository.save(chat);
+    } catch (error) {
+      throw new InternalServerErrorException('fail to save ');
+    }
+  }
+
+  async getUnansweredConversations(
+    query: GetBatchedChatDto,
+    userId: string,
+  ): Promise<ResponsePaginateDto<RespondChatDto>> {
+    return await this.chatRepository.findUnansweredChatlist(query, userId);
+  }
+
+  async getUserUnansweredConversation(userId: string): Promise<Chat | null> {
+    return await this.chatRepository.findUserUnansweredChat(userId);
   }
 }

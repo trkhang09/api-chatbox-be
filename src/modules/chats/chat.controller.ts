@@ -48,6 +48,7 @@ import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
 import type { Response, Request } from 'express';
 import { SseDeltaDto, SseMessageDto } from './dtos/sse.dto';
+import { CreateMessageDto } from '../messages/dtos/create-message.dto';
 
 @ApiTags('Conversation History')
 @ApiSecurity('bare-token')
@@ -257,5 +258,48 @@ export class ChatController {
   })
   async getChatById(@Param('id') id: string, @AuthUser('sub') userId: string) {
     return this.chatService.findChatById(id, userId);
+  }
+
+  @Post('/admin')
+  @ApiOperation({
+    summary: 'create new convesation with admin',
+  })
+  async createNewConversation(
+    @Body() body: CreateNewChatDto,
+    @AuthUser('sub') userId: string,
+  ) {
+    return this.chatService.createNewConversationWithAdmin(
+      body.message,
+      userId,
+    );
+  }
+
+  @Post('/admin/join')
+  @ApiNotFoundResponseCustom()
+  @ApiInternalServerErrorResponseCustom()
+  @ApiBadRequestResponseCustom()
+  @ApiOperation({
+    summary: 'admin join conversation to reply user',
+  })
+  async joinConversationByAdmin(
+    @Body() body: CreateMessageDto,
+    @AuthUser('sub') userId: string,
+  ) {
+    return this.chatService.joinConversationByAdmin(body, userId);
+  }
+
+  @Get('/admin/list')
+  @ApiOperation({
+    summary:
+      'Get one batch of conversations of this user in the current page with a specific size',
+  })
+  @ApiPaginatedResponseCustom(ResponsePaginateDto, RespondChatDto)
+  @ApiBadRequestResponseCustom()
+  @ApiInternalServerErrorResponseCustom()
+  async getUnansweredConversation(
+    @Query() query: GetBatchedChatDto,
+    @AuthUser('sub') userId: string,
+  ) {
+    return this.chatService.getUnansweredConversations(query, userId);
   }
 }

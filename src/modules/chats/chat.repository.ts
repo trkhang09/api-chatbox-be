@@ -26,29 +26,42 @@ export class ChatRepository extends Repository<Chat> {
     userId: string,
     query: GetBatchedChatDto,
   ): Promise<ResponsePaginateDto<RespondChatDto>> {
+    const { page, size, type, searchKeyword } = query;
     let conversations: Chat[];
     let total: number;
     try {
-      [conversations, total] = await this.createQueryBuilder('chat')
+      const qb = this.createQueryBuilder('chat')
         .leftJoinAndSelect(
           'chat.users',
           'users',
-          query.type === ChatTypes.USER ? 'users.id != :userId' : '',
+          type === ChatTypes.USER ? 'users.id != :userId' : '',
           { userId },
         )
-        .where((qb) => {
-          qb.where(
-            'EXISTS (SELECT 1 FROM chat_participants cp WHERE cp."chat_id" = chat.id AND cp."user_id" = :userId)',
+        .leftJoin('chat.messages', 'messages')
+        .where((subQb) => {
+          subQb.where(
+            'EXISTS (SELECT 1 FROM chat_participants cp where cp."chat_id" = chat.id AND cp."user_id" = :userId)',
             { userId },
           );
         })
-        .andWhere('chat.type = :type', { type: query.type })
-        .andWhere('chat.title ILIKE :title', {
-          title: `%${query.searchKeyword || ''}%`,
-        })
-        .orderBy('chat.createdAt', 'DESC')
-        .skip((query.page - 1) * query.size)
-        .take(query.size)
+        .andWhere('chat.type = :type', { type })
+        .andWhere('chat.deleted_at IS NULL');
+
+      if (searchKeyword) {
+        const keyword = `%${searchKeyword}%`;
+        if (type === ChatTypes.USER) {
+          qb.andWhere('users.fullname ILIKE :keyword', { keyword });
+        } else {
+          qb.andWhere('chat.title ILIKE :keyword', { keyword });
+        }
+      }
+      [conversations, total] = await qb
+        .addSelect('MAX(messages.created_at)', 'last_message_at')
+        .groupBy('chat.id')
+        .addGroupBy('users.id')
+        .orderBy('last_message_at', 'DESC')
+        .skip((page - 1) * size)
+        .take(size)
         .getManyAndCount();
     } catch (error) {
       throw new InternalServerErrorException('can not get conversations');
@@ -123,6 +136,106 @@ export class ChatRepository extends Repository<Chat> {
       });
     } catch (error) {
       throw new InternalServerErrorException(`can not get chat`);
+    }
+  }
+
+  async findUnansweredChatlist(query: GetBatchedChatDto, userId: string) {
+    const { page, size, searchKeyword } = query;
+    let conversations: Chat[];
+    let total: number;
+    try {
+      const qb = this.createQueryBuilder('chat')
+        .leftJoinAndSelect('chat.users', 'users')
+        .leftJoin('chat.messages', 'messages')
+        .where('chat.type = :type', { type: ChatTypes.USER })
+        .andWhere('chat.deleted_at IS NULL')
+        .andWhere(
+          `NOT EXISTS (
+          SELECT 1
+          FROM chat_participants cp
+          WHERE cp.chat_id = chat.id
+          AND cp.user_id = :userId
+        )`,
+          { userId },
+        ).andWhere(`(
+          SELECT COUNT(*) 
+          FROM chat_participants cp2 
+          WHERE cp2.chat_id = chat.id
+        ) = 1`);
+
+      if (searchKeyword) {
+        const keyword = `%${searchKeyword}%`;
+        qb.andWhere('users.fullname ILIKE :keyword', { keyword });
+      }
+
+      [conversations, total] = await qb
+        .addSelect('MAX(messages.created_at)', 'last_message_at')
+        .groupBy('chat.id')
+        .addGroupBy('users.id')
+        .orderBy('last_message_at', 'DESC')
+        .skip((page - 1) * size)
+        .take(size)
+        .getManyAndCount();
+    } catch (error) {
+      throw new InternalServerErrorException('can not get conversations');
+    }
+    const partialConversations: RespondChatDto[] = await Promise.all(
+      conversations.map(async (conversation) => {
+        const lastMessage =
+          await this.messageRepository.findLatestMessageInChat(conversation.id);
+        return {
+          id: conversation.id,
+          title: conversation.title,
+          type: conversation.type,
+          createdAt: conversation.createdAt,
+          createdByUserId: conversation.createdByUserId,
+          lastMessage: lastMessage,
+          receiver: plainToInstance(UserDto, conversation.users[0], {
+            excludeExtraneousValues: true,
+          }),
+        };
+      }),
+    );
+
+    return new ResponsePaginateDto({
+      data: partialConversations,
+      page: query.page,
+      size: query.size,
+      total: total,
+      totalInPage: partialConversations.length,
+      totalPage: Math.ceil(total / query.size),
+    });
+  }
+
+  async findUserUnansweredChat(userId: string): Promise<Chat | null> {
+    try {
+      const conversation = await this.createQueryBuilder('chat')
+        .leftJoinAndSelect('chat.users', 'users')
+        .leftJoin('chat.messages', 'messages')
+        .where('chat.type = :type', { type: ChatTypes.USER })
+        .andWhere('chat.deleted_at IS NULL')
+        .andWhere(
+          `EXISTS (
+          SELECT 1 FROM chat_participants cp
+          WHERE cp.chat_id = chat.id AND cp.user_id = :userId
+        )`,
+          { userId },
+        )
+        .andWhere(
+          `(
+          SELECT COUNT(*) FROM chat_participants cp2 WHERE cp2.chat_id = chat.id
+        ) = 1`,
+        )
+        .orderBy('messages.created_at', 'DESC')
+        .limit(1)
+        .getOne();
+      return conversation;
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException(
+        'fail to get conversations',
+        error.message,
+      );
     }
   }
 }
