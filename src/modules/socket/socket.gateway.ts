@@ -268,6 +268,7 @@ export class SocketGateway implements OnGatewayConnection {
       data: message,
     });
 
+    console.log('openChat--', openedChat);
     if (receiverSockets) {
       receiverSockets.forEach((sid) => {
         if (openedChat === chatId) {
