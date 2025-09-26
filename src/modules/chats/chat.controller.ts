@@ -256,6 +256,8 @@ export class ChatController {
   @ApiOperation({
     summary: 'get conversation with users by conversation id',
   })
+  @ApiNotFoundResponseCustom()
+  @ApiInternalServerErrorResponseCustom()
   async getChatById(@Param('id') id: string, @AuthUser('sub') userId: string) {
     return this.chatService.findChatById(id, userId);
   }

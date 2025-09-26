@@ -135,7 +135,7 @@ export class ChatRepository extends Repository<Chat> {
         }),
       });
     } catch (error) {
-      throw new InternalServerErrorException(`can not get chat`);
+      throw new InternalServerErrorException(`can not get chat`, error.message);
     }
   }
 
