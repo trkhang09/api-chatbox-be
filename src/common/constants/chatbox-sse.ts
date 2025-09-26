@@ -5,4 +5,5 @@ export enum ChatboxSseEvent {
 export enum ChatboxSseMessageType {
   COMPLETE = 'message_stream_complete',
   CHAT_CREATED = 'chat_created',
+  SUMMARY = 'title_summary',
 }

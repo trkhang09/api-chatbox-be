@@ -466,11 +466,8 @@ export class ChatService {
   ): Promise<RespondCreateNewChatWithAdminDto> {
     const unansweredChat =
       await this.chatRepository.findUserUnansweredChat(userId);
-    const user = await this.userRepository.findOneBy({ id: userId });
     let newChat: Chat;
-    if (!user) {
-      throw new NotFoundException(`User with id: ${userId} not found`);
-    }
+
     try {
       if (unansweredChat) {
         const messages = await this.messagesService.getMessageByChatId(
@@ -483,7 +480,7 @@ export class ChatService {
         } as CreateMessageDto;
         const newMessage = await this.messagesService.createMessage(
           queryCreateMessage,
-          user.id,
+          userId,
         );
         messages.push(
           plainToInstance(Message, newMessage, { exposeDefaultValues: true }),
@@ -492,17 +489,26 @@ export class ChatService {
         newChat = await this.chatRepository.save(unansweredChat);
       } else {
         newChat = await this.chatRepository.save({
-          createdByUserId: user.id,
+          createdByUserId: userId,
           title: message,
-          users: [user],
-          messages: [
+          users: [
             {
-              content: message,
-              isRead: false,
-              createdByUserId: user.id,
+              id: userId,
             },
           ],
           type: ChatTypes.USER,
+        });
+
+        await this.messagesService.createMessage(
+          {
+            chatId: newChat.id,
+            content: message,
+          },
+          userId,
+        );
+        await this.messagesService.createAiMessage({
+          chatId: newChat.id,
+          content: `[Tin nhắn tự động] Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi sớm nhất có thể.`,
         });
       }
 

@@ -124,18 +124,22 @@ export class SocketGateway implements OnGatewayConnection {
     @MessageBody() body: { query: CreateMessageDto; creatorId: string },
     @ConnectedSocket() client: Socket,
   ) {
+    console.log('bbbbb----');
     let readMessage: RespondMessageDto = new RespondMessageDto({});
     const action = SocketActionType.CREATE;
     const message = await this.messageService.createMessage(
       body.query,
       body.creatorId,
     );
+    console.log('oooo-', body);
     const receiver = await this.userRepository.findReceiver(
       body.query.chatId,
       body.creatorId,
     );
+    console.log('ffff---', receiver);
 
     if (receiver) {
+      console.log('aaaa---', receiver);
       const receiverCurrentChat = this.currentChat.get(receiver.id);
 
       if (receiverCurrentChat === body.query.chatId) {
