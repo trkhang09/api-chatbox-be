@@ -15,9 +15,9 @@ import { CreateMessageDto } from '../messages/dtos/create-message.dto';
 import { UsersRepository } from '../users/users.repository';
 import { EditMessageDto } from '../messages/dtos/edit-message.dto';
 import { RespondMessageDto } from '../messages/dtos/respond-message.dto';
-import { UserDto } from '../users/dtos/user.dto';
 import { SocketType } from 'src/common/constants/socket.constaints';
 import { ResponseSocketDto } from './dtos/response-socket.dto';
+import { SocketActionType } from 'src/common/constants/socket-action.constaints';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -125,6 +125,7 @@ export class SocketGateway implements OnGatewayConnection {
     @ConnectedSocket() client: Socket,
   ) {
     let readMessage: RespondMessageDto = new RespondMessageDto({});
+    const action = SocketActionType.CREATE;
     const message = await this.messageService.createMessage(
       body.query,
       body.creatorId,
@@ -145,11 +146,12 @@ export class SocketGateway implements OnGatewayConnection {
           readMessage = readMessages[0];
         }
       }
-      this.notifyReceiver(receiver.id, body.query.chatId, message);
+      this.notifyReceiver(receiver.id, body.query.chatId, message, action);
       this.notifyReceiver(
         body.creatorId,
         body.query.chatId,
         receiverCurrentChat === body.query.chatId ? readMessage : message,
+        action,
       );
     }
     client.emit('error', {
@@ -172,9 +174,10 @@ export class SocketGateway implements OnGatewayConnection {
       body.chatId,
       body.creatorId,
     );
+    const action = SocketActionType.EDIT;
     if (receiver) {
-      this.notifyReceiver(receiver.id, body.chatId, message);
-      this.notifyReceiver(body.creatorId, body.chatId, message);
+      this.notifyReceiver(receiver.id, body.chatId, message, action);
+      this.notifyReceiver(body.creatorId, body.chatId, message, action);
     }
   }
 
@@ -255,6 +258,7 @@ export class SocketGateway implements OnGatewayConnection {
     receiverId: string,
     chatId: string,
     message: RespondMessageDto,
+    action: SocketActionType,
   ) {
     const receiverSockets = this.onlineUsers.get(receiverId);
     const openedChat = this.currentChat.get(receiverId);
@@ -265,7 +269,10 @@ export class SocketGateway implements OnGatewayConnection {
     const response = new ResponseSocketDto({
       code: HttpStatus.OK,
       message: 'success',
-      data: message,
+      data: {
+        message: message,
+        action: action,
+      },
     });
 
     if (receiverSockets) {

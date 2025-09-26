@@ -32,6 +32,8 @@ import { PermissionType } from 'src/common/constants/permission-constants';
 import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
 import { UserStatus } from 'src/common/enums/user-status.enum';
 import { ApiDashboardQuantity } from 'src/common/decorators/api-dashboard-quantity.decorator';
+import { GetUsersForChatDto } from './dtos/get-users-for-chat.dto';
+import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-internal-server-error-response.decorator';
 
 @Controller('users')
 @ApiSecurity('bare-token')
@@ -133,5 +135,18 @@ export class UsersController {
   @ApiNotFoundResponseCustom()
   async getUserDetail(@Param('userId') userId: string) {
     return this.usersService.getUserById(userId);
+  }
+
+  @Get('/')
+  @ApiOperation({
+    summary: 'get a list user avaiable to create new conversations',
+  })
+  @ApiBadRequestResponseCustom()
+  @ApiInternalServerErrorResponseCustom()
+  async getUsersForCreateNewChat(
+    @Query() query: GetUsersForChatDto,
+    @AuthUser('sub') userId: string,
+  ) {
+    return this.usersService.getUsersForCreateNewChat(userId, query);
   }
 }

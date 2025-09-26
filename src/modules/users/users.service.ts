@@ -22,12 +22,14 @@ import { UserStatus } from 'src/common/enums/user-status.enum';
 import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
 import { RoleType } from 'src/common/constants/role-constants';
 import { RoleFilterResponseDto } from '../roles/dto/role-filter-response.dto';
+import { GetUsersForChatDto } from './dtos/get-users-for-chat.dto';
+import { RespondUserForChatDto } from './dtos/respond-users-for-chat.dto';
 export const DashboardForUserRequestDto = createDashboardRequestDto(UserStatus);
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
+    // @InjectRepository(User)
     private usersRepository: UsersRepository,
     @InjectRepository(Role)
     private readonly roleRepository: RoleRepository,
@@ -391,5 +393,12 @@ export class UsersService {
       id: userId,
       count_tokens_used: countTokensUsed,
     });
+  }
+
+  async getUsersForCreateNewChat(
+    userId: string,
+    query: GetUsersForChatDto,
+  ): Promise<ResponsePaginateDto<RespondUserForChatDto>> {
+    return await this.usersRepository.findForNewChat(userId, query);
   }
 }

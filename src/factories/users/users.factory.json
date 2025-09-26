@@ -138,5 +138,26 @@
     "fullname": "Tina Anderson",
     "role": "USER",
     "status": 1
+  },
+  {
+    "email": "h@gmail.com",
+    "password": "12345678",
+    "fullname": "Nguyễn Văn H",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "khang@gmail.com",
+    "password": "12345678",
+    "fullname": "Trí Khang",
+    "role": "USER",
+    "status": 1
+  },
+  {
+    "email": "admin@gmail.com",
+    "password": "12345678",
+    "fullname": "Nguyễn Văn admin",
+    "role": "ADMIN",
+    "status": 1
   }
 ]
