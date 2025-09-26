@@ -63,12 +63,11 @@ export class UsersRepository extends Repository<User> {
       });
       if (!users) {
         throw new NotFoundException('User Not Found!');
-      } else {
-        userFound =
-          users.length === 1
-            ? users[0]
-            : users.filter((u) => u.id !== senderId)[0];
       }
+      userFound =
+        users.length === 1
+          ? users[0]
+          : users.filter((u) => u.id !== senderId)[0];
       if (userFound) {
         const userDto: UserDto = plainToInstance(UserDto, userFound, {
           excludeExtraneousValues: true,
