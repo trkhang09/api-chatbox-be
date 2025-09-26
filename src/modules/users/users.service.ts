@@ -257,7 +257,7 @@ export class UsersService {
       });
     }
 
-    qb.orderBy('user.updatedAt', 'DESC')
+    qb.orderBy('user.fullname', 'DESC')
       .skip((getUsersDto.page - 1) * getUsersDto.size)
       .take(getUsersDto.size);
 
