@@ -41,6 +41,7 @@ import { SseDeltaDto, SseMessageDto } from './dtos/sse.dto';
 import { CreateMessageDto } from '../messages/dtos/create-message.dto';
 import { RespondCreateNewChatWithAdminDto } from './dtos/respond-create-new-chat-with-admin.dto';
 import { RespondMessageDto } from '../messages/dtos/respond-message.dto';
+import { helloWorld } from 'src/common/constants/message-support.constrants';
 
 export const DashboardForConversationRequestDto =
   createDashboardRequestDto(ChatTypes);
@@ -508,7 +509,7 @@ export class ChatService {
         );
         await this.messagesService.createAiMessage({
           chatId: newChat.id,
-          content: `[Tin nhắn tự động] Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi sớm nhất có thể.`,
+          content: helloWorld,
         });
       }
 
