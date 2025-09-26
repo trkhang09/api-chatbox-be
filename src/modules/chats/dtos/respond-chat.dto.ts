@@ -65,6 +65,13 @@ export class RespondChatDto {
   })
   receiver?: UserDto;
 
+  @Expose()
+  @ApiProperty({
+    description: 'check status conversation',
+    type: RespondMessageDto,
+  })
+  isAccepted?: boolean;
+
   constructor(partial: Partial<RespondChatDto>) {
     Object.assign(this, partial);
   }

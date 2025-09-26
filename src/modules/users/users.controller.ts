@@ -107,7 +107,7 @@ export class UsersController {
   }
 
   @Get('list')
-  @Permissions(PermissionType.USER_GET)
+  // @Permissions(PermissionType.USER_GET)
   @ApiOperation({
     summary: 'Get list of users',
   })

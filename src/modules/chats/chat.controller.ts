@@ -274,7 +274,7 @@ export class ChatController {
     );
   }
 
-  @Post('/admin/join')
+  @Post('/admin/join/:id')
   @ApiNotFoundResponseCustom()
   @ApiInternalServerErrorResponseCustom()
   @ApiBadRequestResponseCustom()
@@ -282,10 +282,10 @@ export class ChatController {
     summary: 'admin join conversation to reply user',
   })
   async joinConversationByAdmin(
-    @Body() body: CreateMessageDto,
+    @Param('id') chatId: string,
     @AuthUser('sub') userId: string,
   ) {
-    return this.chatService.joinConversationByAdmin(body, userId);
+    return this.chatService.joinConversationByAdmin(chatId, userId);
   }
 
   @Get('/admin/list')

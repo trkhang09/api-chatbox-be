@@ -526,8 +526,7 @@ export class ChatService {
     }
   }
 
-  async joinConversationByAdmin(query: CreateMessageDto, userId: string) {
-    const { chatId } = query;
+  async joinConversationByAdmin(chatId: string, userId: string) {
     const user = await this.userRepository.findOneBy({ id: userId });
     const chat = await this.chatRepository
       .createQueryBuilder('chat')
@@ -552,7 +551,6 @@ export class ChatService {
       participants.push(chat.users[0]);
 
       chat.users = participants;
-      await this.messagesService.createMessage(query, user.id);
       return await this.chatRepository.save(chat);
     } catch (error) {
       throw new InternalServerErrorException('fail to save ');

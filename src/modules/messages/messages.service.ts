@@ -145,7 +145,8 @@ export class MessagesService {
     creatorId: string,
   ): Promise<RespondCreatedFirstMessageDto> {
     try {
-      const title = await this.geminiService.generateSummary(message);
+      // const title = await this.geminiService.generateSummary(message);
+      const title = 'default';
 
       const respondMessage = await this.messageRepository.save({
         content: message,
@@ -153,7 +154,7 @@ export class MessagesService {
       });
 
       return new RespondCreatedFirstMessageDto({
-        chatTitle: title.content,
+        chatTitle: title,
         message: respondMessage,
       });
     } catch (error) {
