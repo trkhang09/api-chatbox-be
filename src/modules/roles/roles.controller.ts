@@ -13,7 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiSecurity } from '@nestjs/swagger';
-import { DashboardForRoleRequestDto, RolesService } from './roles.service';
+import { RolesService } from './roles.service';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
 import { RoleFilterRequestDto } from './dto/role-filter-request.dto';
@@ -31,8 +31,7 @@ import { PermissionType } from 'src/common/constants/permission-constants';
 import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
-import { ApiDashboardQuantity } from 'src/common/decorators/api-dashboard-quantity.decorator';
-import { RoleStatus } from 'src/common/enums/role-status.enum';
+import { ResponseUsersCountInRole } from '../users/dtos/response-users-count-in-role';
 
 @Controller('roles')
 @ApiSecurity('bare-token')
@@ -42,11 +41,19 @@ import { RoleStatus } from 'src/common/enums/role-status.enum';
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
-  @ApiDashboardQuantity(RoleStatus)
-  async getQuantity(
-    @Query() query: InstanceType<typeof DashboardForRoleRequestDto>,
-  ) {
-    return this.rolesService.getQuantity(query);
+  @Get('/users-count')
+  @ApiOperation({
+    summary:
+      'Get the roles ordered by number of users (descending) and limited by size.',
+  })
+  @ApiCommonResponseCustom(Array<ResponseUsersCountInRole>, [
+    {
+      role: 'Admin',
+      usersCount: 42,
+    },
+  ])
+  async getQuantity(@Query('size') size: number) {
+    return this.rolesService.getUsersCountEachRoles(size);
   }
 
   @Get()

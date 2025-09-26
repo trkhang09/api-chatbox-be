@@ -9,10 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import {
-  DashboardForDocumentRequestDto,
-  DocumentsService,
-} from './documents.service';
+import { DocumentsService } from './documents.service';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ApiPaginatedResponseCustom } from 'src/common/decorators/api-paginated-response.decorator';
@@ -37,6 +34,7 @@ import { ApiDashboardQuantity } from 'src/common/decorators/api-dashboard-quanti
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
 import { getEnumJoin } from 'src/common/utils/get-enum-join';
 import { isNumber } from 'class-validator';
+import { ResponseQuantityDocumentDto } from './dtos/response-quantity-document.dto';
 
 @Controller('documents')
 @ApiSecurity('bare-token')
@@ -46,50 +44,20 @@ import { isNumber } from 'class-validator';
 export class DocumentsController {
   constructor(private readonly docService: DocumentsService) {}
 
-  @ApiDashboardQuantity(DocumentStatus)
-  @Permissions(PermissionType.DOCUMENT_GET)
-  async getQuantity(
-    @Query() query: InstanceType<typeof DashboardForDocumentRequestDto>,
-  ) {
-    return this.docService.getQuantity(query);
-  }
-
-  @Get('/latest')
+  @Get('/quantity-latest')
   @ApiOperation({
-    summary:
-      'Get list of documents with or without status within a specific number of days',
+    summary: 'get list quantities of latest documents in latest 12 months',
   })
-  @ApiQuery({
-    name: 'status',
-    enum: Object.values(DocumentStatus).filter((v) => isNumber(v)),
-    description: 'Status value, must be one of: ' + getEnumJoin(DocumentStatus),
-    example: Object.values(DocumentStatus)[0],
-    required: false,
-  })
-  @ApiQuery({
-    name: 'days',
-    type: Number,
-    description: 'Number of days (max 90)',
-    minimum: 1,
-    maximum: 90,
-    example: 30,
-  })
-  @ApiCommonResponseCustom(Array<ResponseDocumentDto>, [
+  @ApiCommonResponseCustom(Array<ResponseQuantityDocumentDto>, [
     {
-      id: '6b7b09a3-6f59-421b-909c-4907a51011e8',
-      title: 'Project Plan',
-      description: 'This document contains the detailed project plan for Q1.',
-      status: DocumentStatus.PENDING,
-      size: 23,
-      createdAt: '2025-08-27T14:30:00.000Z',
-      updatedAt: '2025-08-27T14:30:00.000Z',
-      createdByUserId: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
+      month: 5,
+      pending: 12,
+      progressing: 8,
+      done: 20,
     },
   ])
-  async getLatestDocuments(
-    @Query() query: InstanceType<typeof DashboardForDocumentRequestDto>,
-  ) {
-    return this.docService.getLatestDocuments(query);
+  async getLatestDocuments() {
+    return this.docService.getQuantitiesLatestDocuments();
   }
 
   @Get('/')

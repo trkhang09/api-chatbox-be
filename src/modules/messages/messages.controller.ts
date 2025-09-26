@@ -24,12 +24,20 @@ import { ApiInternalServerErrorResponseCustom } from 'src/common/decorators/api-
 import { ApiNotFoundResponseCustom } from 'src/common/decorators/api-not-found-response.decorator';
 import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
 import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
+import * as MessagesAnalysisTypeEnum from 'src/common/enums/messages-analysis-type.enum';
+import { GetMessagesAnalysisDto } from './dtos/get-messages-analysis.dto';
 
 @ApiSecurity('bare-token')
 @ApiSecurity('x-client-id')
 @Controller('messages')
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
+
+  @Get('/analysis')
+  @ApiOperation({ summary: 'Get the analysis of messages' })
+  async getAnalisisMessages(@Query() query: GetMessagesAnalysisDto) {
+    return this.messagesService.getAnalisisMessages(query);
+  }
 
   @Get('/')
   @ApiOperation({

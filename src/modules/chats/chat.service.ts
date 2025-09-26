@@ -387,6 +387,11 @@ export class ChatService {
           data: { chatId: null, content: chunk },
         };
       }
+
+      yield {
+        event: ChatboxSseEvent.MESSAGE,
+        data: { chatId: null, type: ChatboxSseMessageType.COMPLETE },
+      };
       return;
     }
 

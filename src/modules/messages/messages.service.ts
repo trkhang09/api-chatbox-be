@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -9,7 +10,9 @@ import {
   EntityManager,
   FindOptionsWhere,
   ILike,
+  IsNull,
   LessThan,
+  Not,
 } from 'typeorm';
 import { Message } from './entities/messages.entity';
 import { Chat } from '../chats/entities/chat.entity';
@@ -25,6 +28,10 @@ import { plainToInstance } from 'class-transformer';
 import { GetSearchedMessagesDto } from './dtos/get-searched-messages.dto';
 import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat-cursor-pagination.dto';
 import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
+import { GetMessagesAnalysisDto } from './dtos/get-messages-analysis.dto';
+import { MessagesAnalysisType } from 'src/common/enums/messages-analysis-type.enum';
+import { ResponseMessagesAnalysisDto } from './dtos/response-messages-analysis.dto';
+import { ChatTypes } from 'src/common/enums/chat-type.enum';
 
 @Injectable()
 export class MessagesService {
@@ -248,6 +255,84 @@ export class MessagesService {
         'fail to get Message in this chat',
         error.message,
       );
+    }
+  }
+
+  async getAnalisisMessages(query: GetMessagesAnalysisDto) {
+    const analysisKeys = Object.keys(MessagesAnalysisType);
+    const period = analysisKeys
+      .find((key) => MessagesAnalysisType[key] === query.time)
+      ?.split('_')[0];
+
+    let messages: Message[];
+    try {
+      messages = await this.messageRepository.find({
+        where: { chat: Not(IsNull()) },
+        select: { createdAt: true, chat: { type: true } },
+        relations: ['chat'],
+      });
+    } catch (error) {
+      throw new InternalServerErrorException('Cannot get messages');
+    }
+
+    if (period === 'D') {
+      const filterDays = analysisKeys
+        .filter((key) => key.split('_')[0] === 'D')
+        .map((key) => MessagesAnalysisType[key]);
+      const filterDay = filterDays.indexOf(query.time);
+      const hours = Array.from({ length: 24 }).map((_, hour) => hour);
+
+      const response = hours.map(
+        (hour) => new ResponseMessagesAnalysisDto(hour),
+      );
+
+      messages.forEach((message) => {
+        if (message.createdAt.getUTCDay() === filterDay) {
+          const createdHour = message.createdAt.getUTCHours();
+          const createdHourIndex = hours.indexOf(createdHour);
+
+          switch (message.chat.type) {
+            case ChatTypes.BOT:
+              response[createdHourIndex].aiMessagesCount++;
+              break;
+            case ChatTypes.USER:
+              response[createdHourIndex].userMessagesCount++;
+              break;
+          }
+        }
+      });
+
+      return response;
+    } else if (period === 'M') {
+      const filterMonths = analysisKeys
+        .filter((key) => key.split('_')[0] === 'M')
+        .map((key) => MessagesAnalysisType[key]);
+      const filterMonth = filterMonths.indexOf(query.time);
+      const days = Array.from({ length: 7 }).map((_, day) => day);
+
+      const response = days.map(
+        (hour) => new ResponseMessagesAnalysisDto(hour),
+      );
+
+      messages.forEach((message) => {
+        if (message.createdAt.getUTCMonth() === filterMonth) {
+          const createdDay = message.createdAt.getUTCDay();
+          const createdDayIndex = days.indexOf(createdDay);
+
+          switch (message.chat.type) {
+            case ChatTypes.BOT:
+              response[createdDayIndex].aiMessagesCount++;
+              break;
+            case ChatTypes.USER:
+              response[createdDayIndex].userMessagesCount++;
+              break;
+          }
+        }
+      });
+
+      return response;
+    } else {
+      throw new BadRequestException('Invalid analysis type');
     }
   }
 }
