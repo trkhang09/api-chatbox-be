@@ -255,7 +255,9 @@ export class UsersService {
       });
     }
 
-    qb.skip((getUsersDto.page - 1) * getUsersDto.size).take(getUsersDto.size);
+    qb.orderBy('user.fullname', 'DESC')
+      .skip((getUsersDto.page - 1) * getUsersDto.size)
+      .take(getUsersDto.size);
 
     const [users, total] = await qb.getManyAndCount();
 
