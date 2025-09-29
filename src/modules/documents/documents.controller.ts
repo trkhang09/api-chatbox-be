@@ -30,11 +30,8 @@ import { PermissionGuard } from 'src/common/guards/permission.guard';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
 import { ApiForbiddenResponseCustom } from 'src/common/decorators/api-forbidden-response.decorator';
-import { ApiDashboardQuantity } from 'src/common/decorators/api-dashboard-quantity.decorator';
-import { DocumentStatus } from 'src/common/enums/document-status.enum';
-import { getEnumJoin } from 'src/common/utils/get-enum-join';
-import { isNumber } from 'class-validator';
 import { ResponseQuantityDocumentDto } from './dtos/response-quantity-document.dto';
+import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 
 @Controller('documents')
 @ApiSecurity('bare-token')
@@ -90,7 +87,7 @@ export class DocumentsController {
   @ApiNotFoundResponseCustom()
   async createDocument(
     @Body() body: CreateDocumentDto,
-    @AuthUser() user: User,
+    @AuthUser() user: AuthUserDto,
   ) {
     return this.docService.createDocument(body, user);
   }

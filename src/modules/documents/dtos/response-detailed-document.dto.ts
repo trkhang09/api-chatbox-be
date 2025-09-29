@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
 
 export class ResponseDetailedDocumentDto {
@@ -62,9 +62,9 @@ export class ResponseDetailedDocumentDto {
   })
   updatedAT: Date;
 
-  @ApiProperty({
-    description: 'The ID of the user who created the document',
-    example: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
+  @ApiPropertyOptional({
+    description: 'The name of the user who created the document',
+    example: 'Jennifer',
   })
-  createdByUserId: string;
+  author?: string;
 }
