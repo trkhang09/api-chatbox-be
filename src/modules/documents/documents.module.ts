@@ -6,6 +6,7 @@ import { Document } from './entities/document.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { FileModule } from '../files/files.module';
 import { PermissionsModule } from '../permissions/permissions.module';
+import { UsersModule } from '../users/users.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Document]),
@@ -24,6 +25,7 @@ import { PermissionsModule } from '../permissions/permissions.module';
       },
     ]),
     PermissionsModule,
+    UsersModule,
   ],
   providers: [DocumentsService],
   controllers: [DocumentsController],

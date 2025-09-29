@@ -18,11 +18,10 @@ import { ResponseUpdatedDocumentDto } from './dtos/response-updated-document.dto
 import { ClientProxy } from '@nestjs/microservices';
 import { FileService } from '../files/file.service';
 import { ResponseDetailedDocumentDto } from './dtos/response-detailed-document.dto';
-import { createDashboardRequestDto } from 'src/common/utils/create-dashboard-request-dto';
 import { DocumentStatus } from 'src/common/enums/document-status.enum';
-import { validateDashboardRequest } from 'src/common/utils/validate-dashboard-request';
-import { isNumber } from 'class-validator';
 import { ResponseQuantityDocumentDto } from './dtos/response-quantity-document.dto';
+import { UsersRepository } from '../users/users.repository';
+import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 
 @Injectable()
 export class DocumentsService {
@@ -31,6 +30,7 @@ export class DocumentsService {
     @InjectRepository(Document)
     private readonly docRepo: Repository<Document>,
     private readonly fileService: FileService,
+    private readonly userRepo: UsersRepository,
   ) {}
 
   /**
@@ -160,6 +160,13 @@ export class DocumentsService {
       dto[k] = foundDoc[k];
     });
 
+    if (foundDoc.createdByUserId) {
+      const author = await this.userRepo.findOneBy({
+        id: foundDoc.createdByUserId,
+      });
+      dto.author = author?.fullname;
+    }
+
     return dto;
   }
 
@@ -174,7 +181,7 @@ export class DocumentsService {
    */
   async createDocument(
     body: CreateDocumentDto,
-    user: User,
+    user: AuthUserDto,
   ): Promise<ResponseCreatedDocumentDto> {
     const size = await this.fileService.readFileSize(body.filePath);
 
@@ -183,7 +190,7 @@ export class DocumentsService {
         ...body,
         description: body.description ?? '',
         size,
-        createdByUserId: user.id,
+        createdByUserId: user.sub,
       });
 
       this.client.emit('document_chunks_created', {
