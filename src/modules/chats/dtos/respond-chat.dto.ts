@@ -72,6 +72,9 @@ export class RespondChatDto {
   })
   isAccepted?: boolean;
 
+  @Expose()
+  countUnread?: number;
+
   constructor(partial: Partial<RespondChatDto>) {
     Object.assign(this, partial);
   }

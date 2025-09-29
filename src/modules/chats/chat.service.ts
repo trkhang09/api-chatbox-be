@@ -558,6 +558,7 @@ export class ChatService {
       participants.push(chat.users[0]);
 
       chat.users = participants;
+      // send message join
       return await this.chatRepository.save(chat);
     } catch (error) {
       throw new InternalServerErrorException('fail to save ');

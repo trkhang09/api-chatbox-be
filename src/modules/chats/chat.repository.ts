@@ -186,6 +186,12 @@ export class ChatRepository extends Repository<Chat> {
       conversations.map(async (conversation) => {
         const lastMessage =
           await this.messageRepository.findLatestMessageInChat(conversation.id);
+        const countUnread = await this.messageRepository.countBy({
+          chat: {
+            id: conversation.id,
+          },
+          isRead: false,
+        });
         return {
           id: conversation.id,
           title: conversation.title,
@@ -193,6 +199,7 @@ export class ChatRepository extends Repository<Chat> {
           createdAt: conversation.createdAt,
           createdByUserId: conversation.createdByUserId,
           lastMessage: lastMessage,
+          countUnread,
           receiver: plainToInstance(UserDto, conversation.users[0], {
             excludeExtraneousValues: true,
           }),
