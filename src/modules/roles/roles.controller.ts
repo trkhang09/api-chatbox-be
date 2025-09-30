@@ -56,6 +56,18 @@ export class RolesController {
     return this.rolesService.getUsersCountEachRoles(size);
   }
 
+  @Get('/no-pagination')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiOperation({
+    summary: 'Get list of roles without pagination',
+  })
+  @ApiPaginatedResponseCustom(ResponsePaginateDto, Role)
+  @ApiBadRequestResponseCustom()
+  @ApiInternalServerErrorResponseCustom()
+  findAllWithoutPagination() {
+    return this.rolesService.findAllWithoutPagination();
+  }
+
   @Get()
   @Permissions(PermissionType.ROLE_GET)
   @UseInterceptors(ClassSerializerInterceptor)
