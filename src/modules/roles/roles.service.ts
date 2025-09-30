@@ -117,6 +117,20 @@ export class RolesService {
     }
   }
 
+  async findAllWithoutPagination(): Promise<RoleFilterResponseDto[]> {
+    try {
+      const roles = await this.roleRepo.find();
+      const filteredRoles = roles.filter(
+        (role) => role.code !== RoleType.SUPER_ADMIN,
+      );
+      return plainToInstance(RoleFilterResponseDto, filteredRoles, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      throw new Error('Failed to retrieve roles: ' + error.message);
+    }
+  }
+
   async findOne(id: string): Promise<RoleFilterResponseDto> {
     try {
       const role = await this.roleRepo.findOne({
