@@ -71,14 +71,25 @@ export class ChatRepository extends Repository<Chat> {
       conversations.map(async (conversation) => {
         const lastMessage =
           await this.messageRepository.findLatestMessageInChat(conversation.id);
+        const receiver = conversation.users.findLast(
+          (user) => user.id !== userId,
+        );
+        let countUnread = 0;
+        if (receiver) {
+          countUnread = await this.messageRepository.getUnreadMessagesInChat(
+            conversation.id,
+            receiver.id,
+          );
+        }
         return {
           id: conversation.id,
           title: conversation.title,
           type: conversation.type,
           createdAt: conversation.createdAt,
           createdByUserId: conversation.createdByUserId,
-          lastMessage: lastMessage,
-          receiver: plainToInstance(UserDto, conversation.users[0], {
+          countUnread,
+          lastMessage,
+          receiver: plainToInstance(UserDto, receiver, {
             excludeExtraneousValues: true,
           }),
         };
@@ -130,13 +141,17 @@ export class ChatRepository extends Repository<Chat> {
         `The Conversations with id ${id} does not exists`,
       );
     }
+    const receiver =
+      chat.users.length === 1
+        ? chat.users[0]
+        : chat.users.findLast((user) => user.id !== userId);
     return new RespondChatDto({
       id: chat.id,
       title: chat.title,
       createdAt: chat.createdAt,
       type: chat.type,
       isAccepted: chat.users.length === 2,
-      receiver: plainToInstance(UserDto, chat.users[0], {
+      receiver: plainToInstance(UserDto, receiver, {
         excludeExtraneousValues: true,
       }),
     });

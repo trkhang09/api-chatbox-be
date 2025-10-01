@@ -11,4 +11,5 @@ export enum SocketType {
   RESPONSE_MESSAGE = 'responseMessage',
   RESPONSE_RETRIEVE_MESSAGE = 'responseRetrieveMessage',
   RESPONSE_READ_MESSAGE = 'responseReadMessage',
+  USER_ONLINES = 'onlineUsers',
 }

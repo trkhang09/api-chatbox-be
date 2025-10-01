@@ -12,6 +12,7 @@ import { DataSource } from 'typeorm';
 import { UsersModule } from '../users/users.module';
 import { MessageRepository } from '../messages/message.repository';
 import { SettingsModule } from '../settings/settings.module';
+import { SocketModule } from '../socket/socket.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SettingsModule } from '../settings/settings.module';
     OpenaiModule,
     UsersModule,
     SettingsModule,
+    forwardRef(() => SocketModule),
   ],
   providers: [
     {

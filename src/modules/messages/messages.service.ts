@@ -32,6 +32,7 @@ import { GetMessagesAnalysisDto } from './dtos/get-messages-analysis.dto';
 import { MessagesAnalysisType } from 'src/common/enums/messages-analysis-type.enum';
 import { ResponseMessagesAnalysisDto } from './dtos/response-messages-analysis.dto';
 import { ChatTypes } from 'src/common/enums/chat-type.enum';
+import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 
 @Injectable()
 export class MessagesService {
@@ -237,8 +238,31 @@ export class MessagesService {
 
   async getMessagesWithCursorPagination(
     param: GetMessagesInChatCursorPaginationDto,
+    authUserDto: AuthUserDto,
   ): Promise<ResponseGetMessageInChatDto> {
+    const chatFound = await this.chatRepository.findChatWithUser(
+      param.chatId,
+      authUserDto.sub,
+    );
+
+    await this.readMessagesByChatId(chatFound.id, chatFound.receiver?.id);
     return await this.messageRepository.findWithCursorPagination(param);
+  }
+
+  async readMessagesByChatId(chatId: string, createdByUserId?: string) {
+    await this.messageRepository.update(
+      {
+        chat: {
+          id: chatId,
+        },
+        createdByUserId,
+      },
+      {
+        isRead: true,
+      },
+    );
+
+    return true;
   }
 
   async getMessageByChatId(chatId: string): Promise<Message[]> {

@@ -26,6 +26,7 @@ import { GetMessagesInChatCursorPaginationDto } from './dtos/get-message-in-chat
 import { ResponseGetMessageInChatDto } from './dtos/response-get-messages-in-chat.dto';
 import * as MessagesAnalysisTypeEnum from 'src/common/enums/messages-analysis-type.enum';
 import { GetMessagesAnalysisDto } from './dtos/get-messages-analysis.dto';
+import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
 
 @ApiSecurity('bare-token')
 @ApiSecurity('x-client-id')
@@ -48,8 +49,12 @@ export class MessagesController {
   @ApiBadRequestResponseCustom()
   async getMessagesWithCursorPagination(
     @Query() query: GetMessagesInChatCursorPaginationDto,
+    @AuthUser() authUserDto: AuthUserDto,
   ) {
-    return this.messagesService.getMessagesWithCursorPagination(query);
+    return this.messagesService.getMessagesWithCursorPagination(
+      query,
+      authUserDto,
+    );
   }
 
   @Get('/:chatId/search')
