@@ -53,6 +53,9 @@ export class SocketGateway implements OnGatewayConnection {
     if (sockets && !sockets.includes(client.id)) {
       sockets.push(client.id);
     }
+
+    const onlineUserIds = Array.from(this.onlineUsers.keys());
+    this.server.emit(SocketType.USER_ONLINES, onlineUserIds);
   }
 
   @SubscribeMessage(SocketType.SIGN_OUT)
@@ -252,9 +255,12 @@ export class SocketGateway implements OnGatewayConnection {
         this.onlineUsers.delete(userId);
       }
     }
+
+    const onlineUserIds = Array.from(this.onlineUsers.keys());
+    this.server.emit(SocketType.USER_ONLINES, onlineUserIds);
   }
 
-  private async notifyReceiver(
+  async notifyReceiver(
     receiverId: string,
     chatId: string,
     message: RespondMessageDto,

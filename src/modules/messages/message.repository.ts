@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, IsNull, Not, Repository } from 'typeorm';
 import { Message } from './entities/messages.entity';
 import { RespondMessageDto } from './dtos/respond-message.dto';
 import { plainToInstance } from 'class-transformer';
@@ -153,6 +153,7 @@ export class MessageRepository extends Repository<Message> {
       [messages, total] = await this.findAndCount({
         where: {
           chat: { id: chatId },
+          createdByUserId: Not(IsNull()),
           isRead: false,
         },
         order: {
@@ -259,5 +260,15 @@ export class MessageRepository extends Repository<Message> {
     } catch (error) {
       throw new InternalServerErrorException('fail to remove message');
     }
+  }
+
+  async getUnreadMessagesInChat(chatId: string, createdByUserId: string) {
+    return await this.countBy({
+      chat: {
+        id: chatId,
+      },
+      createdByUserId: createdByUserId,
+      isRead: false,
+    });
   }
 }

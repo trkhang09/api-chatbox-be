@@ -71,14 +71,25 @@ export class ChatRepository extends Repository<Chat> {
       conversations.map(async (conversation) => {
         const lastMessage =
           await this.messageRepository.findLatestMessageInChat(conversation.id);
+        const receiver = conversation.users.findLast(
+          (user) => user.id !== userId,
+        );
+        let countUnread = 0;
+        if (receiver) {
+          countUnread = await this.messageRepository.getUnreadMessagesInChat(
+            conversation.id,
+            receiver.id,
+          );
+        }
         return {
           id: conversation.id,
           title: conversation.title,
           type: conversation.type,
           createdAt: conversation.createdAt,
           createdByUserId: conversation.createdByUserId,
-          lastMessage: lastMessage,
-          receiver: plainToInstance(UserDto, conversation.users[0], {
+          countUnread,
+          lastMessage,
+          receiver: plainToInstance(UserDto, receiver, {
             excludeExtraneousValues: true,
           }),
         };
@@ -111,32 +122,39 @@ export class ChatRepository extends Repository<Chat> {
   }
 
   async findChatWithUser(id: string, userId: string): Promise<RespondChatDto> {
-    try {
-      const chat = await this.createQueryBuilder('chat')
-        .leftJoinAndSelect('chat.users', 'users', 'users.id != :userId')
-        .where(
-          'EXISTS (SELECT 1 FROM chat_participants cp WHERE cp."chat_id" = chat.id AND cp."user_id" = :userId)',
-          { userId },
-        )
-        .andWhere('chat.id = :id', { id })
-        .getOne();
-      if (!chat) {
-        throw new NotFoundException(
-          `The Conversations with id ${id} does not exists`,
-        );
-      }
-      return new RespondChatDto({
-        id: chat.id,
-        title: chat.title,
-        createdAt: chat.createdAt,
-        type: chat.type,
-        receiver: plainToInstance(UserDto, chat.users[0], {
-          excludeExtraneousValues: true,
-        }),
-      });
-    } catch (error) {
-      throw new InternalServerErrorException(`can not get chat`, error.message);
+    const chat = await this.createQueryBuilder('chat')
+      .leftJoinAndSelect('chat.users', 'users')
+      .where(
+        'EXISTS (SELECT 1 FROM chat_participants cp WHERE cp."chat_id" = chat.id)',
+        { userId },
+      )
+      .andWhere('chat.id = :id', { id })
+      .getOne();
+
+    if (
+      !chat ||
+      (chat &&
+        chat.users.length === 2 &&
+        !chat.users.some((user) => user.id === userId))
+    ) {
+      throw new NotFoundException(
+        `The Conversations with id ${id} does not exists`,
+      );
     }
+    const receiver =
+      chat.users.length === 1
+        ? chat.users[0]
+        : chat.users.findLast((user) => user.id !== userId);
+    return new RespondChatDto({
+      id: chat.id,
+      title: chat.title,
+      createdAt: chat.createdAt,
+      type: chat.type,
+      isAccepted: chat.users.length === 2,
+      receiver: plainToInstance(UserDto, receiver, {
+        excludeExtraneousValues: true,
+      }),
+    });
   }
 
   async findUnansweredChatlist(query: GetBatchedChatDto, userId: string) {
@@ -183,6 +201,12 @@ export class ChatRepository extends Repository<Chat> {
       conversations.map(async (conversation) => {
         const lastMessage =
           await this.messageRepository.findLatestMessageInChat(conversation.id);
+        const countUnread = await this.messageRepository.countBy({
+          chat: {
+            id: conversation.id,
+          },
+          isRead: false,
+        });
         return {
           id: conversation.id,
           title: conversation.title,
@@ -190,6 +214,7 @@ export class ChatRepository extends Repository<Chat> {
           createdAt: conversation.createdAt,
           createdByUserId: conversation.createdByUserId,
           lastMessage: lastMessage,
+          countUnread,
           receiver: plainToInstance(UserDto, conversation.users[0], {
             excludeExtraneousValues: true,
           }),

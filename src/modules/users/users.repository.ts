@@ -54,15 +54,22 @@ export class UsersRepository extends Repository<User> {
     senderId: string,
   ): Promise<UserDto | null> {
     try {
-      const user = await this.findOne({
+      let userFound: User;
+      const users = await this.find({
         relations: ['chats'],
         where: {
           chats: { id: chatId },
-          id: Not(senderId),
         },
       });
-      if (user) {
-        const userDto: UserDto = plainToInstance(UserDto, user, {
+      if (!users) {
+        throw new NotFoundException('User Not Found!');
+      }
+      userFound =
+        users.length === 1
+          ? users[0]
+          : users.filter((u) => u.id !== senderId)[0];
+      if (userFound) {
+        const userDto: UserDto = plainToInstance(UserDto, userFound, {
           excludeExtraneousValues: true,
         });
         return userDto;

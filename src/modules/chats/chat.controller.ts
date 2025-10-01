@@ -47,7 +47,6 @@ import { SettingConstants } from 'src/common/constants/setting-constrants';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionType } from 'src/common/constants/permission-constants';
 import type { Response, Request } from 'express';
-import { SseDeltaDto, SseMessageDto } from './dtos/sse.dto';
 import { CreateMessageDto } from '../messages/dtos/create-message.dto';
 
 @ApiTags('Conversation History')
@@ -284,10 +283,13 @@ export class ChatController {
     summary: 'admin join conversation to reply user',
   })
   async joinConversationByAdmin(
-    @Body() body: CreateMessageDto,
-    @AuthUser('sub') userId: string,
+    @AuthUser() authUserDto: AuthUserDto,
+    @Body() createMessageDto: CreateMessageDto,
   ) {
-    return this.chatService.joinConversationByAdmin(body, userId);
+    return this.chatService.joinConversationByAdmin(
+      createMessageDto,
+      authUserDto,
+    );
   }
 
   @Get('/admin/list')

@@ -41,6 +41,13 @@ import { SseDeltaDto, SseMessageDto } from './dtos/sse.dto';
 import { CreateMessageDto } from '../messages/dtos/create-message.dto';
 import { RespondCreateNewChatWithAdminDto } from './dtos/respond-create-new-chat-with-admin.dto';
 import { RespondMessageDto } from '../messages/dtos/respond-message.dto';
+import {
+  adminJoined,
+  helloWorld,
+} from 'src/common/constants/message-support.constrants';
+import { SocketGateway } from '../socket/socket.gateway';
+import { SocketActionType } from 'src/common/constants/socket-action.constaints';
+import { replacePlaceHolder } from 'src/common/utils';
 
 export const DashboardForConversationRequestDto =
   createDashboardRequestDto(ChatTypes);
@@ -54,6 +61,7 @@ export class ChatService {
     private readonly messagesService: MessagesService,
     private readonly settingService: SettingsService,
     private readonly userService: UsersService,
+    private readonly socketGateway: SocketGateway,
     @Inject('AI_SERVICE') private readonly aiService: AiService,
   ) {}
 
@@ -466,11 +474,8 @@ export class ChatService {
   ): Promise<RespondCreateNewChatWithAdminDto> {
     const unansweredChat =
       await this.chatRepository.findUserUnansweredChat(userId);
-    const user = await this.userRepository.findOneBy({ id: userId });
     let newChat: Chat;
-    if (!user) {
-      throw new NotFoundException(`User with id: ${userId} not found`);
-    }
+
     try {
       if (unansweredChat) {
         const messages = await this.messagesService.getMessageByChatId(
@@ -483,7 +488,7 @@ export class ChatService {
         } as CreateMessageDto;
         const newMessage = await this.messagesService.createMessage(
           queryCreateMessage,
-          user.id,
+          userId,
         );
         messages.push(
           plainToInstance(Message, newMessage, { exposeDefaultValues: true }),
@@ -492,17 +497,26 @@ export class ChatService {
         newChat = await this.chatRepository.save(unansweredChat);
       } else {
         newChat = await this.chatRepository.save({
-          createdByUserId: user.id,
+          createdByUserId: userId,
           title: message,
-          users: [user],
-          messages: [
+          users: [
             {
-              content: message,
-              isRead: false,
-              createdByUserId: user.id,
+              id: userId,
             },
           ],
           type: ChatTypes.USER,
+        });
+
+        await this.messagesService.createMessage(
+          {
+            chatId: newChat.id,
+            content: message,
+          },
+          userId,
+        );
+        await this.messagesService.createAiMessage({
+          chatId: newChat.id,
+          content: helloWorld,
         });
       }
 
@@ -526,22 +540,27 @@ export class ChatService {
     }
   }
 
-  async joinConversationByAdmin(query: CreateMessageDto, userId: string) {
-    const { chatId } = query;
-    const user = await this.userRepository.findOneBy({ id: userId });
+  async joinConversationByAdmin(
+    createMessageDto: CreateMessageDto,
+    authUserDto: AuthUserDto,
+  ): Promise<RespondChatDto> {
+    const user = await this.userRepository.findOneBy({ id: authUserDto.sub });
     const chat = await this.chatRepository
       .createQueryBuilder('chat')
       .leftJoinAndSelect('chat.users', 'users')
-      .where('chat.id = :chatId', { chatId })
+      .where('chat.id = :chatId', { chatId: createMessageDto.chatId })
       .getOne();
-
     if (!chat) {
       throw new NotFoundException(
-        `the conversation with id: ${chatId} not found`,
+        `the conversation with id: ${createMessageDto.chatId} not found`,
       );
     }
     if (!user) {
-      throw new NotFoundException(`user with id: ${userId} not found`);
+      throw new NotFoundException(`user with id: ${authUserDto.sub} not found`);
+    }
+
+    if (chat.users.length === 1 && authUserDto.sub === chat.users[0].id) {
+      throw new BadRequestException(`u can't chat with u`);
     }
     const participants: User[] = [];
     participants.push(user);
@@ -552,8 +571,63 @@ export class ChatService {
       participants.push(chat.users[0]);
 
       chat.users = participants;
-      await this.messagesService.createMessage(query, user.id);
-      return await this.chatRepository.save(chat);
+      // send message join
+      const messageJoinCreated = await this.messagesService.createMessage(
+        {
+          chatId: chat.id,
+          content: replacePlaceHolder(adminJoined, {
+            fullname: authUserDto.fullname,
+          }),
+        },
+        authUserDto.sub,
+      );
+      const newMessageCreated = await this.messagesService.createMessage(
+        {
+          chatId: chat.id,
+          content: createMessageDto.content,
+        },
+        authUserDto.sub,
+      );
+      const receiver = chat.users.filter(
+        (user) => user.id !== authUserDto.sub,
+      )[0];
+      await Promise.all([
+        this.socketGateway.notifyReceiver(
+          receiver.id,
+          chat.id,
+          messageJoinCreated,
+          SocketActionType.CREATE,
+        ),
+        this.socketGateway.notifyReceiver(
+          authUserDto.sub,
+          chat.id,
+          messageJoinCreated,
+          SocketActionType.CREATE,
+        ),
+      ]);
+
+      await Promise.all([
+        this.socketGateway.notifyReceiver(
+          receiver.id,
+          chat.id,
+          newMessageCreated,
+          SocketActionType.CREATE,
+        ),
+        this.socketGateway.notifyReceiver(
+          authUserDto.sub,
+          chat.id,
+          newMessageCreated,
+          SocketActionType.CREATE,
+        ),
+      ]);
+      const chatStore = await this.chatRepository.save(chat);
+      return {
+        ...chatStore,
+        lastMessage: newMessageCreated,
+        receiver: plainToInstance(UserDto, receiver, {
+          excludeExtraneousValues: true,
+        }),
+      };
     } catch (error) {
       throw new InternalServerErrorException('fail to save ');
     }
