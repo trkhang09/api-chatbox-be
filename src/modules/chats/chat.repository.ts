@@ -50,7 +50,10 @@ export class ChatRepository extends Repository<Chat> {
       if (searchKeyword) {
         const keyword = `%${searchKeyword}%`;
         if (type === ChatTypes.USER) {
-          qb.andWhere('users.fullname ILIKE :keyword', { keyword });
+          qb.andWhere(
+            '(users.fullname ILIKE :keyword OR chat.title ILIKE :keyword)',
+            { keyword },
+          );
         } else {
           qb.andWhere('chat.title ILIKE :keyword', { keyword });
         }
