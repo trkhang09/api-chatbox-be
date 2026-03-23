@@ -2,16 +2,16 @@ import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 import { AuthInterceptor } from './auth.interceptor';
-import { LoginDto } from './dtos/login.dto';
-import { ForgotPasswordDto } from './dtos/forgot-password.dto';
-import { ResetPasswordDto } from './dtos/reset-password.dto';
-import { LoginResponseDto } from './dtos/login-response.dto';
-import { MeDto } from './dtos/me.dto';
 import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthUserDto } from 'src/common/dtos/auth-user.dto';
-import { ChangePasswordDto } from './dtos/change-password.dto';
+// import { LoginDto } from './dtos/login.dto';
+// import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+// import { ResetPasswordDto } from './dtos/reset-password.dto';
+// import { LoginResponseDto } from './dtos/login-response.dto';
+// import { MeDto } from './dtos/me.dto';
+// import { ChangePasswordDto } from './dtos/change-password.dto';
 
 @ApiSecurity('bare-token')
 @ApiSecurity('x-client-id')
@@ -19,49 +19,4 @@ import { ChangePasswordDto } from './dtos/change-password.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
-  @ApiCommonResponseCustom(LoginResponseDto)
-  @Public()
-  @UseInterceptors(AuthInterceptor)
-  @Post('login')
-  @ApiOperation({ summary: 'Login into system' })
-  async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
-    return await this.authService.login(loginDto);
-  }
-
-  @ApiCommonResponseCustom(MeDto)
-  @ApiOperation({ summary: 'Get User data of this user' })
-  @Get('me')
-  async me(@AuthUser() user: AuthUserDto) {
-    return user;
-  }
-
-  @ApiCommonResponseCustom(Boolean, true)
-  @ApiOperation({
-    summary:
-      'Request to the system to mark that this user forgot their password',
-  })
-  @Public()
-  @Post('forgot-password')
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    return this.authService.forgotPassword(forgotPasswordDto);
-  }
-
-  @ApiCommonResponseCustom(Boolean, true)
-  @ApiOperation({ summary: 'Reset the password of this user' })
-  @Public()
-  @Post('reset-password')
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    return await this.authService.resetPassword(resetPasswordDto);
-  }
-
-  @ApiCommonResponseCustom(Boolean, true)
-  @ApiOperation({ summary: 'Change the password of this user' })
-  @Post('change-password')
-  async changePassword(
-    @Body() changePasswordDto: ChangePasswordDto,
-    @AuthUser() user: AuthUserDto,
-  ) {
-    return await this.authService.changePassword(changePasswordDto, user.email);
-  }
 }

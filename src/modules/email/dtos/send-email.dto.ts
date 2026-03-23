@@ -1,5 +1,0 @@
-export default interface SendEmailDto {
-  to: string;
-  subject: string;
-  text: string;
-}

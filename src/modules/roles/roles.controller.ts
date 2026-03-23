@@ -14,9 +14,9 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiSecurity } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
-import { CreateRoleRequestDto } from './dto/create-role-request.dto';
-import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
-import { RoleFilterRequestDto } from './dto/role-filter-request.dto';
+// import { CreateRoleRequestDto } from './dto/create-role-request.dto';
+// import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
+// import { RoleFilterRequestDto } from './dto/role-filter-request.dto';
 import { Role } from './entities/role.entity';
 import { ResponsePaginateDto } from 'src/common/dtos/response-paginate.dto';
 import { ApiCommonResponseCustom } from 'src/common/decorators/api-common-response.decorator';
@@ -38,110 +38,4 @@ import { ResponseUsersCountInRole } from '../users/dtos/response-users-count-in-
 @ApiSecurity('x-client-id')
 @ApiForbiddenResponseCustom()
 @UseGuards(PermissionGuard)
-export class RolesController {
-  constructor(private readonly rolesService: RolesService) {}
-
-  @Get('/users-count')
-  @ApiOperation({
-    summary:
-      'Get the roles ordered by number of users (descending) and limited by size.',
-  })
-  @ApiCommonResponseCustom(Array<ResponseUsersCountInRole>, [
-    {
-      role: 'Admin',
-      usersCount: 42,
-    },
-  ])
-  async getQuantity(@Query('size') size: number) {
-    return this.rolesService.getUsersCountEachRoles(size);
-  }
-
-  @Get('/no-pagination')
-  @UseInterceptors(ClassSerializerInterceptor)
-  @ApiOperation({
-    summary: 'Get list of roles without pagination',
-  })
-  @ApiPaginatedResponseCustom(ResponsePaginateDto, Role)
-  @ApiBadRequestResponseCustom()
-  @ApiInternalServerErrorResponseCustom()
-  findAllWithoutPagination() {
-    return this.rolesService.findAllWithoutPagination();
-  }
-
-  @Get()
-  @Permissions(PermissionType.ROLE_GET)
-  @UseInterceptors(ClassSerializerInterceptor)
-  @ApiOperation({
-    summary: 'Get list of roles',
-  })
-  @ApiPaginatedResponseCustom(ResponsePaginateDto, Role)
-  @ApiBadRequestResponseCustom()
-  @ApiInternalServerErrorResponseCustom()
-  findAll(@Query() query: RoleFilterRequestDto) {
-    return this.rolesService.findAll(query);
-  }
-
-  @Get(':id')
-  @Permissions(PermissionType.ROLE_GET)
-  @ApiOperation({
-    summary: 'Get a specific role',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'The ID of the role which will be removed',
-    example: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
-    type: 'string',
-  })
-  @ApiOkResponseCustom(Boolean, true)
-  @ApiNotFoundResponseCustom()
-  @ApiInternalServerErrorResponseCustom()
-  findOne(@Param('id') id: string) {
-    return this.rolesService.findOne(id);
-  }
-
-  @Post()
-  @Permissions(PermissionType.ROLE_CREATE)
-  @ApiOperation({
-    summary: 'Create a new role',
-  })
-  @ApiCommonResponseCustom(Role)
-  create(@Body() dto: CreateRoleRequestDto, @Req() req) {
-    const userId = req['user'].sub;
-    return this.rolesService.create(dto, userId);
-  }
-
-  @Put(':id')
-  @Permissions(PermissionType.ROLE_UPDATE)
-  @ApiOperation({
-    summary: 'Update a role',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'The ID of the role which will be updated',
-    example: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
-    type: 'string',
-  })
-  @ApiCommonResponseCustom(Role)
-  @ApiNotFoundResponseCustom()
-  update(@Param('id') id: string, @Body() dto: UpdateRoleRequestDto) {
-    return this.rolesService.update(id, dto);
-  }
-
-  @Delete(':id')
-  @Permissions(PermissionType.ROLE_DELETE)
-  @ApiOperation({
-    summary: 'Remove a role',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'The ID of the role which will be removed',
-    example: 'd9b2d63d-a233-4123-847a-7c35fcb9a1b5',
-    type: 'string',
-  })
-  @ApiOkResponseCustom(Boolean, true)
-  @ApiNotFoundResponseCustom()
-  @ApiInternalServerErrorResponseCustom()
-  remove(@Param('id') id: string, @AuthUser() user: AuthUserDto) {
-    return this.rolesService.remove(id, user);
-  }
-}
+export class RolesController {}
