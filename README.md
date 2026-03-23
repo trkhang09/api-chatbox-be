@@ -36,13 +36,27 @@ Trong project gốc, mình chịu trách nhiệm chính ở các phần sau:
 
 ## 📁 Cấu trúc project
 
-src/
-│── controllers/ # Xử lý request/response
-│── services/ # Business logic
-│── repositories/ # Data access layer
-│── models/ # Định nghĩa entity
-│── routes/ # Định tuyến API
-│── config/ # Cấu hình (DB, env)
+- ai-chatbox-be/ 
+- ├── src/
+- │ ├── common/
+- │ ├── factories/
+- │ ├── migrations/
+- │ ├── modules/
+- │ │ ├── chats/
+- │ │ │ ├── dtos/
+- │ │ │ ├── entities/
+- │ │ │ ├── chat.controller.ts
+- │ │ │ ├── chat.module.ts
+- │ │ │ ├── chat.repository.ts
+- │ │ │ ├── chat.service.ts
+- │ │ ├── ...
+- │ ├── seeds/
+- │ ├── app.controller.ts
+- │ ├── app.module.ts
+- │ ├── app.service.ts
+- │ ├── data-source.ts
+- │ ├── ...
+- │ └── main.ts
 
 ---
 
